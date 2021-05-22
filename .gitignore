@@ -1,7 +1,8 @@
 #eclipse
-/bin
-/.settings
-/.classpath
+**/bin
+**/.settings
+**/.classpath
+*.project
 
 #In case people make their workspace in the repo
 /eclipse/
@@ -14,11 +15,21 @@
 #gradle
 /build
 /.gradle
+/mdk/.gradle
+/mdk/build
+/buildSrc/build
+/buildSrc/.gradle
 
 #occupational hazards
-/projects/
+/projects/mcp/
+/projects/clean/
+/projects/forge/
+/projects/**/build/
+/projects/**/out/
+/projects/**/run/
+/projects/**/*.launch
 /repo/
-/buildSrc
+src/generated/resources/.cache/
 
 #Patch rejects
 /patches-/
@@ -26,7 +37,8 @@
 
 # FML changelog
 changelog.txt
-/patches_old/
-/patches_old_bak/
 *.py
 *.7z
+/logs/
+
+/projects/forge/rejects/
