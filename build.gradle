@@ -3,7 +3,7 @@ buildscript {
         mavenLocal()
         maven {
             name = 'forge'
-            url = 'https://maven.minecraftforge.net'
+            url = 'https://maven.minecraftforge.net/'
         }
         mavenCentral()
     }
@@ -46,18 +46,15 @@ plugins {
     id 'eclipse'
 }
 
-// v RETROGRADLE TEMP v
-allprojects {
-    repositories {
-        maven { url = 'https://maven.gemwire.uk' }
-        maven { url = 'https://ateranimavis.github.io/maven' }
-    }
-}
-// ^ RETROGRADLE TEMP ^
-
 Util.init() //Init all our extension methods!
 
-println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
+println('Java: ' + System.getProperty('java.version') +
+        ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ')' +
+        ' Arch: ' + System.getProperty('os.arch'))
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+// Configuration
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 ext {
     JAR_SIGNER = null
@@ -74,20 +71,26 @@ ext {
     MCP_VERSION = '20210627.140000'
     POST_PROCESSOR = [
         tool: 'net.minecraftforge:mcpcleanup:2.3.2:fatjar',
-        repo: 'https://maven.minecraftforge.net',
+        repo: 'https://maven.minecraftforge.net/',
         args: ['--input', '{input}', '--output', '{output}']
     ]
 }
 
-// v RETROGRADLE TEMP v
-def mcpVer = MC_VERSION + '-' + MCP_VERSION
-def mcpConf = file("${System.getProperty('user.home')}/.gradle/caches/forge_gradle/minecraft_repo/versions/${mcpVer}/mcp.zip")
-if (!mcpConf.exists()) {
-    mcpConf.getParentFile().mkdirs()
-    new URL("https://ateranimavis.github.io/maven/de/oceanlabs/mcp/mcp_config/${mcpVer}/mcp_config-${mcpVer}.zip")
-        .withInputStream { i -> mcpConf.withOutputStream { it << i } }
+//------------------------------------------------------------------------------------------------------------------------------------------
+// RetroGradle
+//------------------------------------------------------------------------------------------------------------------------------------------
+
+apply from: 'retrogradle-dev.gradle'
+ext {
+    LEGACY_MAJOR = 13     // Legacy versions have an API change prefix
+    LEGACY_BUILD = 2588   // Base build number to not conflict with existing build numbers
+    BUILD_NUMBER = 0      // LEGACY_BUILD + commit offset, used to mimic unique build from old versions
+    SPEC_VERSION = '20.1' // This is overwritten by git tag, but here so dev time doesn't explode
 }
-// ^ RETROGRADLE TEMP ^
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+// MCP
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 project(':mcp') {
     apply plugin: 'net.minecraftforge.gradle.mcp'
@@ -96,6 +99,10 @@ project(':mcp') {
         pipeline = 'joined'
     }
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+// Clean
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 project(':clean') {
     evaluationDependsOn(':mcp')
@@ -144,6 +151,10 @@ project(':clean') {
         }
     }
 }
+
+//------------------------------------------------------------------------------------------------------------------------------------------
+// Forge
+//------------------------------------------------------------------------------------------------------------------------------------------
 
 project(':forge') {
     evaluationDependsOn(':clean')
@@ -194,12 +205,8 @@ project(':forge') {
     }
 
     ext {
-        LEGACY_MAJOR = 13 //Legacy versions have a API change prefix
-        LEGACY_BUILD = 2588 //Base build number to not conflict with existing build numbers
-        BUILD_NUMBER = 0 // LEGACY_BUILD + commit offset, used to mimic unique build from old versions
-
         GIT_INFO = Util.gitInfo(rootProject.file('.'))
-        SPEC_VERSION = '20.1' // This is overwritten by git tag, but here so dev time doesnt explode
+
         MCP_ARTIFACT = project(':mcp').mcp.config
         SPECIAL_SOURCE = 'net.md-5:SpecialSource:1.9.0'
         SPECIAL_SOURCE_MCP = 'net.md-5:SpecialSource:1.8.5'
@@ -208,8 +215,28 @@ project(':forge') {
         INSTALLER_TOOLS = 'net.minecraftforge:installertools:1.1.11'
     }
 
-    version = Util.getVersion(GIT_INFO, MC_VERSION)
+    def getVersion = { info ->
+        def branch = info.branch
+
+        //
+        if (branch in ['master', 'HEAD', MC_VERSION, MC_VERSION + '.0']) branch = null
+
+        // 1.13.x style
+        if (branch != null && branch.endsWith('.x') && MC_VERSION.startsWith(branch.substring(0, branch.length() - 2))) branch = null
+
+        SPEC_VERSION = info.tag
+        BUILD_NUMBER = LEGACY_BUILD + info.offset.toInteger()
+
+        // Bake the response instead of making it dynamic
+        return "${MC_VERSION}-${LEGACY_MAJOR}.${info.tag}.${BUILD_NUMBER}${t -> if (branch != null) t << '-' + branch}".toString()
+    }
+
+    version = getVersion(GIT_INFO)
     println('Forge Version: ' + version)
+
+    //--------------------------------------------------------------------------------------------------------------------------------------
+    // Setup
+    //--------------------------------------------------------------------------------------------------------------------------------------
 
     patcher {
         extraExc file("$rootDir/src/main/resources/forge.exc")
@@ -222,6 +249,10 @@ project(':forge') {
         accessTransformer = file("$rootDir/src/main/resources/forge_at.cfg")
         //sideAnnotationStripper = file("$rootDir/src/main/resources/forge.sas")
         processor = POST_PROCESSOR
+
+        //----------------------------------------------------------------------------------------------------------------------------------
+        // Run Configurations
+        //----------------------------------------------------------------------------------------------------------------------------------
 
         runs {
             forge_client {
@@ -297,6 +328,24 @@ project(':forge') {
         }
     }
 
+    //--------------------------------------------------------------------------------------------------------------------------------------
+    // Patches
+    //--------------------------------------------------------------------------------------------------------------------------------------
+
+    applyPatches {
+        originalPrefix = '../src-base/minecraft/'
+        modifiedPrefix = '../src-work/minecraft/'
+    }
+
+    genPatches {
+        originalPrefix = '../src-base/minecraft/'
+        modifiedPrefix = '../src-work/minecraft/'
+    }
+
+    //--------------------------------------------------------------------------------------------------------------------------------------
+    // Manifest
+    //--------------------------------------------------------------------------------------------------------------------------------------
+
     ext {
         MANIFESTS = [
             '/': [
@@ -315,15 +364,9 @@ project(':forge') {
         ]
     }
 
-    applyPatches {
-        originalPrefix = '../src-base/minecraft/'
-        modifiedPrefix = '../src-work/minecraft/'
-    }
-
-    genPatches {
-        originalPrefix = '../src-base/minecraft/'
-        modifiedPrefix = '../src-work/minecraft/'
-    }
+    //--------------------------------------------------------------------------------------------------------------------------------------
+    // Dependencies
+    //--------------------------------------------------------------------------------------------------------------------------------------
 
     configurations {
         installer {
@@ -502,6 +545,10 @@ project(':forge') {
         testImplementation 'org.hamcrest:hamcrest-all:1.3' // needs advanced matching for list order
     }
 
+    //--------------------------------------------------------------------------------------------------------------------------------------
+    // Extra text files for installer
+    //--------------------------------------------------------------------------------------------------------------------------------------
+
     def extraTxts = [
         rootProject.file('CREDITS.txt'),
         rootProject.file('LICENSE.txt'),
@@ -513,6 +560,10 @@ project(':forge') {
     if (changelog.exists()) {
         extraTxts += changelog
     }
+
+    //--------------------------------------------------------------------------------------------------------------------------------------
+    // Bin Patch Generation
+    //--------------------------------------------------------------------------------------------------------------------------------------
 
     // We apply the bin patches we just created to make a jar that is JUST our changes
     ['Client', 'Server', 'Joined'].each { side ->
