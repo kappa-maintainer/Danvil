@@ -43,10 +43,8 @@ import org.objectweb.asm.MethodVisitor
 
 plugins {
     id 'com.github.ben-manes.versions' version '0.36.0'
-    id 'io.freefair.compress' version '6.0.0-m2'
     id 'eclipse'
 }
-apply plugin: 'eclipse'
 
 // v RETROGRADLE TEMP v
 allprojects {
@@ -73,7 +71,7 @@ ext {
     MAPPING_CHANNEL = 'snapshot_nodoc'
     MAPPING_VERSION = '20161220-1.11'
     MC_VERSION = '1.11.2'
-    MCP_VERSION = '20210523.153500'
+    MCP_VERSION = '20210627.140000'
     POST_PROCESSOR = [
         tool: 'net.minecraftforge:mcpcleanup:2.3.2:fatjar',
         repo: 'https://maven.minecraftforge.net',
