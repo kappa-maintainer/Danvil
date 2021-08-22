@@ -137,7 +137,9 @@ project(':clean') {
 
         runs {
             clean_client {
+                client true
                 taskName 'clean_client'
+                ideaModule "${rootProject.name}.${project.name}.main"
 
                 main 'net.minecraft.client.main.Main'
                 workingDirectory project.file('run')
@@ -150,9 +152,11 @@ project(':clean') {
             }
 
             clean_server {
+                client false
                 taskName 'clean_server'
+                ideaModule "${rootProject.name}.${project.name}.main"
 
-                main 'net.minecraft.server.Main'
+                main 'net.minecraft.server.MinecraftServer'
                 workingDirectory project.file('run')
             }
         }
@@ -263,7 +267,9 @@ project(':forge') {
 
         runs {
             forge_client {
+                client true
                 taskName 'forge_client'
+                ideaModule "${rootProject.name}.${project.name}.main"
                 main 'net.minecraftforge.legacydev.MainClient'
                 workingDirectory project.file('run')
 
@@ -300,7 +306,9 @@ project(':forge') {
             }
 
             forge_server {
+                client false
                 taskName 'forge_server'
+                ideaModule "${rootProject.name}.${project.name}.main"
                 main 'net.minecraftforge.legacydev.MainServer'
                 workingDirectory project.file('run')
 
