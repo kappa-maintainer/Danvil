@@ -277,14 +277,17 @@ project(':forge') {
                 environment 'tweakClass',       'net.minecraftforge.fml.common.launcher.FMLTweaker'
                 environment 'mainClass',        'net.minecraft.launchwrapper.Launch'
                 environment 'assetIndex',       '{asset_index}'
-                environment 'assetDirectory',   '{assets_root}'
-                environment 'nativesDirectory', '{natives}'
-                environment 'MC_VERSION',        MC_VERSION
-                environment 'MCP_VERSION',       MCP_VERSION
+                environment 'assetDirectory',   downloadAssets.output
+                environment 'nativesDirectory', extractNatives.output.get().asFile
+                environment 'MC_VERSION',       MC_VERSION
+                environment 'MCP_VERSION',      MCP_VERSION
                 environment 'MCP_MAPPINGS',     '{mcp_mappings}'
-                environment 'MCP_TO_SRG',       '{mcp_to_srg}'
+                environment 'MCP_TO_SRG',       createSrg2Mcp.getOutput().get().getAsFile().getAbsolutePath()
                 environment 'FORGE_GROUP',      project.group
                 environment 'FORGE_VERSION',    project.version.substring(MC_VERSION.length() + 1)
+
+                // Lazily supply the Mappings target, createSrg2Mcp.getMappings() doesn't get populated until later
+                lazyToken 'mcp_mappings', { -> createSrg2Mcp.getMappings().get() }
 
                 mods {
                     forge { source sourceSets.main }
@@ -318,9 +321,12 @@ project(':forge') {
                 environment 'MC_VERSION',        MC_VERSION
                 environment 'MCP_VERSION',       MCP_VERSION
                 environment 'MCP_MAPPINGS',     '{mcp_mappings}'
-                environment 'MCP_TO_SRG',       '{mcp_to_srg}'
+                environment 'MCP_TO_SRG',       createSrg2Mcp.getOutput().get().getAsFile().getAbsolutePath()
                 environment 'FORGE_GROUP',      project.group
                 environment 'FORGE_VERSION',    project.version.substring(MC_VERSION.length() + 1)
+
+                // Lazily supply the Mappings target, createSrg2Mcp.getMappings() doesn't get populated until later
+                lazyToken 'mcp_mappings', { -> createSrg2Mcp.getMappings().get() }
 
                 mods {
                     forge { source sourceSets.main }
