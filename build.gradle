@@ -1041,15 +1041,6 @@ project(':forge') {
         classifier 'userdev3' // Should be 'userdev' but FG5 hardcodes pre 1.13 versions to userdev3
     }
 
-    extractRangeMap {
-        dependencies.setFrom(jar.archiveFile)
-        sources.setFrom(sourceSets.userdev.java.srcDirs)
-    }
-
-    applyRangeMap {
-        sources.setFrom(sourceSets.userdev.java.srcDirs)
-    }
-
     tasks.eclipse.dependsOn('genEclipseRuns')
 
     if (project.hasProperty('UPDATE_MAPPINGS')) {
