@@ -605,13 +605,20 @@ project(':forge') {
             dirtyJar = genClientBinPatches.dirtyJar
             srg = genClientBinPatches.srg
             patchSets.setFrom(genClientBinPatches.patchSets)
-            args.addAll(
-                '--legacy',
-                '--prefix', 'binpatch/client',
-                '--clean', genServerBinPatches.cleanJar.get().getAsFile(),
-                '--dirty', '{dirty}',
-                '--prefix', 'binpatch/server'
-            )
+            getArgs().set([
+                    '--output', '{output}',
+                    '--patches', '{patches}',
+                    '--srg', '{srg}',
+                    '--legacy',
+
+                    '--clean', '{clean}',
+                    '--dirty', '{dirty}',
+                    '--prefix', 'binpatch/client',
+
+                    '--clean', genServerBinPatches.cleanJar.get().asFile.path,
+                    '--dirty', genServerBinPatches.dirtyJar.get().asFile.path,
+                    '--prefix', 'binpatch/server'
+            ])
         }
     }
 
@@ -841,7 +848,7 @@ project(':forge') {
                 ] as Map,
                 processors: []
             ]
-            getClasspath(project, libs, MCP_ARTIFACT.descriptor) //Tell it to download mcp_config
+            getClasspath(project, libs, MCP_ARTIFACT.get().descriptor) //Tell it to download mcp_config
             json.libraries = libs.values().sort { a, b -> a.name.compareTo(b.name) }
 
             output.text = new JsonBuilder(json).toPrettyString()
