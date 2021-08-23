@@ -1038,7 +1038,7 @@ project(':forge') {
         from(sourceSets.userdev.output.resourcesDir) {
             into '/inject/'
         }
-        classifier 'userdev5'
+        classifier 'userdev3' // Should be 'userdev' but FG5 hardcodes pre 1.13 versions to userdev3
     }
 
     extractRangeMap {
