@@ -75,7 +75,7 @@ ext {
     MAPPING_CHANNEL = 'snapshot_nodoc'
     MAPPING_VERSION = '20161220-1.11'
     MC_VERSION = '1.11.2'
-    MCP_VERSION = '20210823.210043'
+    MCP_VERSION = '20210824.173128'
     POST_PROCESSOR = [
         tool: 'net.minecraftforge:mcpcleanup:2.3.2:fatjar',
         repo: 'https://maven.minecraftforge.net/',
@@ -250,7 +250,7 @@ project(':forge') {
     //--------------------------------------------------------------------------------------------------------------------------------------
 
     patcher {
-        extraExc file("$rootDir/src/main/resources/forge.exc")
+        excs.from file("$rootDir/src/main/resources/forge.exc")
         parent = project(':clean')
         patches = file("$rootDir/patches/minecraft")
         patchedSrc = file('src/main/java')
