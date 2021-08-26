@@ -2,6 +2,7 @@ buildscript {
     repositories {
         maven { url = 'https://maven.minecraftforge.net' }
         mavenCentral()
+        maven { url = 'https://ateranimavis.github.io/maven/' } // RG
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:5.1.+'
@@ -54,6 +55,11 @@ minecraft {
             property 'forge.logging.console.level', 'debug'
         }
     }
+}
+
+repositories {
+    maven { url = 'https://ateranimavis.github.io/maven/' } // RG
+    mavenLocal()                                            // RG
 }
 
 dependencies {
