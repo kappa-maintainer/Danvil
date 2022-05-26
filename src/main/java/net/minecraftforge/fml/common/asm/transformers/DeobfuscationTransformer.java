@@ -30,7 +30,6 @@ import net.minecraftforge.fml.common.asm.transformers.deobf.FMLRemappingAdapter;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 
 public class DeobfuscationTransformer implements IClassTransformer, IClassNameTransformer {
     private static final String[] EXEMPT_LIBS = new String[] {
@@ -72,7 +71,7 @@ public class DeobfuscationTransformer implements IClassTransformer, IClassNameTr
 
         ClassReader classReader = new ClassReader(bytes);
         ClassWriter classWriter = new ClassWriter(WRITER_FLAGS);
-        RemappingClassAdapter remapAdapter = new FMLRemappingAdapter(classWriter);
+        FMLRemappingAdapter remapAdapter = new FMLRemappingAdapter(classWriter);
         classReader.accept(remapAdapter, READER_FLAGS);
         return classWriter.toByteArray();
     }

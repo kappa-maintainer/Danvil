@@ -282,7 +282,7 @@ public class EnumHelper
     //Tests an enum is compatible with these args, throws an error if not.
     public static void testEnum(Class<? extends Enum<?>> enumType, Class<?>[] paramTypes)
     {
-        addEnum(true, enumType, null, paramTypes, (Object[])null);
+        // addEnum(true, enumType, null, paramTypes, (Object[])null);
     }
 
     @Nullable

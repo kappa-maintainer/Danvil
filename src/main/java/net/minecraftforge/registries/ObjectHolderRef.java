@@ -154,21 +154,29 @@ class ObjectHolderRef
     private static class FinalFieldHelper
     {
         private static Field modifiersField;
-        private static Object reflectionFactory;
-        private static Method newFieldAccessor;
-        private static Method fieldAccessorSet;
+        // private static Object reflectionFactory;
+        // private static Method newFieldAccessor;
+        // private static Method fieldAccessorSet;
 
         static Field makeWritable(Field f) throws ReflectiveOperationException
         {
             f.setAccessible(true);
             if (modifiersField == null)
             {
-                Method getReflectionFactory = Class.forName("sun.reflect.ReflectionFactory").getDeclaredMethod("getReflectionFactory");
-                reflectionFactory = getReflectionFactory.invoke(null);
-                newFieldAccessor = Class.forName("sun.reflect.ReflectionFactory").getDeclaredMethod("newFieldAccessor", Field.class, boolean.class);
-                fieldAccessorSet = Class.forName("sun.reflect.FieldAccessor").getDeclaredMethod("set", Object.class, Object.class);
-                modifiersField = Field.class.getDeclaredField("modifiers");
-                modifiersField.setAccessible(true);
+                // Method getReflectionFactory = Class.forName("sun.reflect.ReflectionFactory").getDeclaredMethod("getReflectionFactory");
+                // reflectionFactory = getReflectionFactory.invoke(null);
+                // newFieldAccessor = Class.forName("sun.reflect.ReflectionFactory").getDeclaredMethod("newFieldAccessor", Field.class, boolean.class);
+                // fieldAccessorSet = Class.forName("sun.reflect.FieldAccessor").getDeclaredMethod("set", Object.class, Object.class);
+                Method getDeclaredFields0 = Class.class.getDeclaredMethod("getDeclaredFields0", boolean.class);
+                getDeclaredFields0.setAccessible(true);
+                Field[] fields = (Field[]) getDeclaredFields0.invoke(Field.class, false);
+                for (Field each : fields) {
+                    if ("modifiers".equals(each.getName())) {
+                        modifiersField = each;
+                        modifiersField.setAccessible(true);
+                        break;
+                    }
+                }
             }
             modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
             return f;
@@ -176,8 +184,9 @@ class ObjectHolderRef
 
         static void setField(Field field, @Nullable Object instance, Object thing) throws ReflectiveOperationException
         {
-            Object fieldAccessor = newFieldAccessor.invoke(reflectionFactory, field, false);
-            fieldAccessorSet.invoke(fieldAccessor, instance, thing);
+            // Object fieldAccessor = newFieldAccessor.invoke(reflectionFactory, field, false);
+            // fieldAccessorSet.invoke(fieldAccessor, instance, thing);
+            field.set(instance, thing);
         }
     }
 }
