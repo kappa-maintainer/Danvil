@@ -41,9 +41,11 @@ minecraft {
     def common = {
         patchPrefixOriginal "../src-base/minecraft"
         patchPrefixChanged "../src-work/minecraft"
-        mainClassClient "net.minecraft.launchwrapper.Launch"
+        // mainClassClient "net.minecraft.launchwrapper.Launch"
+        mainClassClient "com.cleanroommc.bouncepad.Bouncepad"
         tweakClassClient "net.minecraftforge.fml.common.launcher.FMLTweaker"
-        mainClassServer "net.minecraft.launchwrapper.Launch"
+        // mainClassServer "net.minecraft.launchwrapper.Launch"
+        mainClassServer "com.cleanroommc.bouncepad.Bouncepad"
         tweakClassServer "net.minecraftforge.fml.common.launcher.FMLServerTweaker"
     }
 
