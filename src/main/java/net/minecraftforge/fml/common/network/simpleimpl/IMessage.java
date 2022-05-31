@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,11 +33,11 @@ public interface IMessage {
      *
      * @param buf
      */
-    public void fromBytes(ByteBuf buf);
+    void fromBytes(ByteBuf buf);
 
     /**
      * Deconstruct your message into the supplied byte buffer
      * @param buf
      */
-    public void toBytes(ByteBuf buf);
+    void toBytes(ByteBuf buf);
 }

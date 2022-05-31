@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,8 @@ import com.google.common.base.Throwables;
 
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.util.EnumFacing;
+
+import javax.annotation.Nullable;
 
 /**
  * This is the core holder object Capabilities.
@@ -55,6 +57,7 @@ public class Capability<T>
          * @param side The side of the object the instance is associated with.
          * @return a NBT holding the data. Null if no data needs to be stored.
          */
+        @Nullable
         NBTBase writeNBT(Capability<T> capability, T instance, EnumFacing side);
 
         /**
@@ -103,6 +106,7 @@ public class Capability<T>
      * Quick access to the IStorage's writeNBT. 
      * See {@link IStorage#writeNBT(Capability, Object, EnumFacing)} for documentation.
      */
+    @Nullable
     public NBTBase writeNBT(T instance, EnumFacing side)
     {
     	return storage.writeNBT(this, instance, side);
@@ -117,6 +121,7 @@ public class Capability<T>
      *
      * @return A NEW instance of the default implementation.
      */
+    @Nullable
     public T getDefaultInstance()
     {
         try
@@ -125,9 +130,9 @@ public class Capability<T>
         }
         catch (Exception e)
         {
-            Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
-        return null;
     }
 
     /**

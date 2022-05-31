@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package net.minecraftforge.fml.common.patcher;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -30,15 +31,15 @@ import java.util.jar.JarFile;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.repackage.com.nothome.delta.Delta;
 
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
-
-import java.util.logging.Logger;
 
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteArrayDataOutput;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import org.apache.logging.log4j.Logger;
+
+import javax.annotation.Nullable;
 
 public class GenDiffSet {
 
@@ -52,7 +53,8 @@ public class GenDiffSet {
         String outputDir = args[3]; //Path to place generated .binpatch
         String killTarget = args[4]; //"true" if we should destroy the target file if it generated a successful .binpatch
 
-        LogManager.getLogger("GENDIFF").log(Level.INFO, String.format("Creating patches at %s for %s from %s", outputDir, sourceJar, targetDir));
+        Logger logger = LogManager.getLogger("FML.GENDIFF");
+        logger.info("Creating patches at {} for {} from {}", outputDir, sourceJar, targetDir);
         Delta delta = new Delta();
         FMLDeobfuscatingRemapper remapper = FMLDeobfuscatingRemapper.INSTANCE;
         remapper.setupLoadOnly(deobfData, false);
@@ -78,8 +80,7 @@ public class GenDiffSet {
                 String sourceClassName = name.replace('/', '.');
                 String targetClassName = remapper.map(name).replace('/', '.');
                 JarEntry entry = sourceZip.getJarEntry(jarName);
-
-                byte[] vanillaBytes = entry != null ? ByteStreams.toByteArray(sourceZip.getInputStream(entry)) : new byte[0];
+                byte[] vanillaBytes = toByteArray(sourceZip, entry);
                 byte[] patchedBytes = Files.toByteArray(targetFile);
 
                 byte[] diff = delta.compute(vanillaBytes, patchedBytes);
@@ -106,15 +107,27 @@ public class GenDiffSet {
                 File target = new File(outputDir, targetClassName+".binpatch");
                 target.getParentFile().mkdirs();
                 Files.write(diffOut.toByteArray(), target);
-                Logger.getLogger("GENDIFF").info(String.format("Wrote patch for %s (%s) at %s",name, targetClassName, target.getAbsolutePath()));
+                logger.info("Wrote patch for {} ({}) at {}", name, targetClassName, target.getAbsolutePath());
                 if (kill)
                 {
                     targetFile.delete();
-                    Logger.getLogger("GENDIFF").info(String.format("  Deleted target: %s", targetFile.toString()));
+                    logger.info("  Deleted target: {}", targetFile);
                 }
             }
         }
         sourceZip.close();
     }
 
+    private static byte[] toByteArray(JarFile sourceZip, @Nullable JarEntry entry) throws IOException
+    {
+        if (entry == null)
+        {
+            return new byte[0];
+        }
+
+        try (InputStream sourceZipInputStream = sourceZip.getInputStream(entry))
+        {
+            return ByteStreams.toByteArray(sourceZipInputStream);
+        }
+    }
 }

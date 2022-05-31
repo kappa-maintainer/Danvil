@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package net.minecraftforge.fml.common.asm.transformers;
 
+import net.minecraftforge.fml.common.FMLLog;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_PROTECTED;
@@ -35,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -43,17 +45,17 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraftforge.fml.relauncher.FMLRelaunchLog;
 
+import org.apache.commons.io.IOUtils;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
@@ -123,8 +125,8 @@ public class AccessTransformer implements IClassTransformer
         {
             rulesResource = Resources.getResource(rulesFile);
         }
-        processATFile(Resources.asCharSource(rulesResource, Charsets.UTF_8));
-        FMLRelaunchLog.fine("Loaded %d rules from AccessTransformer config file %s", modifiers.size(), rulesFile);
+        processATFile(Resources.asCharSource(rulesResource, StandardCharsets.UTF_8));
+        FMLLog.log.debug("Loaded {} rules from AccessTransformer config file {}", modifiers.size(), rulesFile);
     }
     protected void processATFile(CharSource rulesResource) throws IOException
     {
@@ -172,7 +174,7 @@ public class AccessTransformer implements IClassTransformer
                 }
                 String className = parts.get(1).replace('/', '.');
                 modifiers.put(className, m);
-                if (DEBUG) System.out.printf("AT RULE: %s %s %s (type %s)\n", toBinary(m.targetAccess), m.name, m.desc, className);
+                if (DEBUG) FMLLog.log.debug("AT RULE: {} {} {} (type {})", toBinary(m.targetAccess), m.name, m.desc, className);
                 return true;
             }
         });
@@ -182,12 +184,12 @@ public class AccessTransformer implements IClassTransformer
     public byte[] transform(String name, String transformedName, byte[] bytes)
     {
         if (bytes == null) { return null; }
+        if (!modifiers.containsKey(transformedName)) { return bytes; }
 
         if (DEBUG)
         {
-            FMLRelaunchLog.fine("Considering all methods and fields on %s (%s)\n", transformedName, name);
+            FMLLog.log.debug("Considering all methods and fields on {} ({})", transformedName, name);
         }
-        if (!modifiers.containsKey(transformedName)) { return bytes; }
 
         ClassNode classNode = new ClassNode();
         ClassReader classReader = new ClassReader(bytes);
@@ -201,7 +203,16 @@ public class AccessTransformer implements IClassTransformer
                 classNode.access = getFixedAccess(classNode.access, m);
                 if (DEBUG)
                 {
-                    System.out.println(String.format("Class: %s %s -> %s", name, toBinary(m.oldAccess), toBinary(m.newAccess)));
+                    FMLLog.log.debug("Class: {} {} -> {}", name, toBinary(m.oldAccess), toBinary(m.newAccess));
+                }
+                // if this is an inner class, also modify the access flags on the corresponding InnerClasses attribute
+                for (InnerClassNode innerClass : classNode.innerClasses)
+                {
+                    if (innerClass.name.equals(classNode.name))
+                    {
+                        innerClass.access = getFixedAccess(innerClass.access, m);
+                        break;
+                    }
                 }
                 continue;
             }
@@ -214,7 +225,7 @@ public class AccessTransformer implements IClassTransformer
                         n.access = getFixedAccess(n.access, m);
                         if (DEBUG)
                         {
-                            System.out.println(String.format("Field: %s.%s %s -> %s", name, n.name, toBinary(m.oldAccess), toBinary(m.newAccess)));
+                            FMLLog.log.debug("Field: {}.{} {} -> {}", name, n.name, toBinary(m.oldAccess), toBinary(m.newAccess));
                         }
 
                         if (!m.name.equals("*"))
@@ -250,7 +261,7 @@ public class AccessTransformer implements IClassTransformer
 
                         if (DEBUG)
                         {
-                            System.out.println(String.format("Method: %s.%s%s %s -> %s", name, n.name, n.desc, toBinary(m.oldAccess), toBinary(m.newAccess)));
+                            FMLLog.log.debug("Method: {}.{}{} {} -> {}", name, n.name, n.desc, toBinary(m.oldAccess), toBinary(m.newAccess));
                         }
 
                         if (!m.name.equals("*"))
@@ -260,7 +271,10 @@ public class AccessTransformer implements IClassTransformer
                     }
                 }
 
-                replaceInvokeSpecial(classNode, nowOverrideable);
+                if (!nowOverrideable.isEmpty())
+                {
+                    replaceInvokeSpecial(classNode, nowOverrideable);
+                }
             }
         }
 
@@ -469,27 +483,8 @@ public class AccessTransformer implements IClassTransformer
         }
         finally
         {
-            if (outJar != null)
-            {
-                try
-                {
-                    outJar.close();
-                }
-                catch (IOException e)
-                {
-                }
-            }
-
-            if (inJar != null)
-            {
-                try
-                {
-                    inJar.close();
-                }
-                catch (IOException e)
-                {
-                }
-            }
+            IOUtils.closeQuietly(outJar);
+            IOUtils.closeQuietly(inJar);
         }
     }
     Multimap<String, Modifier> getModifiers()

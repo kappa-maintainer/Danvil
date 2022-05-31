@@ -1,9 +1,9 @@
 --- ../src-base/minecraft/net/minecraft/world/WorldProvider.java
 +++ ../src-work/minecraft/net/minecraft/world/WorldProvider.java
-@@ -53,26 +53,12 @@
- 
+@@ -55,37 +55,12 @@
      protected void func_76572_b()
      {
+         this.field_191067_f = true;
 -        WorldType worldtype = this.field_76579_a.func_72912_H().func_76067_t();
 -
 -        if (worldtype == WorldType.field_77138_c)
@@ -19,17 +19,28 @@
 -        {
 -            this.field_76578_c = new BiomeProvider(this.field_76579_a.func_72912_H());
 -        }
-+        this.field_76578_c = field_76577_b.getBiomeProvider(field_76579_a);
++        this.field_76578_c = this.field_76577_b.getBiomeProvider(field_76579_a);
      }
  
      public IChunkGenerator func_186060_c()
      {
--        return (IChunkGenerator)(this.field_76577_b == WorldType.field_77138_c ? new ChunkProviderFlat(this.field_76579_a, this.field_76579_a.func_72905_C(), this.field_76579_a.func_72912_H().func_76089_r(), this.field_82913_c) : (this.field_76577_b == WorldType.field_180272_g ? new ChunkProviderDebug(this.field_76579_a) : (this.field_76577_b == WorldType.field_180271_f ? new ChunkProviderOverworld(this.field_76579_a, this.field_76579_a.func_72905_C(), this.field_76579_a.func_72912_H().func_76089_r(), this.field_82913_c) : new ChunkProviderOverworld(this.field_76579_a, this.field_76579_a.func_72905_C(), this.field_76579_a.func_72912_H().func_76089_r(), this.field_82913_c))));
-+        return field_76577_b.getChunkGenerator(field_76579_a, field_82913_c);
+-        if (this.field_76577_b == WorldType.field_77138_c)
+-        {
+-            return new ChunkGeneratorFlat(this.field_76579_a, this.field_76579_a.func_72905_C(), this.field_76579_a.func_72912_H().func_76089_r(), this.field_82913_c);
+-        }
+-        else if (this.field_76577_b == WorldType.field_180272_g)
+-        {
+-            return new ChunkGeneratorDebug(this.field_76579_a);
+-        }
+-        else
+-        {
+-            return this.field_76577_b == WorldType.field_180271_f ? new ChunkGeneratorOverworld(this.field_76579_a, this.field_76579_a.func_72905_C(), this.field_76579_a.func_72912_H().func_76089_r(), this.field_82913_c) : new ChunkGeneratorOverworld(this.field_76579_a, this.field_76579_a.func_72905_C(), this.field_76579_a.func_72912_H().func_76089_r(), this.field_82913_c);
+-        }
++        return this.field_76577_b.getChunkGenerator(field_76579_a, field_82913_c);
      }
  
      public boolean func_76566_a(int p_76566_1_, int p_76566_2_)
-@@ -158,7 +144,7 @@
+@@ -179,7 +154,7 @@
      @SideOnly(Side.CLIENT)
      public float func_76571_f()
      {
@@ -38,7 +49,7 @@
      }
  
      @SideOnly(Side.CLIENT)
-@@ -174,13 +160,13 @@
+@@ -196,13 +171,13 @@
  
      public int func_76557_i()
      {
@@ -54,7 +65,7 @@
      }
  
      @SideOnly(Side.CLIENT)
-@@ -214,6 +200,327 @@
+@@ -241,6 +216,371 @@
          return new WorldBorder();
      }
  
@@ -85,51 +96,17 @@
 +     * EXA: DIM1, DIM-1
 +     * @return The sub-folder name to save this world's chunks to.
 +     */
++    @Nullable
 +    public String getSaveFolder()
 +    {
 +        return (dimensionId == 0 ? null : "DIM" + dimensionId);
 +    }
 +
 +    /**
-+     * A message to display to the user when they transfer to this dimension.
-+     *
-+     * @return The message to be displayed
-+     */
-+    public String getWelcomeMessage()
-+    {
-+        if (this instanceof WorldProviderEnd)
-+        {
-+            return "Entering the End";
-+        }
-+        else if (this instanceof WorldProviderHell)
-+        {
-+            return "Entering the Nether";
-+        }
-+        return null;
-+    }
-+
-+    /**
-+     * A Message to display to the user when they transfer out of this dismension.
-+     *
-+     * @return The message to be displayed
-+     */
-+    public String getDepartMessage()
-+    {
-+        if (this instanceof WorldProviderEnd)
-+        {
-+            return "Leaving the End";
-+        }
-+        else if (this instanceof WorldProviderHell)
-+        {
-+            return "Leaving the Nether";
-+        }
-+        return null;
-+    }
-+
-+    /**
-+     * The dimensions movement factor. Relative to normal overworld.
-+     * It is applied to the players position when they transfer dimensions.
-+     * Exa: Nether movement is 8.0
++     * The dimension's movement factor.
++     * Whenever a player or entity changes dimension from world A to world B, their coordinates are multiplied by
++     * worldA.provider.getMovementFactor() / worldB.provider.getMovementFactor()
++     * Example: Overworld factor is 1, nether factor is 8. Traveling from overworld to nether multiplies coordinates by 1/8.
 +     * @return The movement factor
 +     */
 +    public double getMovementFactor()
@@ -141,6 +118,23 @@
 +        return 1.0;
 +    }
 +
++    /**
++     * If this method returns true, then chunks received by the client will
++     * have {@link net.minecraft.world.chunk.Chunk#resetRelightChecks} called
++     * on them, queuing lighting checks for all air blocks in the chunk (and
++     * any adjacent light-emitting blocks).
++     *
++     * Returning true here is recommended if the chunk generator used also
++     * does this for newly generated chunks.
++     *
++     * @return true if lighting checks should be performed
++     */
++    public boolean shouldClientCheckLighting()
++    {
++        return !(this instanceof WorldProviderSurface);
++    }
++
++    @Nullable
 +    @SideOnly(Side.CLIENT)
 +    public net.minecraftforge.client.IRenderHandler getSkyRenderer()
 +    {
@@ -153,6 +147,7 @@
 +        this.skyRenderer = skyRenderer;
 +    }
 +
++    @Nullable
 +    @SideOnly(Side.CLIENT)
 +    public net.minecraftforge.client.IRenderHandler getCloudRenderer()
 +    {
@@ -165,6 +160,7 @@
 +        cloudRenderer = renderer;
 +    }
 +
++    @Nullable
 +    @SideOnly(Side.CLIENT)
 +    public net.minecraftforge.client.IRenderHandler getWeatherRenderer()
 +    {
@@ -176,6 +172,20 @@
 +    {
 +        weatherRenderer = renderer;
 +    }
++
++    /**
++     * Allows for manipulating the coloring of the lightmap texture.
++     * Will be called for each 16*16 combination of sky/block light values.
++     *
++     * @param partialTicks Progress between ticks.
++     * @param sunBrightness Current sun brightness.
++     * @param skyLight Sky light brightness factor.
++     * @param blockLight Block light brightness factor.
++     * @param colors The color values that will be used: [r, g, b].
++     *
++     * @see net.minecraft.client.renderer.EntityRenderer#updateLightmap(float)
++     */
++    public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) {}
 +
 +    public BlockPos getRandomizedSpawnPoint()
 +    {
@@ -190,7 +200,7 @@
 +        {
 +            if (spawnFuzz < 2) spawnFuzz = 2;
 +            int spawnFuzzHalf = spawnFuzz / 2;
-+            ret = field_76579_a.func_175672_r(ret.func_177982_a(field_76579_a.field_73012_v.nextInt(spawnFuzzHalf) - spawnFuzz, 0, field_76579_a.field_73012_v.nextInt(spawnFuzzHalf) - spawnFuzz));
++            ret = field_76579_a.func_175672_r(ret.func_177982_a(spawnFuzzHalf - field_76579_a.field_73012_v.nextInt(spawnFuzz), 0, spawnFuzzHalf - field_76579_a.field_73012_v.nextInt(spawnFuzz)));
 +        }
 +
 +        return ret;
@@ -200,11 +210,11 @@
 +     *
 +     * @param entity The entity holding the map, playername, or frame-ENTITYID
 +     * @param x X Position
-+     * @param y Y Position
 +     * @param z Z Position
++     * @param rotation the regular rotation of the marker
 +     * @return True to 'spin' the cursor
 +     */
-+    public boolean shouldMapSpin(String entity, double x, double y, double z)
++    public boolean shouldMapSpin(String entity, double x, double z, double rotation)
 +    {
 +        return dimensionId < 0;
 +    }
@@ -217,7 +227,52 @@
 +     */
 +    public int getRespawnDimension(net.minecraft.entity.player.EntityPlayerMP player)
 +    {
-+        return 0;
++        return player.getSpawnDimension();
++    }
++
++    /**
++     * Called from {@link World#initCapabilities()}, to gather capabilities for this world.
++     * It's safe to access world here since this is called after world is registered.
++     *
++     * On server, called directly after mapStorage and world data such as Scoreboard and VillageCollection are initialized.
++     * On client, called when world is constructed, just before world load event is called.
++     * Note that this method is always called before the world load event.
++     * @return initial holder for capabilities on the world
++     */
++    @Nullable
++    public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities() {
++        return null;
++    }
++
++    /**
++     * Called on the client to get the music type to play when in this world type.
++     * At the time of calling, the client player and world are guaranteed to be non-null
++     * @return null to use vanilla logic, otherwise a MusicType to play in this world
++     */
++    @Nullable
++    @SideOnly(Side.CLIENT)
++    public net.minecraft.client.audio.MusicTicker.MusicType getMusicType()
++    {
++        return null;
++    }
++
++    /**
++     * Determines if the player can sleep in this world (or if the bed should explode for example).
++     *
++     * @param player The player that is attempting to sleep
++     * @param pos The location where the player tries to sleep at (the position of the clicked on bed for example)
++     * @return the result of a player trying to sleep at the given location
++     */
++    public WorldSleepResult canSleepAt(net.minecraft.entity.player.EntityPlayer player, BlockPos pos)
++    {
++        return (this.func_76567_e() && this.field_76579_a.func_180494_b(pos) != net.minecraft.init.Biomes.field_76778_j) ? WorldSleepResult.ALLOW : WorldSleepResult.BED_EXPLODES;
++    }
++
++    public static enum WorldSleepResult
++    {
++        ALLOW,
++        DENY,
++        BED_EXPLODES;
 +    }
 +
 +    /*======================================= Start Moved From World =========================================*/

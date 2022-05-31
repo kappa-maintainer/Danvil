@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,9 @@ package net.minecraftforge.fluids;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * Implement this interface on Block classes which represent world-placeable Fluids.
  *
@@ -36,6 +39,20 @@ public interface IFluidBlock
     Fluid getFluid();
 
     /**
+     * Attempts to place the block at a given position. The placed block's level will correspond
+     * to the provided fluid amount.
+     * This method should be called by fluid containers such as buckets, but it is recommended
+     * to use {@link FluidUtil}.
+     *
+     * @param world      the world to place the block in
+     * @param pos        the position to place the block at
+     * @param fluidStack the fluid stack to get the required data from
+     * @param doPlace    if false, the placement will only be simulated
+     * @return the amount of fluid extracted from the provided stack to achieve some fluid level
+     */
+    int place(World world, BlockPos pos, @Nonnull FluidStack fluidStack, boolean doPlace);
+
+    /**
      * Attempt to drain the block. This method should be called by devices such as pumps.
      *
      * NOTE: The block is intended to handle its own state changes.
@@ -44,6 +61,7 @@ public interface IFluidBlock
      *            If false, the drain will only be simulated.
      * @return
      */
+    @Nullable
     FluidStack drain(World world, BlockPos pos, boolean doDrain);
 
     /**

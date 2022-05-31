@@ -1,4 +1,35 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016-2018.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.test;
+
+import com.google.common.base.Joiner;
+import com.google.common.base.Throwables;
+import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.passive.HorseArmorType;
+import net.minecraft.init.Bootstrap;
+import net.minecraftforge.client.EnumHelperClient;
+import net.minecraftforge.common.BiomeDictionary;
+import net.minecraftforge.common.util.EnumHelper;
+import org.junit.Assert;
+import org.junit.Test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -9,17 +40,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import net.minecraft.init.Bootstrap;
-import net.minecraftforge.client.EnumHelperClient;
-import net.minecraftforge.common.BiomeDictionary;
-import net.minecraftforge.common.util.EnumHelper;
-
-import org.junit.Assert;
-import org.junit.Test;
-
-import com.google.common.base.Joiner;
-import com.google.common.base.Throwables;
 
 public class EnumHelperTest
 {
@@ -78,14 +98,32 @@ public class EnumHelperTest
                 actualParameters = Arrays.copyOfRange(actualParameters, 1, actualParameters.length); //Trim off name
                 String info =
                         "  Method: " + method.getDeclaringClass().getSimpleName() + "." + method.getName() + "\n" +
-                        "  Class: " + returnType.getName() + "\n" +
-                        "  Actual:   " + COMMA.join(actualParameters);
+                                "  Class: " + returnType.getName() + "\n" +
+                                "  Actual:   " + COMMA.join(actualParameters);
 
                 boolean found = false; // There can sometimes be multiple constructors.
 
                 for (Constructor<?> declaredConstructor : declaredConstructors)
                 {
-                    seenCtrs.add(declaredConstructor);
+                    boolean filter = declaredConstructor.isSynthetic();
+
+                    if (returnType == EnumEnchantmentType.class && declaredConstructor.getParameterTypes().length == 2)
+                    {
+                        filter = true; //We don't want people using this method.
+                    }
+                    if (returnType == EntityLiving.SpawnPlacementType.class && declaredConstructor.getParameterTypes().length == 2)
+                    {
+                        filter = true; //We don't want people using this method.
+                    }
+                    if (returnType == HorseArmorType.class && (declaredConstructor.getParameterTypes().length == 3 || declaredConstructor.getParameterTypes()[2] == int.class))
+                    {
+                       filter = true; //We don't want people using either of these methods.
+                    }
+
+                    if (!filter)
+                    {
+                        seenCtrs.add(declaredConstructor);
+                    }
                     //System.out.println("    " + declaredConstructor.toString());
 
                     Class<?>[] expectedParameters = declaredConstructor.getParameterTypes();
@@ -102,7 +140,7 @@ public class EnumHelperTest
 
                     info += "\n  Expected: " + COMMA.join(expectedParameters);
 
-                    if (Arrays.equals(actualParameters,  expectedParameters))
+                    if (Arrays.equals(actualParameters, expectedParameters))
                     {
                         matchedCtrs.add(declaredConstructor);
                         found = true;
@@ -111,7 +149,7 @@ public class EnumHelperTest
 
                 if (!found)
                 {
-                    System.out.println("Pamaters did not Match:");
+                    System.out.println("Parameters did not Match:");
                     System.out.println(info);
                     failed = true;
                 }

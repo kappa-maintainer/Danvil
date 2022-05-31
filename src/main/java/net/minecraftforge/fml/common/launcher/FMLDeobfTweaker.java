@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,9 +25,9 @@ import java.util.List;
 
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.LaunchClassLoader;
+import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.relauncher.CoreModManager;
 import net.minecraftforge.fml.relauncher.FMLInjectionData;
-import net.minecraftforge.fml.relauncher.FMLRelaunchLog;
 
 public class FMLDeobfTweaker implements ITweaker {
     @Override
@@ -47,20 +47,23 @@ public class FMLDeobfTweaker implements ITweaker {
         }
         classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ModAccessTransformer");
         classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ItemStackTransformer");
+        classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ItemBlockTransformer");
+        classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ItemBlockSpecialTransformer");
+        classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.PotionEffectTransformer");
         try
         {
-            FMLRelaunchLog.fine("Validating minecraft");
+            FMLLog.log.debug("Validating minecraft");
             Class<?> loaderClazz = Class.forName("net.minecraftforge.fml.common.Loader", true, classLoader);
             Method m = loaderClazz.getMethod("injectData", Object[].class);
             m.invoke(null, (Object)FMLInjectionData.data());
             m = loaderClazz.getMethod("instance");
             m.invoke(null);
-            FMLRelaunchLog.fine("Minecraft validated, launching...");
+            FMLLog.log.debug("Minecraft validated, launching...");
         }
         catch (Exception e)
         {
             // Load in the Loader, make sure he's ready to roll - this will initialize most of the rest of minecraft here
-            System.out.println("A CRITICAL PROBLEM OCCURRED INITIALIZING MINECRAFT - LIKELY YOU HAVE AN INCORRECT VERSION FOR THIS FML");
+            FMLLog.log.fatal("A CRITICAL PROBLEM OCCURRED INITIALIZING MINECRAFT - LIKELY YOU HAVE AN INCORRECT VERSION FOR THIS FML");
             throw new RuntimeException(e);
         }
     }

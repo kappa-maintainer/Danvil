@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
 package net.minecraftforge.fml.server;
 
 import java.io.*;
@@ -25,7 +26,6 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
-import net.minecraft.launchwrapper.Launch;
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.NetworkManager;
@@ -35,6 +35,7 @@ import net.minecraft.server.dedicated.PendingCommand;
 import net.minecraft.util.IThreadListener;
 import net.minecraft.util.text.translation.LanguageMap;
 import net.minecraft.world.storage.SaveFormatOld;
+import net.minecraftforge.common.util.CompoundDataFixer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.IFMLSidedHandler;
@@ -42,8 +43,8 @@ import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.StartupQuery;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
-import net.minecraftforge.fml.common.functions.GenericIterableFactory;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
+import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.fml.relauncher.Side;
 
 import com.google.common.collect.ImmutableList;
@@ -165,7 +166,7 @@ public class FMLServerHandler implements IFMLSidedHandler
     {
         if (query.getResult() == null)
         {
-            FMLLog.warning("%s", query.getText());
+            FMLLog.log.warn(query.getText());
             query.finish();
         }
         else
@@ -173,7 +174,7 @@ public class FMLServerHandler implements IFMLSidedHandler
             String text = query.getText() +
                     "\n\nRun the command /fml confirm or or /fml cancel to proceed." +
                     "\nAlternatively start the server with -Dfml.queryResult=confirm or -Dfml.queryResult=cancel to preselect the answer.";
-            FMLLog.warning("%s", text);
+            FMLLog.log.warn(text);
 
             if (!query.isSynchronous()) return; // no-op until mc does commands in another thread (if ever)
 
@@ -188,20 +189,20 @@ public class FMLServerHandler implements IFMLSidedHandler
                 // rudimentary command processing, check for fml confirm/cancel and stop commands
                 synchronized (dedServer.pendingCommandList)
                 {
-                    for (Iterator<PendingCommand> it = GenericIterableFactory.newCastingIterable(dedServer.pendingCommandList, PendingCommand.class).iterator(); it.hasNext(); )
+                    for (Iterator<PendingCommand> it = dedServer.pendingCommandList.iterator(); it.hasNext(); )
                     {
                         String cmd = it.next().command.trim().toLowerCase();
 
                         if (cmd.equals("/fml confirm"))
                         {
-                            FMLLog.info("confirmed");
+                            FMLLog.log.info("confirmed");
                             query.setResult(true);
                             done = true;
                             it.remove();
                         }
                         else if (cmd.equals("/fml cancel"))
                         {
-                            FMLLog.info("cancelled");
+                            FMLLog.log.info("cancelled");
                             query.setResult(false);
                             done = true;
                             it.remove();
@@ -221,6 +222,12 @@ public class FMLServerHandler implements IFMLSidedHandler
     }
 
     @Override
+    public boolean isDisplayCloseRequested()
+    {
+        return false;
+    }
+
+    @Override
     public boolean shouldServerShouldBeKilledQuietly()
     {
         return false;
@@ -229,24 +236,36 @@ public class FMLServerHandler implements IFMLSidedHandler
     @Override
     public void addModAsResource(ModContainer container)
     {
-        String langFile = "assets/" + container.getModId().toLowerCase() + "/lang/en_US.lang";
+        String langFile = "assets/" + container.getModId().toLowerCase() + "/lang/en_us.lang";
+        String langFile2 = "assets/" + container.getModId().toLowerCase() + "/lang/en_US.lang";
         File source = container.getSource();
         InputStream stream = null;
         ZipFile zip = null;
         try
         {
-            if (source.isDirectory() && (Boolean) Launch.blackboard.get("fml.deobfuscatedEnvironment"))
+            if (source.isDirectory() && FMLLaunchHandler.isDeobfuscatedEnvironment())
             {
-                stream = new FileInputStream(new File(source.toURI().resolve(langFile).getPath()));
+                File f = new File(source.toURI().resolve(langFile).getPath());
+                if (!f.exists())
+                    f = new File(source.toURI().resolve(langFile2).getPath());
+                if (!f.exists())
+                    throw new FileNotFoundException(source.toURI().resolve(langFile).getPath());
+                stream = new FileInputStream(f);
             }
-            else
+            else if (source.exists()) //Fake sources.. Yay coremods -.-
             {
                 zip = new ZipFile(source);
                 ZipEntry entry = zip.getEntry(langFile);
-                if(entry == null) throw new FileNotFoundException();
+                if (entry == null) entry = zip.getEntry(langFile2);
+                if (entry == null) throw new FileNotFoundException(langFile);
                 stream = zip.getInputStream(entry);
             }
-            LanguageMap.inject(stream);
+            if (stream != null)
+                LanguageMap.inject(stream);
+        }
+        catch (FileNotFoundException e)
+        {
+            FMLLog.log.warn("Missing English translation for {}: {}", container.getModId(), e.getMessage());
         }
         catch (IOException e)
         {
@@ -254,20 +273,12 @@ public class FMLServerHandler implements IFMLSidedHandler
         }
         catch(Exception e)
         {
-            FMLLog.getLogger().error(e);
+            FMLLog.log.error(e);
         }
         finally
         {
             IOUtils.closeQuietly(stream);
-            try
-            {
-                if (zip != null)
-                    zip.close();
-            }
-            catch (IOException e)
-            {
-                // shush
-            }
+            IOUtils.closeQuietly(zip);
         }
     }
 
@@ -327,5 +338,27 @@ public class FMLServerHandler implements IFMLSidedHandler
     public String stripSpecialChars(String message)
     {
         return message;
+    }
+
+    @Override
+    public void reloadRenderers() {
+        // NOOP
+    }
+
+    @Override
+    public void fireSidedRegistryEvents()
+    {
+        // NOOP
+    }
+    @Override
+    public CompoundDataFixer getDataFixer()
+    {
+        return (CompoundDataFixer)this.server.getDataFixer();
+    }
+
+    @Override
+    public boolean isDisplayVSyncForced()
+    {
+        return false;
     }
 }

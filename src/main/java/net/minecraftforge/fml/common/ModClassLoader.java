@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -91,7 +91,7 @@ public class ModClassLoader extends URLClassLoader
         }
         catch (URISyntaxException e)
         {
-            FMLLog.log(Level.ERROR, e, "Unable to process our input to locate the minecraft code");
+            FMLLog.log.error("Unable to process our input to locate the minecraft code", e);
             throw new LoaderException(e);
         }
     }
@@ -103,6 +103,8 @@ public class ModClassLoader extends URLClassLoader
 
     public boolean isDefaultLibrary(File file)
     {
+        String home = System.getProperty("java.home"); // Nullcheck just in case some JVM decides to be stupid
+        if (home != null && file.getAbsolutePath().startsWith(home)) return true;
         // Should really pull this from the json somehow, but we dont have that at runtime.
         String name = file.getName();
         if (!name.endsWith(".jar")) return false;

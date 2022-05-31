@@ -1,7 +1,6 @@
-
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +21,7 @@ package net.minecraftforge.fluids;
 
 import java.util.Random;
 
+import net.minecraft.block.material.MapColor;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -29,6 +29,9 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
+
+import javax.annotation.Nonnull;
 
 /**
  * This is a cellular-automata based finite fluid block implementation.
@@ -38,9 +41,14 @@ import net.minecraft.world.World;
  */
 public class BlockFluidFinite extends BlockFluidBase
 {
+    public BlockFluidFinite(Fluid fluid, Material material, MapColor mapColor)
+    {
+        super(fluid, material, mapColor);
+    }
+
     public BlockFluidFinite(Fluid fluid, Material material)
     {
-        super(fluid, material);
+        this(fluid, material, material.getMaterialMapColor());
     }
 
     @Override
@@ -60,9 +68,9 @@ public class BlockFluidFinite extends BlockFluidBase
     }
 
     @Override
-    public boolean canCollideCheck(IBlockState state, boolean fullHit)
+    public boolean canCollideCheck(@Nonnull IBlockState state, boolean fullHit)
     {
-        return fullHit && state.getValue(LEVEL) == quantaPerBlock - 1;
+        return fullHit;
     }
 
     @Override
@@ -72,7 +80,7 @@ public class BlockFluidFinite extends BlockFluidBase
     }
 
     @Override
-    public void updateTick(World world, BlockPos pos, IBlockState state, Random rand)
+    public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random rand)
     {
         boolean changed = false;
         int quantaRemaining = state.getValue(LEVEL) + 1;
@@ -90,7 +98,7 @@ public class BlockFluidFinite extends BlockFluidBase
             changed = true;
             if (quantaRemaining == 1)
             {
-                world.setBlockState(pos, state.withProperty(LEVEL, quantaRemaining - 1), 2);
+                world.setBlockState(pos, state.withProperty(LEVEL, quantaRemaining - 1), Constants.BlockFlags.SEND_TO_CLIENTS);
                 return;
             }
         }
@@ -122,7 +130,7 @@ public class BlockFluidFinite extends BlockFluidBase
         {
             if (changed)
             {
-                world.setBlockState(pos, state.withProperty(LEVEL, quantaRemaining - 1), 2);
+                world.setBlockState(pos, state.withProperty(LEVEL, quantaRemaining - 1), Constants.BlockFlags.SEND_TO_CLIENTS);
             }
             return;
         }
@@ -151,7 +159,7 @@ public class BlockFluidFinite extends BlockFluidBase
                     }
                     else
                     {
-                        world.setBlockState(off, getDefaultState().withProperty(LEVEL, newQuanta - 1), 2);
+                        world.setBlockState(off, getDefaultState().withProperty(LEVEL, newQuanta - 1), Constants.BlockFlags.SEND_TO_CLIENTS);
                     }
                     world.scheduleUpdate(off, this, tickRate);
                 }
@@ -163,7 +171,7 @@ public class BlockFluidFinite extends BlockFluidBase
         {
             ++each;
         }
-        world.setBlockState(pos, state.withProperty(LEVEL, each - 1), 2);
+        world.setBlockState(pos, state.withProperty(LEVEL, each - 1), Constants.BlockFlags.SEND_TO_CLIENTS);
     }
 
     public int tryToFlowVerticallyInto(World world, BlockPos pos, int amtToInput)
@@ -182,13 +190,13 @@ public class BlockFluidFinite extends BlockFluidBase
             amt += amtToInput;
             if (amt > quantaPerBlock)
             {
-                world.setBlockState(other, myState.withProperty(LEVEL, quantaPerBlock - 1), 3);
+                world.setBlockState(other, myState.withProperty(LEVEL, quantaPerBlock - 1));
                 world.scheduleUpdate(other, this, tickRate);
                 return amt - quantaPerBlock;
             }
             else if (amt > 0)
             {
-                world.setBlockState(other, myState.withProperty(LEVEL, amt - 1), 3);
+                world.setBlockState(other, myState.withProperty(LEVEL, amt - 1));
                 world.scheduleUpdate(other, this, tickRate);
                 world.setBlockToAir(pos);
                 return 0;
@@ -202,7 +210,7 @@ public class BlockFluidFinite extends BlockFluidBase
             {
                 if (displaceIfPossible(world, other))
                 {
-                    world.setBlockState(other, myState.withProperty(LEVEL, amtToInput - 1), 3);
+                    world.setBlockState(other, myState.withProperty(LEVEL, amtToInput - 1));
                     world.scheduleUpdate(other, this, tickRate);
                     world.setBlockToAir(pos);
                     return 0;
@@ -218,8 +226,8 @@ public class BlockFluidFinite extends BlockFluidBase
                 if (density_other < density) // then swap
                 {
                     IBlockState state = world.getBlockState(other);
-                    world.setBlockState(other, myState.withProperty(LEVEL, amtToInput - 1), 3);
-                    world.setBlockState(pos,   state, 3);
+                    world.setBlockState(other, myState.withProperty(LEVEL, amtToInput - 1));
+                    world.setBlockState(pos,   state);
                     world.scheduleUpdate(other, this, tickRate);
                     world.scheduleUpdate(pos,   state.getBlock(), state.getBlock().tickRate(world));
                     return 0;
@@ -230,10 +238,10 @@ public class BlockFluidFinite extends BlockFluidBase
                 if (density_other > density)
                 {
                     IBlockState state = world.getBlockState(other);
-                    world.setBlockState(other, myState.withProperty(LEVEL, amtToInput - 1), 3);
-                    world.setBlockState(other, state, 3);
+                    world.setBlockState(other, myState.withProperty(LEVEL, amtToInput - 1));
+                    world.setBlockState(pos, state);
                     world.scheduleUpdate(other, this,  tickRate);
-                    world.scheduleUpdate(other, state.getBlock(), state.getBlock().tickRate(world));
+                    world.scheduleUpdate(pos, state.getBlock(), state.getBlock().tickRate(world));
                     return 0;
                 }
             }
@@ -243,9 +251,45 @@ public class BlockFluidFinite extends BlockFluidBase
 
     /* IFluidBlock */
     @Override
+    public int place(World world, BlockPos pos, @Nonnull FluidStack fluidStack, boolean doPlace)
+    {
+        IBlockState existing = world.getBlockState(pos);
+        float quantaAmount = Fluid.BUCKET_VOLUME / quantaPerBlockFloat;
+        // If the stack contains more available fluid than the full source block,
+        // set a source block
+        int closest = Fluid.BUCKET_VOLUME;
+        int quanta = quantaPerBlock;
+        if (fluidStack.amount < closest)
+        {
+            // Figure out maximum level to match stack amount
+            closest = MathHelper.floor(quantaAmount * MathHelper.floor(fluidStack.amount / quantaAmount));
+            quanta = MathHelper.floor(closest / quantaAmount);
+        }
+        if (existing.getBlock() == this)
+        {
+            int existingQuanta = existing.getValue(LEVEL) + 1;
+            int missingQuanta = quantaPerBlock - existingQuanta;
+            closest = Math.min(closest, MathHelper.floor(missingQuanta * quantaAmount));
+            quanta = Math.min(quanta + existingQuanta, quantaPerBlock);
+        }
+
+        // If too little (or too much, technically impossible) fluid is to be placed, abort
+        if (quanta < 1 || quanta > 16)
+            return 0;
+
+        if (doPlace)
+        {
+            FluidUtil.destroyBlockOnFluidPlacement(world, pos);
+            world.setBlockState(pos, getDefaultState().withProperty(LEVEL, quanta - 1), Constants.BlockFlags.DEFAULT_AND_RERENDER);
+        }
+
+        return closest;
+    }
+
+    @Override
     public FluidStack drain(World world, BlockPos pos, boolean doDrain)
     {
-        final FluidStack fluidStack = new FluidStack(getFluid(), MathHelper.floor_float(getQuantaPercentage(world, pos) * Fluid.BUCKET_VOLUME));
+        final FluidStack fluidStack = new FluidStack(getFluid(), MathHelper.floor(getQuantaPercentage(world, pos) * Fluid.BUCKET_VOLUME));
 
         if (doDrain)
         {

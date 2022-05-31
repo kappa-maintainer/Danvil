@@ -1,6 +1,6 @@
 --- ../src-base/minecraft/net/minecraft/entity/Entity.java
 +++ ../src-work/minecraft/net/minecraft/entity/Entity.java
-@@ -78,7 +78,7 @@
+@@ -85,7 +85,7 @@
  import org.apache.logging.log4j.LogManager;
  import org.apache.logging.log4j.Logger;
  
@@ -8,8 +8,19 @@
 +public abstract class Entity implements ICommandSender, net.minecraftforge.common.capabilities.ICapabilitySerializable<NBTTagCompound>
  {
      private static final Logger field_184243_a = LogManager.getLogger();
-     private static final AxisAlignedBB field_174836_a = new AxisAlignedBB(0.0D, 0.0D, 0.0D, 0.0D, 0.0D, 0.0D);
-@@ -190,7 +190,7 @@
+     private static final List<ItemStack> field_190535_b = Collections.<ItemStack>emptyList();
+@@ -177,6 +177,10 @@
+     private boolean field_184237_aG;
+     private final double[] field_191505_aI;
+     private long field_191506_aJ;
++    /**
++     * Setting this to true will prevent the world from calling {@link #onUpdate()} for this entity.
++     */
++    public boolean updateBlocked;
+ 
+     public Entity(World p_i1582_1_)
+     {
+@@ -200,7 +204,7 @@
  
          if (p_i1582_1_ != null)
          {
@@ -18,7 +29,7 @@
          }
  
          this.field_70180_af = new EntityDataManager(this);
-@@ -201,8 +201,16 @@
+@@ -211,8 +215,16 @@
          this.field_70180_af.func_187214_a(field_184234_aB, Boolean.valueOf(false));
          this.field_70180_af.func_187214_a(field_189655_aD, Boolean.valueOf(false));
          this.func_70088_a();
@@ -35,7 +46,40 @@
      public int func_145782_y()
      {
          return this.field_145783_c;
-@@ -1151,12 +1159,12 @@
+@@ -344,6 +356,7 @@
+         this.field_70165_t = p_70107_1_;
+         this.field_70163_u = p_70107_3_;
+         this.field_70161_v = p_70107_5_;
++        if (this.isAddedToWorld() && !this.field_70170_p.field_72995_K) this.field_70170_p.func_72866_a(this, false); // Forge - Process chunk registration after moving.
+         float f = this.field_70130_N / 2.0F;
+         float f1 = this.field_70131_O;
+         this.func_174826_a(new AxisAlignedBB(p_70107_1_ - (double)f, p_70107_3_, p_70107_5_ - (double)f, p_70107_1_ + (double)f, p_70107_3_ + (double)f1, p_70107_5_ + (double)f));
+@@ -995,6 +1008,7 @@
+         this.field_70165_t = (axisalignedbb.field_72340_a + axisalignedbb.field_72336_d) / 2.0D;
+         this.field_70163_u = axisalignedbb.field_72338_b;
+         this.field_70161_v = (axisalignedbb.field_72339_c + axisalignedbb.field_72334_f) / 2.0D;
++        if (this.isAddedToWorld() && !this.field_70170_p.field_72995_K) this.field_70170_p.func_72866_a(this, false); // Forge - Process chunk registration after moving.
+     }
+ 
+     protected SoundEvent func_184184_Z()
+@@ -1053,7 +1067,7 @@
+ 
+     protected void func_180429_a(BlockPos p_180429_1_, Block p_180429_2_)
+     {
+-        SoundType soundtype = p_180429_2_.func_185467_w();
++        SoundType soundtype = p_180429_2_.getSoundType(field_70170_p.func_180495_p(p_180429_1_), field_70170_p, p_180429_1_, this);
+ 
+         if (this.field_70170_p.func_180495_p(p_180429_1_.func_177984_a()).func_177230_c() == Blocks.field_150431_aC)
+         {
+@@ -1259,6 +1273,7 @@
+         BlockPos blockpos = new BlockPos(i, j, k);
+         IBlockState iblockstate = this.field_70170_p.func_180495_p(blockpos);
+ 
++        if(!iblockstate.func_177230_c().addRunningEffects(iblockstate, field_70170_p, blockpos, this))
+         if (iblockstate.func_185901_i() != EnumBlockRenderType.INVISIBLE)
+         {
+             this.field_70170_p.func_175688_a(EnumParticleTypes.BLOCK_CRACK, this.field_70165_t + ((double)this.field_70146_Z.nextFloat() - 0.5D) * (double)this.field_70130_N, this.func_174813_aQ().field_72338_b + 0.1D, this.field_70161_v + ((double)this.field_70146_Z.nextFloat() - 0.5D) * (double)this.field_70130_N, -this.field_70159_w * 4.0D, 1.5D, -this.field_70179_y * 4.0D, Block.func_176210_f(iblockstate));
+@@ -1277,12 +1292,12 @@
              BlockPos blockpos = new BlockPos(this.field_70165_t, d0, this.field_70161_v);
              IBlockState iblockstate = this.field_70170_p.func_180495_p(blockpos);
  
@@ -52,7 +96,23 @@
              }
              else
              {
-@@ -1568,6 +1576,9 @@
+@@ -1382,6 +1397,7 @@
+             this.field_70126_B -= 360.0F;
+         }
+ 
++        if (!this.field_70170_p.field_72995_K) this.field_70170_p.func_72964_e((int) Math.floor(this.field_70165_t) >> 4, (int) Math.floor(this.field_70161_v) >> 4); // Forge - ensure target chunk is loaded.
+         this.func_70107_b(this.field_70165_t, this.field_70163_u, this.field_70161_v);
+         this.func_70101_b(p_70080_7_, p_70080_8_);
+     }
+@@ -1707,6 +1723,7 @@
+             {
+                 p_189511_1_.func_74757_a("Glowing", this.field_184238_ar);
+             }
++            p_189511_1_.func_74757_a("UpdateBlocked", updateBlocked);
+ 
+             if (!this.field_184236_aF.isEmpty())
+             {
+@@ -1720,6 +1737,9 @@
                  p_189511_1_.func_74782_a("Tags", nbttaglist);
              }
  
@@ -62,9 +122,11 @@
              this.func_70014_b(p_189511_1_);
  
              if (this.func_184207_aI())
-@@ -1675,6 +1686,9 @@
+@@ -1826,7 +1846,11 @@
+             this.func_174810_b(p_70020_1_.func_74767_n("Silent"));
              this.func_189654_d(p_70020_1_.func_74767_n("NoGravity"));
              this.func_184195_f(p_70020_1_.func_74767_n("Glowing"));
++            updateBlocked = p_70020_1_.func_74767_n("UpdateBlocked");
  
 +            if (p_70020_1_.func_74764_b("ForgeData")) customEntityData = p_70020_1_.func_74775_l("ForgeData");
 +            if (this.capabilities != null && p_70020_1_.func_74764_b("ForgeCaps")) this.capabilities.deserializeNBT(p_70020_1_.func_74775_l("ForgeCaps"));
@@ -72,7 +134,7 @@
              if (p_70020_1_.func_150297_b("Tags", 9))
              {
                  this.field_184236_aF.clear();
-@@ -1757,7 +1771,10 @@
+@@ -1918,7 +1942,10 @@
          {
              EntityItem entityitem = new EntityItem(this.field_70170_p, this.field_70165_t, this.field_70163_u + (double)p_70099_2_, this.field_70161_v, p_70099_1_);
              entityitem.func_174869_p();
@@ -83,24 +145,106 @@
 +                this.field_70170_p.func_72838_d(entityitem);
              return entityitem;
          }
-         else
-@@ -1867,6 +1884,7 @@
+     }
+@@ -1985,6 +2012,7 @@
+             this.field_70159_w = 0.0D;
+             this.field_70181_x = 0.0D;
+             this.field_70179_y = 0.0D;
++            if(!updateBlocked)
+             this.func_70071_h_();
  
-     public boolean func_184205_a(Entity p_184205_1_, boolean p_184205_2_)
-     {
+             if (this.func_184218_aH())
+@@ -2032,6 +2060,7 @@
+             }
+         }
+ 
 +        if (!net.minecraftforge.event.ForgeEventFactory.canMountEntity(this, p_184205_1_, true)) return false;
          if (p_184205_2_ || this.func_184228_n(p_184205_1_) && p_184205_1_.func_184219_q(this))
          {
              if (this.func_184218_aH())
-@@ -2336,6 +2354,7 @@
+@@ -2067,6 +2096,7 @@
+         if (this.field_184239_as != null)
+         {
+             Entity entity = this.field_184239_as;
++            if (!net.minecraftforge.event.ForgeEventFactory.canMountEntity(this, entity, false)) return;
+             this.field_184239_as = null;
+             entity.func_184225_p(this);
+         }
+@@ -2509,8 +2539,16 @@
+     @Nullable
+     public Entity func_184204_a(int p_184204_1_)
      {
++        if (this.field_70170_p.field_72995_K || this.field_70128_L) return null;
++        return changeDimension(p_184204_1_, this.func_184102_h().func_71218_a(p_184204_1_).func_85176_s());
++    }
++
++    @Nullable // Forge: Entities that require custom handling should override this method, not the other
++    public Entity changeDimension(int p_184204_1_, net.minecraftforge.common.util.ITeleporter teleporter)
++    {
          if (!this.field_70170_p.field_72995_K && !this.field_70128_L)
          {
 +            if (!net.minecraftforge.common.ForgeHooks.onTravelToDimension(this, p_184204_1_)) return null;
              this.field_70170_p.field_72984_F.func_76320_a("changeDimension");
              MinecraftServer minecraftserver = this.func_184102_h();
              int i = this.field_71093_bK;
-@@ -2429,7 +2448,7 @@
+@@ -2518,7 +2556,7 @@
+             WorldServer worldserver1 = minecraftserver.func_71218_a(p_184204_1_);
+             this.field_71093_bK = p_184204_1_;
+ 
+-            if (i == 1 && p_184204_1_ == 1)
++            if (i == 1 && p_184204_1_ == 1 && teleporter.isVanilla())
+             {
+                 worldserver1 = minecraftserver.func_71218_a(0);
+                 this.field_71093_bK = 0;
+@@ -2529,22 +2567,23 @@
+             this.field_70170_p.field_72984_F.func_76320_a("reposition");
+             BlockPos blockpos;
+ 
+-            if (p_184204_1_ == 1)
++            if (p_184204_1_ == 1 && teleporter.isVanilla())
+             {
+                 blockpos = worldserver1.func_180504_m();
+             }
+             else
+             {
+-                double d0 = this.field_70165_t;
+-                double d1 = this.field_70161_v;
++                double moveFactor = worldserver.field_73011_w.getMovementFactor() / worldserver1.field_73011_w.getMovementFactor();
++                double d0 = MathHelper.func_151237_a(this.field_70165_t * moveFactor, worldserver1.func_175723_af().func_177726_b() + 16.0D, worldserver1.func_175723_af().func_177728_d() - 16.0D);
++                double d1 = MathHelper.func_151237_a(this.field_70161_v * moveFactor, worldserver1.func_175723_af().func_177736_c() + 16.0D, worldserver1.func_175723_af().func_177733_e() - 16.0D);
+                 double d2 = 8.0D;
+ 
+-                if (p_184204_1_ == -1)
++                if (false && p_184204_1_ == -1)
+                 {
+                     d0 = MathHelper.func_151237_a(d0 / 8.0D, worldserver1.func_175723_af().func_177726_b() + 16.0D, worldserver1.func_175723_af().func_177728_d() - 16.0D);
+                     d1 = MathHelper.func_151237_a(d1 / 8.0D, worldserver1.func_175723_af().func_177736_c() + 16.0D, worldserver1.func_175723_af().func_177733_e() - 16.0D);
+                 }
+-                else if (p_184204_1_ == 0)
++                else if (false && p_184204_1_ == 0)
+                 {
+                     d0 = MathHelper.func_151237_a(d0 * 8.0D, worldserver1.func_175723_af().func_177726_b() + 16.0D, worldserver1.func_175723_af().func_177728_d() - 16.0D);
+                     d1 = MathHelper.func_151237_a(d1 * 8.0D, worldserver1.func_175723_af().func_177736_c() + 16.0D, worldserver1.func_175723_af().func_177733_e() - 16.0D);
+@@ -2554,8 +2593,7 @@
+                 d1 = (double)MathHelper.func_76125_a((int)d1, -29999872, 29999872);
+                 float f = this.field_70177_z;
+                 this.func_70012_b(d0, this.field_70163_u, d1, 90.0F, 0.0F);
+-                Teleporter teleporter = worldserver1.func_85176_s();
+-                teleporter.func_180620_b(this, f);
++                teleporter.placeEntity(worldserver1, this, f);
+                 blockpos = new BlockPos(this);
+             }
+ 
+@@ -2567,7 +2605,7 @@
+             {
+                 entity.func_180432_n(this);
+ 
+-                if (i == 1 && p_184204_1_ == 1)
++                if (i == 1 && p_184204_1_ == 1 && teleporter.isVanilla())
+                 {
+                     BlockPos blockpos1 = worldserver1.func_175672_r(worldserver1.func_175694_M());
+                     entity.func_174828_a(blockpos1, entity.field_70177_z, entity.field_70125_A);
+@@ -2604,7 +2642,7 @@
  
      public float func_180428_a(Explosion p_180428_1_, World p_180428_2_, BlockPos p_180428_3_, IBlockState p_180428_4_)
      {
@@ -109,11 +253,46 @@
      }
  
      public boolean func_174816_a(Explosion p_174816_1_, World p_174816_2_, BlockPos p_174816_3_, IBlockState p_174816_4_, float p_174816_5_)
-@@ -2726,6 +2745,164 @@
+@@ -2901,6 +2939,218 @@
          EnchantmentHelper.func_151385_b(p_174815_1_, p_174815_2_);
      }
  
 +    /* ================================== Forge Start =====================================*/
++    /**
++     * Internal use for keeping track of entities that are tracked by a world, to
++     * allow guarantees that entity position changes will force a chunk load, avoiding
++     * potential issues with entity desyncing and bad chunk data.
++     */
++    private boolean isAddedToWorld;
++
++    /**
++     * Gets whether this entity has been added to a world (for tracking). Specifically
++     * between the times when an entity is added to a world and the entity being removed
++     * from the world's tracked lists. See {@link World#onEntityAdded(Entity)} and
++     * {@link World#onEntityRemoved(Entity)}.
++     *
++     * @return True if this entity is being tracked by a world
++     */
++    public final boolean isAddedToWorld() { return this.isAddedToWorld; }
++
++    /**
++     * Called after the entity has been added to the world's
++     * ticking list. Can be overriden, but needs to call super
++     * to prevent MC-136995.
++     */
++    public void onAddedToWorld() {
++        this.isAddedToWorld = true;
++    }
++
++    /**
++     * Called after the entity has been removed to the world's
++     * ticking list. Can be overriden, but needs to call super
++     * to prevent MC-136995.
++     */
++    public void onRemovedFromWorld() {
++        this.isAddedToWorld = false;
++    }
++
 +    /**
 +     * Returns a NBTTagCompound that can be used to store custom data for this entity.
 +     * It will be written, and read from disc, so it persists over world saves.
@@ -141,7 +320,7 @@
 +     * Called when a user uses the creative pick block button on this entity.
 +     *
 +     * @param target The full target the player is looking at
-+     * @return A ItemStack to add to the player's inventory, Null if nothing should be added.
++     * @return A ItemStack to add to the player's inventory, empty ItemStack if nothing should be added.
 +     */
 +    public ItemStack getPickedResult(RayTraceResult target)
 +    {
@@ -156,7 +335,7 @@
 +        else if (this instanceof net.minecraft.entity.item.EntityItemFrame)
 +        {
 +            ItemStack held = ((net.minecraft.entity.item.EntityItemFrame)this).func_82335_i();
-+            if (held == null)
++            if (held.func_190926_b())
 +            {
 +                return new ItemStack(net.minecraft.init.Items.field_151160_bD);
 +            }
@@ -183,15 +362,15 @@
 +        }
 +        else
 +        {
-+            String name = EntityList.func_75621_b(this);
-+            if (EntityList.field_75627_a.containsKey(name))
++            ResourceLocation name = EntityList.func_191301_a(this);
++            if (name != null && EntityList.field_75627_a.containsKey(name))
 +            {
 +                ItemStack stack = new ItemStack(net.minecraft.init.Items.field_151063_bx);
 +                net.minecraft.item.ItemMonsterPlacer.func_185078_a(stack, name);
 +                return stack;
 +            }
 +        }
-+        return null;
++        return ItemStack.field_190927_a;
 +    }
 +
 +    public UUID getPersistentID()
@@ -202,6 +381,7 @@
 +    /**
 +     * Reset the entity ID to a new value. Not to be used from Mod code
 +     */
++    @Deprecated // TODO: remove (1.13?)
 +    public final void resetEntityId()
 +    {
 +        this.field_145783_c = field_70152_a++;
@@ -246,14 +426,15 @@
 +        return this instanceof EntityLivingBase;
 +    }
 +
-+    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, net.minecraft.util.EnumFacing facing)
++    @Override
++    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, @Nullable net.minecraft.util.EnumFacing facing)
 +    {
-+        if (getCapability(capability, facing) != null)
-+            return true;
-+        return capabilities == null ? false : capabilities.hasCapability(capability, facing);
++        return capabilities != null && capabilities.hasCapability(capability, facing);
 +    }
 +
-+    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, net.minecraft.util.EnumFacing facing)
++    @Override
++    @Nullable
++    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable net.minecraft.util.EnumFacing facing)
 +    {
 +        return capabilities == null ? null : capabilities.getCapability(capability, facing);
 +    }
@@ -268,6 +449,23 @@
 +        NBTTagCompound ret = new NBTTagCompound();
 +        ret.func_74778_a("id", this.func_70022_Q());
 +        return this.func_189511_e(ret);
++    }
++
++    /**
++     * Checks if this {@link Entity} can trample a {@link Block}.
++     *
++     * @param world The world in which the block will be trampled
++     * @param block The block being tested
++     * @param pos The block pos
++     * @param fallDistance The fall distance
++     * @return {@code true} if this entity can trample, {@code false} otherwise
++     */
++    public boolean canTrample(World world, Block block, BlockPos pos, float fallDistance)
++    {
++        return world.field_73012_v.nextFloat() < fallDistance - 0.5F
++            && this instanceof EntityLivingBase
++            && (this instanceof EntityPlayer || net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(world, this))
++            && this.field_70130_N * this.field_70130_N * this.field_70131_O > 0.512F;
 +    }
 +    /* ================================== Forge End =====================================*/
 +

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,12 +23,15 @@ import java.util.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
+import javax.annotation.Nullable;
+
 
 public class ListenerList
 {
     private static ImmutableList<ListenerList> allLists = ImmutableList.of();
     private static int maxSize = 0;
 
+    @Nullable
     private ListenerList parent;
     private ListenerListInst[] lists = new ListenerListInst[0];
 
@@ -37,7 +40,7 @@ public class ListenerList
         this(null);
     }
 
-    public ListenerList(ListenerList parent)
+    public ListenerList(@Nullable ListenerList parent)
     {
         // parent needs to be set before resize !
         this.parent = parent;

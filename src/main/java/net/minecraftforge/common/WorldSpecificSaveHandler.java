@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -95,7 +95,7 @@ public class WorldSpecificSaveHandler implements ISaveHandler
             }
             catch (IOException e)
             {
-                FMLLog.log(Level.ERROR, e, "A critical error occurred copying %s to world specific dat folder - new file will be created.", parentFile.getName());
+                FMLLog.log.error("A critical error occurred copying {} to world specific dat folder - new file will be created.", parentFile.getName(), e);
             }
         }
     }

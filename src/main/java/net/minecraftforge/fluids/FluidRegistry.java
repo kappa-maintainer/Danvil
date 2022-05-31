@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,12 +19,12 @@
 
 package net.minecraftforge.fluids;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import net.minecraftforge.fml.common.LoaderState;
-import org.apache.logging.log4j.Level;
 
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
@@ -38,8 +38,6 @@ import net.minecraftforge.common.MinecraftForge;
 import com.google.common.base.Strings;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -47,7 +45,9 @@ import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.registry.RegistryDelegate;
+import net.minecraftforge.registries.IRegistryDelegate;
+
+import javax.annotation.Nullable;
 
 /**
  * Handles Fluid registrations. Fluids MUST be registered in order to function.
@@ -67,9 +67,10 @@ public abstract class FluidRegistry
     static Map<Fluid,FluidDelegate> delegates = Maps.newHashMap();
 
     static boolean universalBucketEnabled = false;
-    static Set<Fluid> bucketFluids = Sets.newHashSet();
+    static Set<String> bucketFluids = Sets.newHashSet();
+    static Set<Fluid> currentBucketFluids;
 
-    public static final Fluid WATER = new Fluid("water", new ResourceLocation("blocks/water_still"), new ResourceLocation("blocks/water_flow")) {
+    public static final Fluid WATER = new Fluid("water", new ResourceLocation("blocks/water_still"), new ResourceLocation("blocks/water_flow"), new ResourceLocation("blocks/water_overlay")) {
         @Override
         public String getLocalizedName(FluidStack fs) {
             return I18n.translateToLocal("tile.water.name");
@@ -121,13 +122,13 @@ public abstract class FluidRegistry
                 String derivedName = defaultName.split(":",2)[1];
                 String localDefault = defaultFluidName.get(derivedName);
                 if (localDefault == null) {
-                    FMLLog.getLogger().log(Level.ERROR, "The fluid {} (specified as {}) is missing from this instance - it will be removed", derivedName, defaultName);
+                    FMLLog.log.error("The fluid {} (specified as {}) is missing from this instance - it will be removed", derivedName, defaultName);
                     continue;
                 }
                 fluid = masterFluidReference.get(localDefault);
-                FMLLog.getLogger().log(Level.ERROR, "The fluid {} specified as default is not present - it will be reverted to default {}", defaultName, localDefault);
+                FMLLog.log.error("The fluid {} specified as default is not present - it will be reverted to default {}", defaultName, localDefault);
             }
-            FMLLog.getLogger().log(Level.DEBUG, "The fluid {} has been selected as the default fluid for {}", defaultName, fluid.getName());
+            FMLLog.log.debug("The fluid {} has been selected as the default fluid for {}", defaultName, fluid.getName());
             Fluid oldFluid = localFluids.put(fluid.getName(), fluid);
             Integer id = localFluidIDs.remove(oldFluid);
             localFluidIDs.put(fluid, id);
@@ -140,6 +141,7 @@ public abstract class FluidRegistry
         fluids = localFluids;
         fluidNames = localFluidNames;
         fluidBlocks = null;
+        currentBucketFluids = null;
         for (FluidDelegate fd : delegates.values())
         {
             fd.rebind();
@@ -209,28 +211,6 @@ public abstract class FluidRegistry
         return fluids.get(fluidName);
     }
 
-    @Deprecated // Modders should never actually use int ID, use String
-    public static Fluid getFluid(int fluidID)
-    {
-        return fluidIDs.inverse().get(fluidID);
-    }
-
-    @Deprecated // Modders should never actually use int ID, use String
-    public static int getFluidID(Fluid fluid)
-    {
-        Integer ret = fluidIDs.get(fluid);
-        if (ret == null) throw new RuntimeException("Attempted to access ID for unregistered fluid, Stop using this method modder!");
-        return ret;
-    }
-
-    @Deprecated // Modders should never actually use int ID, use String
-    public static int getFluidID(String fluidName)
-    {
-        Integer ret = fluidIDs.get(getFluid(fluidName));
-        if (ret == null) throw new RuntimeException("Attempted to access ID for unregistered fluid, Stop using this method modder!");
-        return ret;
-    }
-
     public static String getFluidName(Fluid fluid)
     {
         return fluids.inverse().get(fluid);
@@ -241,6 +221,7 @@ public abstract class FluidRegistry
         return getFluidName(stack.getFluid());
     }
 
+    @Nullable
     public static FluidStack getFluidStack(String fluidName, int amount)
     {
         if (!fluids.containsKey(fluidName))
@@ -255,7 +236,7 @@ public abstract class FluidRegistry
      */
     public static Map<String, Fluid> getRegisteredFluids()
     {
-        return ImmutableMap.copyOf(fluids);
+        return Maps.unmodifiableBiMap(fluids);
     }
 
     /**
@@ -265,7 +246,7 @@ public abstract class FluidRegistry
     @Deprecated
     public static Map<Fluid, Integer> getRegisteredFluidIDs()
     {
-        return ImmutableMap.copyOf(fluidIDs);
+        return Maps.unmodifiableBiMap(fluidIDs);
     }
 
     /**
@@ -277,7 +258,9 @@ public abstract class FluidRegistry
     {
         if (Loader.instance().hasReachedState(LoaderState.PREINITIALIZATION))
         {
-            FMLLog.getLogger().log(Level.ERROR, "Trying to activate the universal filled bucket too late. Call it statically in your Mods class. Mod: {}", Loader.instance().activeModContainer().getName());
+            ModContainer modContainer = Loader.instance().activeModContainer();
+            String modContainerName = modContainer == null ? null : modContainer.getName();
+            FMLLog.log.error("Trying to activate the universal filled bucket too late. Call it statically in your Mods class. Mod: {}", modContainerName);
         }
         else
         {
@@ -306,18 +289,31 @@ public abstract class FluidRegistry
         {
             registerFluid(fluid);
         }
-        return bucketFluids.add(fluid);
+        return bucketFluids.add(fluid.getName());
     }
 
     /**
      * All fluids registered with the universal bucket
-     * @return An immutable set containing the fluids
+     * @return A read-only set containing the fluids
      */
     public static Set<Fluid> getBucketFluids()
     {
-        return ImmutableSet.copyOf(bucketFluids);
+        if (currentBucketFluids == null)
+        {
+            Set<Fluid> tmp = Sets.newHashSet();
+            for (String fluidName : bucketFluids)
+            {
+                tmp.add(getFluid(fluidName));
+            }
+            currentBucketFluids = Collections.unmodifiableSet(tmp);
+        }
+        return currentBucketFluids;
     }
 
+    public static boolean hasBucket(Fluid fluid)
+    {
+        return bucketFluids.contains(fluid.getName());
+    }
 
     public static Fluid lookupFluidForBlock(Block block)
     {
@@ -332,6 +328,14 @@ public abstract class FluidRegistry
                 }
             }
             fluidBlocks = tmp;
+        }
+        if (block == Blocks.FLOWING_WATER)
+        {
+            block = Blocks.WATER;
+        }
+        else if (block == Blocks.FLOWING_LAVA)
+        {
+            block = Blocks.LAVA;
         }
         return fluidBlocks.get(block);
     }
@@ -367,10 +371,25 @@ public abstract class FluidRegistry
     {
         String name = masterFluidReference.inverse().get(key);
         if (Strings.isNullOrEmpty(name)) {
-            FMLLog.getLogger().log(Level.ERROR, "The fluid registry is corrupted. A fluid {} {} is not properly registered. The mod that registered this is broken", key.getClass().getName(), key.getName());
+            FMLLog.log.error("The fluid registry is corrupted. A fluid {} {} is not properly registered. The mod that registered this is broken", key.getClass().getName(), key.getName());
             throw new IllegalStateException("The fluid registry is corrupted");
         }
         return name;
+    }
+
+    @Nullable
+    public static String getModId(@Nullable FluidStack fluidStack)
+    {
+        if (fluidStack != null)
+        {
+            String defaultFluidName = getDefaultFluidName(fluidStack.getFluid());
+            if (defaultFluidName != null)
+            {
+                ResourceLocation fluidResourceName = new ResourceLocation(defaultFluidName);
+                return fluidResourceName.getResourceDomain();
+            }
+        }
+        return null;
     }
 
     public static void loadFluidDefaults(NBTTagCompound tag)
@@ -378,7 +397,7 @@ public abstract class FluidRegistry
         Set<String> defaults = Sets.newHashSet();
         if (tag.hasKey("DefaultFluidList",9))
         {
-            FMLLog.getLogger().log(Level.DEBUG, "Loading persistent fluid defaults from world");
+            FMLLog.log.debug("Loading persistent fluid defaults from world");
             NBTTagList tl = tag.getTagList("DefaultFluidList", 8);
             for (int i = 0; i < tl.tagCount(); i++)
             {
@@ -387,7 +406,7 @@ public abstract class FluidRegistry
         }
         else
         {
-            FMLLog.getLogger().log(Level.DEBUG, "World is missing persistent fluid defaults - using local defaults");
+            FMLLog.log.debug("World is missing persistent fluid defaults - using local defaults");
         }
         loadFluidDefaults(HashBiMap.create(fluidIDs), defaults);
     }
@@ -417,24 +436,24 @@ public abstract class FluidRegistry
 
         if (!illegalFluids.isEmpty())
         {
-            FMLLog.getLogger().log(Level.FATAL, "The fluid registry is corrupted. Something has inserted a fluid without registering it");
-            FMLLog.getLogger().log(Level.FATAL, "There is {} unregistered fluids", illegalFluids.size());
+            FMLLog.log.fatal("The fluid registry is corrupted. Something has inserted a fluid without registering it");
+            FMLLog.log.fatal("There is {} unregistered fluids", illegalFluids.size());
             for (Fluid f: illegalFluids)
             {
-                FMLLog.getLogger().log(Level.FATAL, "  Fluid name : {}, type: {}", f.getName(), f.getClass().getName());
+                FMLLog.log.fatal("  Fluid name : {}, type: {}", f.getName(), f.getClass().getName());
             }
-            FMLLog.getLogger().log(Level.FATAL, "The mods that own these fluids need to register them properly");
+            FMLLog.log.fatal("The mods that own these fluids need to register them properly");
             throw new IllegalStateException("The fluid map contains fluids unknown to the master fluid registry");
         }
     }
 
-    static RegistryDelegate<Fluid> makeDelegate(Fluid fl)
+    static IRegistryDelegate<Fluid> makeDelegate(Fluid fl)
     {
         return delegates.get(fl);
     }
 
 
-    private static class FluidDelegate implements RegistryDelegate<Fluid>
+    private static class FluidDelegate implements IRegistryDelegate<Fluid>
     {
         private String name;
         private Fluid fluid;

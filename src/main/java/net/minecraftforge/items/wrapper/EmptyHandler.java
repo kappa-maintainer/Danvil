@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,6 +23,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 
+import javax.annotation.Nonnull;
+
 public class EmptyHandler implements IItemHandlerModifiable
 {
     public static final IItemHandler INSTANCE = new EmptyHandler();
@@ -34,26 +36,41 @@ public class EmptyHandler implements IItemHandlerModifiable
     }
 
     @Override
+    @Nonnull
     public ItemStack getStackInSlot(int slot)
     {
-        return null;
+        return ItemStack.EMPTY;
     }
 
     @Override
-    public ItemStack insertItem(int slot, ItemStack stack, boolean simulate)
+    @Nonnull
+    public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate)
     {
         return stack;
     }
 
     @Override
+    @Nonnull
     public ItemStack extractItem(int slot, int amount, boolean simulate)
     {
-        return null;
+        return ItemStack.EMPTY;
     }
 
     @Override
-    public void setStackInSlot(int slot, ItemStack stack)
+    public void setStackInSlot(int slot, @Nonnull ItemStack stack)
     {
         // nothing to do here
+    }
+
+    @Override
+    public int getSlotLimit(int slot)
+    {
+        return 0;
+    }
+
+    @Override
+    public boolean isItemValid(int slot, @Nonnull ItemStack stack)
+    {
+        return false;
     }
 }

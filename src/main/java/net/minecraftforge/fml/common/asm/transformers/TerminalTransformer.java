@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@ package net.minecraftforge.fml.common.asm.transformers;
 import org.objectweb.asm.*;
 
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraftforge.fml.relauncher.FMLRelaunchLog;
+import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.relauncher.FMLSecurityManager.ExitTrappedException;
 
 public class TerminalTransformer implements IClassTransformer
@@ -34,16 +34,18 @@ public class TerminalTransformer implements IClassTransformer
         ClassReader reader = new ClassReader(basicClass);
         ClassWriter writer = new ClassWriter(ClassWriter.COMPUTE_MAXS);
 
-        ClassVisitor visitor = writer;
-        visitor = new ExitVisitor(visitor);
+        ExitVisitor visitor = new ExitVisitor(writer);
 
         reader.accept(visitor, 0);
+
+        if (!visitor.dirty) return basicClass;
         return writer.toByteArray();
     }
 
     public static class ExitVisitor extends ClassVisitor
     {
         private String clsName = null;
+        private boolean dirty;
         private static final String callbackOwner = org.objectweb.asm.Type.getInternalName(ExitVisitor.class);
 
         private ExitVisitor(ClassVisitor cv)
@@ -81,44 +83,47 @@ public class TerminalTransformer implements IClassTransformer
                     {
                         if (warn)
                         {
-                            FMLRelaunchLog.warning("=============================================================");
-                            FMLRelaunchLog.warning("MOD HAS DIRECT REFERENCE System.exit() THIS IS NOT ALLOWED REROUTING TO FML!");
-                            FMLRelaunchLog.warning("Offender: %s.%s%s", ExitVisitor.this.clsName, mName, mDesc);
-                            FMLRelaunchLog.warning("Use FMLCommonHandler.exitJava instead");
-                            FMLRelaunchLog.warning("=============================================================");
+                            FMLLog.log.warn("=============================================================");
+                            FMLLog.log.warn("MOD HAS DIRECT REFERENCE System.exit() THIS IS NOT ALLOWED REROUTING TO FML!");
+                            FMLLog.log.warn("Offender: {}.{}{}", ExitVisitor.this.clsName, mName, mDesc);
+                            FMLLog.log.warn("Use FMLCommonHandler.exitJava instead");
+                            FMLLog.log.warn("=============================================================");
                         }
                         owner = ExitVisitor.callbackOwner;
                         name = "systemExitCalled";
+                        dirty = true;
                     }
                     else if (opcode == Opcodes.INVOKEVIRTUAL && owner.equals("java/lang/Runtime") && name.equals("exit") && desc.equals("(I)V"))
                     {
                         if (warn)
                         {
-                            FMLRelaunchLog.warning("=============================================================");
-                            FMLRelaunchLog.warning("MOD HAS DIRECT REFERENCE Runtime.exit() THIS IS NOT ALLOWED REROUTING TO FML!");
-                            FMLRelaunchLog.warning("Offender: %s.%s%s", ExitVisitor.this.clsName, mName, mDesc);
-                            FMLRelaunchLog.warning("Use FMLCommonHandler.exitJava instead");
-                            FMLRelaunchLog.warning("=============================================================");
+                            FMLLog.log.warn("=============================================================");
+                            FMLLog.log.warn("MOD HAS DIRECT REFERENCE Runtime.exit() THIS IS NOT ALLOWED REROUTING TO FML!");
+                            FMLLog.log.warn("Offender: {}.{}{}", ExitVisitor.this.clsName, mName, mDesc);
+                            FMLLog.log.warn("Use FMLCommonHandler.exitJava instead");
+                            FMLLog.log.warn("=============================================================");
                         }
                         opcode = Opcodes.INVOKESTATIC;
                         owner = ExitVisitor.callbackOwner;
                         name = "runtimeExitCalled";
                         desc = "(Ljava/lang/Runtime;I)V";
+                        dirty = true;
                     }
                     else if (opcode == Opcodes.INVOKEVIRTUAL && owner.equals("java/lang/Runtime") && name.equals("halt") && desc.equals("(I)V"))
                     {
                         if (warn)
                         {
-                            FMLRelaunchLog.warning("=============================================================");
-                            FMLRelaunchLog.warning("MOD HAS DIRECT REFERENCE Runtime.halt() THIS IS NOT ALLOWED REROUTING TO FML!");
-                            FMLRelaunchLog.warning("Offendor: %s.%s%s", ExitVisitor.this.clsName, mName, mDesc);
-                            FMLRelaunchLog.warning("Use FMLCommonHandler.exitJava instead");
-                            FMLRelaunchLog.warning("=============================================================");
+                            FMLLog.log.warn("=============================================================");
+                            FMLLog.log.warn("MOD HAS DIRECT REFERENCE Runtime.halt() THIS IS NOT ALLOWED REROUTING TO FML!");
+                            FMLLog.log.warn("Offendor: {}.{}{}", ExitVisitor.this.clsName, mName, mDesc);
+                            FMLLog.log.warn("Use FMLCommonHandler.exitJava instead");
+                            FMLLog.log.warn("=============================================================");
                         }
                         opcode = Opcodes.INVOKESTATIC;
                         owner = ExitVisitor.callbackOwner;
                         name = "runtimeHaltCalled";
                         desc = "(Ljava/lang/Runtime;I)V";
+                        dirty = true;
                     }
 
                     super.visitMethodInsn(opcode, owner, name, desc, isIntf);

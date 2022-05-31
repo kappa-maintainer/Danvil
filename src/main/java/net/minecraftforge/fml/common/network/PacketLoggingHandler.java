@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -56,7 +56,7 @@ public class PacketLoggingHandler
                 {
                     PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
                     msg.writePacketData(buf);
-                    FMLLog.log(Level.DEBUG, "%s %s:\n%s", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
+                    FMLLog.log.debug("{} {}:\n{}", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
                     ctx.fireChannelRead(msg);
                 }
             });
@@ -70,7 +70,7 @@ public class PacketLoggingHandler
                     {
                         PacketBuffer buf = new PacketBuffer(Unpooled.buffer());
                         ((Packet<?>)msg).writePacketData(buf);
-                        FMLLog.log(Level.DEBUG, "%s %s:\n%s", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
+                        FMLLog.log.debug("{} {}:\n{}", prefix, msg.getClass().getSimpleName(), ByteBufUtils.getContentDump(buf));
                     }
                     ctx.write(msg, promise);
                 }
@@ -90,7 +90,7 @@ public class PacketLoggingHandler
                     {
                         ByteBuf pkt = (ByteBuf)itr.next();
                         pkt.markReaderIndex();
-                        FMLLog.log(Level.DEBUG, "%s:\n%s", prefix, ByteBufUtils.getContentDump(pkt));
+                        FMLLog.log.debug("{}:\n{}", prefix, ByteBufUtils.getContentDump(pkt));
                         pkt.resetReaderIndex();
                     }
                 }
@@ -102,7 +102,7 @@ public class PacketLoggingHandler
                 protected void encode(ChannelHandlerContext context, ByteBuf input, ByteBuf output) throws Exception
                 {
                     input.markReaderIndex();
-                    FMLLog.log(Level.DEBUG, "%s:\n%s", prefix, ByteBufUtils.getContentDump(input));
+                    FMLLog.log.debug("{}:\n{}", prefix, ByteBufUtils.getContentDump(input));
                     input.resetReaderIndex();
                     super.encode(context, input, output);
                 }

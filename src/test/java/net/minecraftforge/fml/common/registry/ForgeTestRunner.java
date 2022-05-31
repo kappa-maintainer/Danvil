@@ -1,8 +1,23 @@
-package net.minecraftforge.fml.common.registry;
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016-2018.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 
-import java.net.URLClassLoader;
-import java.util.Collections;
-import java.util.Set;
+package net.minecraftforge.fml.common.registry;
 
 import com.google.common.collect.Sets;
 import org.junit.runner.Description;
@@ -11,6 +26,10 @@ import org.junit.runner.notification.Failure;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.JUnit4;
 import org.junit.runners.model.InitializationError;
+
+import java.net.URLClassLoader;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * Uses {@code ResettingClassLoader} to load the test class. Minecraft and Forge
@@ -41,7 +60,7 @@ public class ForgeTestRunner extends Runner
         String testFileClassName = testFileClass.getName();
         String delegateRunningToClassName = delegateRunningTo.getName();
 
-        String[] allPatterns = new String[] {testFileClassName, delegateRunningToClassName};
+        String[] allPatterns = new String[]{testFileClassName, delegateRunningToClassName};
 
         ResettingClassLoader classLoader = new ResettingClassLoader(allPatterns);
 
@@ -51,7 +70,7 @@ public class ForgeTestRunner extends Runner
             Class<?> testClass = classLoader.loadClass(testFileClassName);
             innerRunner = innerRunnerClass.cast(innerRunnerClass.getConstructor(Class.class).newInstance(testClass));
         }
-        catch (Exception  e)
+        catch (Exception e)
         {
             throw new InitializationError(e);
         }
@@ -76,6 +95,7 @@ public class ForgeTestRunner extends Runner
     {
         try
         {
+            System.setProperty("forge.disableVanillaGameData", "false");
             innerRunnerClass.getMethod("run", RunNotifier.class).invoke(innerRunner, notifier);
         }
         catch (Exception e)
@@ -87,14 +107,12 @@ public class ForgeTestRunner extends Runner
     /**
      * If a class name starts with any of the supplied patterns, it is loaded by
      * <em>this</em> classloader; otherwise it is loaded by the parent classloader.
-     *
      */
     private class ResettingClassLoader extends URLClassLoader
     {
         private final Set<String> quarantinedClassNames;
 
         /**
-         *
          * @param quarantinedClassNames prefixes to match against when deciding how to load a class
          */
         public ResettingClassLoader(String... quarantinedClassNames)
@@ -103,7 +121,7 @@ public class ForgeTestRunner extends Runner
 
             this.quarantinedClassNames = Sets.newHashSet();
             Collections.addAll(this.quarantinedClassNames, quarantinedClassNames);
-            Collections.addAll(this.quarantinedClassNames,  "net.minecraft", "net.minecraftforge");
+            Collections.addAll(this.quarantinedClassNames, "net.minecraft", "net.minecraftforge");
         }
 
 
@@ -118,16 +136,16 @@ public class ForgeTestRunner extends Runner
         {
             boolean quarantine = false;
 
-            for(String quarantinedPattern : quarantinedClassNames)
+            for (String quarantinedPattern : quarantinedClassNames)
             {
-                if(name.startsWith(quarantinedPattern))
+                if (name.startsWith(quarantinedPattern))
                 {
                     quarantine = true;
                     break;
                 }
             }
 
-            if(quarantine)
+            if (quarantine)
             {
                 try
                 {

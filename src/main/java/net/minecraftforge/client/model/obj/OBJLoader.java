@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ import net.minecraftforge.client.model.IModel;
 import net.minecraftforge.client.model.ModelLoaderRegistry;
 import net.minecraftforge.fml.common.FMLLog;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Level;
 
 /*
@@ -44,34 +45,33 @@ public enum OBJLoader implements ICustomModelLoader {
     INSTANCE;
 
     private IResourceManager manager;
-    private final Set<String> enabledDomains = new HashSet<String>();
-    private final Map<ResourceLocation, OBJModel> cache = new HashMap<ResourceLocation, OBJModel>();
-    private final Map<ResourceLocation, Exception> errors = new HashMap<ResourceLocation, Exception>();
+    private final Set<String> enabledDomains = new HashSet<>();
 
     public void addDomain(String domain)
     {
         enabledDomains.add(domain.toLowerCase());
-        FMLLog.log(Level.INFO, "OBJLoader: Domain %s has been added.", domain.toLowerCase());
+        FMLLog.log.info("OBJLoader: Domain {} has been added.", domain.toLowerCase());
     }
 
+    @Override
     public void onResourceManagerReload(IResourceManager resourceManager)
     {
         this.manager = resourceManager;
-        cache.clear();
-        errors.clear();
     }
 
+    @Override
     public boolean accepts(ResourceLocation modelLocation)
     {
         return enabledDomains.contains(modelLocation.getResourceDomain()) && modelLocation.getResourcePath().endsWith(".obj");
     }
 
+    @Override
     public IModel loadModel(ResourceLocation modelLocation) throws Exception
     {
         ResourceLocation file = new ResourceLocation(modelLocation.getResourceDomain(), modelLocation.getResourcePath());
-        if (!cache.containsKey(file))
+        IResource resource = null;
+        try
         {
-            IResource resource = null;
             try
             {
                 resource = manager.getResource(file);
@@ -85,22 +85,20 @@ public enum OBJLoader implements ICustomModelLoader {
                 else throw e;
             }
             OBJModel.Parser parser = new OBJModel.Parser(resource, manager);
-            OBJModel model = null;
+            OBJModel model;
             try
             {
                 model = parser.parse();
             }
             catch (Exception e)
             {
-                errors.put(modelLocation, e);
+                throw new ModelLoaderRegistry.LoaderException("Error loading model previously: " + file, e);
             }
-            finally
-            {
-                cache.put(modelLocation, model);
-            }
+            return model;
         }
-        OBJModel model = cache.get(file);
-        if (model == null) throw new ModelLoaderRegistry.LoaderException("Error loading model previously: " + file, errors.get(modelLocation));
-        return model;
+        finally
+        {
+            IOUtils.closeQuietly(resource);
+        }
     }
 }

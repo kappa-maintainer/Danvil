@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -102,10 +102,10 @@ public class ZipperUtil {
         }
         catch (IOException e)
         {
-            FMLLog.log(Level.WARN, e, "World backup failed.");
+            FMLLog.log.warn("World backup failed.", e);
             throw e;
         }
 
-        FMLLog.info("World backup created at %s.", zip.getCanonicalPath());
+        FMLLog.log.info("World backup created at {}.", zip.getCanonicalPath());
     }
 }

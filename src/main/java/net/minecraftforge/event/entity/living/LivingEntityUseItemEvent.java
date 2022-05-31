@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,18 +23,21 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 
-public abstract class LivingEntityUseItemEvent extends LivingEvent
+import javax.annotation.Nonnull;
+
+public class LivingEntityUseItemEvent extends LivingEvent
 {
     private final ItemStack item;
     private int duration;
 
-    private LivingEntityUseItemEvent(EntityLivingBase entity, ItemStack item, int duration)
+    private LivingEntityUseItemEvent(EntityLivingBase entity, @Nonnull ItemStack item, int duration)
     {
         super(entity);
         this.item = item;
         this.setDuration(duration);
     }
 
+    @Nonnull
     public ItemStack getItem()
     {
         return item;
@@ -64,7 +67,7 @@ public abstract class LivingEntityUseItemEvent extends LivingEvent
     @Cancelable
     public static class Start extends LivingEntityUseItemEvent
     {
-        public Start(EntityLivingBase entity, ItemStack item, int duration)
+        public Start(EntityLivingBase entity, @Nonnull ItemStack item, int duration)
         {
             super(entity, item, duration);
         }
@@ -79,7 +82,7 @@ public abstract class LivingEntityUseItemEvent extends LivingEvent
     @Cancelable
     public static class Tick extends LivingEntityUseItemEvent
     {
-        public Tick(EntityLivingBase entity, ItemStack item, int duration)
+        public Tick(EntityLivingBase entity, @Nonnull ItemStack item, int duration)
         {
             super(entity, item, duration);
         }
@@ -100,7 +103,7 @@ public abstract class LivingEntityUseItemEvent extends LivingEvent
     @Cancelable
     public static class Stop extends LivingEntityUseItemEvent
     {
-        public Stop(EntityLivingBase entity, ItemStack item, int duration)
+        public Stop(EntityLivingBase entity, @Nonnull ItemStack item, int duration)
         {
             super(entity, item, duration);
         }
@@ -110,6 +113,8 @@ public abstract class LivingEntityUseItemEvent extends LivingEvent
      * Fired after an item has fully finished being used.
      * The item has been notified that it was used, and the item/result stacks reflect after that state.
      * This means that when this is fired for a Potion, the potion effect has already been applied.
+     * 
+     * {@link LivingEntityUseItemEvent#item} is a copy of the item BEFORE it was used.
      *
      * If you wish to cancel those effects, you should cancel one of the above events.
      *
@@ -119,18 +124,19 @@ public abstract class LivingEntityUseItemEvent extends LivingEvent
     public static class Finish extends LivingEntityUseItemEvent
     {
         private ItemStack result;
-        public Finish(EntityLivingBase entity, ItemStack item, int duration, ItemStack result)
+        public Finish(EntityLivingBase entity, @Nonnull ItemStack item, int duration, @Nonnull ItemStack result)
         {
             super(entity, item, duration);
             this.setResultStack(result);
         }
 
+        @Nonnull
         public ItemStack getResultStack()
         {
             return result;
         }
 
-        public void setResultStack(ItemStack result)
+        public void setResultStack(@Nonnull ItemStack result)
         {
             this.result = result;
         }

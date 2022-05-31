@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 
 import net.minecraft.util.IStringSerializable;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
@@ -35,6 +35,8 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import javax.annotation.Nullable;
+
 /**
  * Various implementations of ITimeValue.
  */
@@ -44,11 +46,13 @@ public final class TimeValues
     {
         INSTANCE;
 
+        @Override
         public float apply(float input)
         {
             return input;
         }
 
+        @Override
         public String getName()
         {
             return "identity";
@@ -64,6 +68,7 @@ public final class TimeValues
             this.output = output;
         }
 
+        @Override
         public float apply(float input)
         {
             return output;
@@ -106,6 +111,7 @@ public final class TimeValues
             this.output = newValue;
         }
 
+        @Override
         public float apply(float input)
         {
             return output;
@@ -144,6 +150,7 @@ public final class TimeValues
             this.args = args;
         }
 
+        @Override
         public float apply(float input)
         {
             float ret = input;
@@ -199,6 +206,7 @@ public final class TimeValues
             this.f = f;
         }
 
+        @Override
         public float apply(float input)
         {
             return g.apply(f.apply(input));
@@ -236,6 +244,7 @@ public final class TimeValues
             this.valueResolver = valueResolver;
         }
 
+        @Override
         public String getName()
         {
             return parameterName;
@@ -256,6 +265,7 @@ public final class TimeValues
             }
         }
 
+        @Override
         public float apply(float input)
         {
             resolve();
@@ -291,12 +301,14 @@ public final class TimeValues
 
         private final ThreadLocal<Function<String, ITimeValue>> valueResolver = new ThreadLocal<Function<String, ITimeValue>>();
 
-        public void setValueResolver(Function<String, ITimeValue> valueResolver)
+        public void setValueResolver(@Nullable Function<String, ITimeValue> valueResolver)
         {
             this.valueResolver.set(valueResolver);
         }
 
+        @Override
         @SuppressWarnings("unchecked")
+        @Nullable
         public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> type)
         {
             if(type.getRawType() != ITimeValue.class)
@@ -306,6 +318,7 @@ public final class TimeValues
 
             return (TypeAdapter<T>)new TypeAdapter<ITimeValue>()
             {
+                @Override
                 public void write(JsonWriter out, ITimeValue parameter) throws IOException
                 {
                     if(parameter instanceof ConstValue)
@@ -338,6 +351,7 @@ public final class TimeValues
                     }
                 }
 
+                @Override
                 public ITimeValue read(JsonReader in) throws IOException
                 {
                     switch(in.peek())

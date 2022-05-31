@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,8 @@ package net.minecraftforge.items;
 
 import net.minecraft.item.ItemStack;
 
+import javax.annotation.Nonnull;
+
 public interface IItemHandlerModifiable extends IItemHandler
 {
     /**
@@ -30,9 +32,9 @@ public interface IItemHandlerModifiable extends IItemHandler
      * is called unexpectedly.
      *
      * @param slot  Slot to modify
-     * @param stack ItemStack to set slot to (may be null)
+     * @param stack ItemStack to set slot to (may be empty).
      * @throws RuntimeException if the handler is called in a way that the handler
      * was not expecting.
      **/
-    void setStackInSlot(int slot, ItemStack stack);
+    void setStackInSlot(int slot, @Nonnull ItemStack stack);
 }

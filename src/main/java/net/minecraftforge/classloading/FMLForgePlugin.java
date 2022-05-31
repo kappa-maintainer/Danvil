@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,8 @@ import java.util.Map;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
+import javax.annotation.Nullable;
+
 public class FMLForgePlugin implements IFMLLoadingPlugin
 {
     public static boolean RUNTIME_DEOBF = false;
@@ -42,6 +44,7 @@ public class FMLForgePlugin implements IFMLLoadingPlugin
     }
 
     @Override
+    @Nullable
     public String getSetupClass()
     {
         return null;

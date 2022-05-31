@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,10 +22,10 @@ package net.minecraftforge.client.model.animation;
 import java.util.List;
 
 import net.minecraft.client.model.ModelBase;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderHelper;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -44,6 +44,7 @@ import net.minecraftforge.common.animation.IEventHandler;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.animation.CapabilityAnimation;
 
+import net.minecraftforge.common.model.animation.IAnimationStateMachine;
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL11;
 
@@ -67,12 +68,12 @@ public class AnimationModelBase<T extends Entity> extends ModelBase implements I
     @Override
     public void render(Entity entity, float limbSwing, float limbSwingSpeed, float timeAlive, float yawHead, float rotationPitch, float scale)
     {
-        if(!(entity.hasCapability(CapabilityAnimation.ANIMATION_CAPABILITY, null)))
+        IAnimationStateMachine capability = entity.getCapability(CapabilityAnimation.ANIMATION_CAPABILITY, null);
+        if (capability == null)
         {
             return;
         }
-
-        Pair<IModelState, Iterable<Event>> pair = entity.getCapability(CapabilityAnimation.ANIMATION_CAPABILITY, null).apply(timeAlive / 20);
+        Pair<IModelState, Iterable<Event>> pair = capability.apply(timeAlive / 20);
         handleEvents((T)entity, timeAlive / 20, pair.getRight());
         IModel model = ModelLoaderRegistry.getModelOrMissing(modelLocation);
         IBakedModel bakedModel = model.bake(pair.getLeft(), DefaultVertexFormats.ITEM, ModelLoader.defaultTextureGetter());
@@ -83,12 +84,12 @@ public class AnimationModelBase<T extends Entity> extends ModelBase implements I
         GlStateManager.pushMatrix();
         GlStateManager.rotate(180, 0, 0, 1);
         Tessellator tessellator = Tessellator.getInstance();
-        VertexBuffer VertexBuffer = tessellator.getBuffer();
-        VertexBuffer.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
-        VertexBuffer.setTranslation(-0.5, -1.5, -0.5);
+        BufferBuilder builder = tessellator.getBuffer();
+        builder.begin(GL11.GL_QUADS, DefaultVertexFormats.BLOCK);
+        builder.setTranslation(-0.5, -1.5, -0.5);
 
-        lighter.setParent(new VertexBufferConsumer(VertexBuffer));
-        lighter.setWorld(entity.worldObj);
+        lighter.setParent(new VertexBufferConsumer(builder));
+        lighter.setWorld(entity.world);
         lighter.setState(Blocks.AIR.getDefaultState());
         lighter.setBlockPos(pos);
         boolean empty = true;
@@ -122,12 +123,13 @@ public class AnimationModelBase<T extends Entity> extends ModelBase implements I
         VertexBuffer.pos(1, 1, 1).color(0xFF, 0xFF, 0xFF, 0xFF).tex(1, 1).lightmap(240, 0).endVertex();
         VertexBuffer.pos(1, 1, 0).color(0xFF, 0xFF, 0xFF, 0xFF).tex(1, 0).lightmap(240, 0).endVertex();*/
 
-        VertexBuffer.setTranslation(0, 0, 0);
+        builder.setTranslation(0, 0, 0);
 
         tessellator.draw();
         GlStateManager.popMatrix();
         RenderHelper.enableStandardItemLighting();
     }
 
+    @Override
     public void handleEvents(T instance, float time, Iterable<Event> pastEvents) {}
 }

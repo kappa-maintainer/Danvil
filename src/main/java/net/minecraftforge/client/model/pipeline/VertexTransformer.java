@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package net.minecraftforge.client.model.pipeline;
 
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
 
@@ -31,26 +32,37 @@ public class VertexTransformer implements IVertexConsumer
         this.parent = parent;
     }
 
+    @Override
     public VertexFormat getVertexFormat()
     {
         return parent.getVertexFormat();
     }
 
+    @Override
     public void setQuadTint(int tint)
     {
         parent.setQuadTint(tint);
     }
 
+    @Override
+    public void setTexture(TextureAtlasSprite texture)
+    {
+        parent.setTexture(texture);
+    }
+
+    @Override
     public void setQuadOrientation(EnumFacing orientation)
     {
         parent.setQuadOrientation(orientation);
     }
 
+    @Override
     public void setApplyDiffuseLighting(boolean diffuse)
     {
         parent.setApplyDiffuseLighting(diffuse);
     }
 
+    @Override
     public void put(int element, float... data)
     {
         parent.put(element, data);

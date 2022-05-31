@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,6 @@ package net.minecraftforge.fml.common;
 import java.util.List;
 import java.util.Set;
 
-import net.minecraftforge.fml.common.functions.ModNameFunction;
 import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 
 import com.google.common.base.Joiner;
@@ -84,7 +83,7 @@ public class ModMetadata
 
     public String getChildModList()
     {
-        return Joiner.on(", ").join(Lists.transform(childMods, new ModNameFunction()));
+        return Joiner.on(", ").join(childMods.stream().map(ModContainer::getName).iterator());
     }
 
     public String printableSortingRules()

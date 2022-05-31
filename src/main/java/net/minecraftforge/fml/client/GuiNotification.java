@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -63,12 +63,12 @@ public class GuiNotification extends GuiScreen
         {
             if (offset >= spaceAvailable)
             {
-                this.drawCenteredString(this.fontRendererObj, "...", this.width / 2, offset, 0xFFFFFF);
+                this.drawCenteredString(this.fontRenderer, "...", this.width / 2, offset, 0xFFFFFF);
                 break;
             }
             else
             {
-                if (!line.isEmpty()) this.drawCenteredString(this.fontRendererObj, line, this.width / 2, offset, 0xFFFFFF);
+                if (!line.isEmpty()) this.drawCenteredString(this.fontRenderer, line, this.width / 2, offset, 0xFFFFFF);
                 offset += 10;
             }
         }

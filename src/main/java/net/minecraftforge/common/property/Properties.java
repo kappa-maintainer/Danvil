@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,9 +35,13 @@ public class Properties
      */
     public static final IUnlistedProperty<IModelState> AnimationProperty = new IUnlistedProperty<IModelState>()
     {
+        @Override
         public String getName() { return "forge_animation"; }
+        @Override
         public boolean isValid(IModelState state) { return true; }
+        @Override
         public Class<IModelState> getType() { return IModelState.class; }
+        @Override
         public String valueToString(IModelState state) { return state.toString(); }
     };
 
@@ -55,21 +59,25 @@ public class Properties
             this.parent = parent;
         }
 
+        @Override
         public String getName()
         {
             return parent.getName();
         }
 
+        @Override
         public boolean isValid(V value)
         {
             return parent.getAllowedValues().contains(value);
         }
 
+        @Override
         public Class<V> getType()
         {
             return parent.getValueClass();
         }
 
+        @Override
         public String valueToString(V value)
         {
             return parent.getName(value);

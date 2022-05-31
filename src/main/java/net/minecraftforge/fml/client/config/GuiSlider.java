@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,7 +20,8 @@
 package net.minecraftforge.fml.client.config;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
+
+import javax.annotation.Nullable;
 
 /**
  * This class is blatantly stolen from iChunUtils with permission.
@@ -42,6 +43,7 @@ public class GuiSlider extends GuiButtonExt
     public double maxValue = 5.0D;
     public int precision = 1;
 
+    @Nullable
     public ISlider parent = null;
 
     public String suffix = "";
@@ -53,7 +55,7 @@ public class GuiSlider extends GuiButtonExt
         this(id, xPos, yPos, width, height, prefix, suf, minVal, maxVal, currentVal, showDec, drawStr, null);
     }
 
-    public GuiSlider(int id, int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, ISlider par)
+    public GuiSlider(int id, int xPos, int yPos, int width, int height, String prefix, String suf, double minVal, double maxVal, double currentVal, boolean showDec, boolean drawStr, @Nullable ISlider par)
     {
         super(id, xPos, yPos, width, height, prefix);
         minValue = minVal;
@@ -110,13 +112,11 @@ public class GuiSlider extends GuiButtonExt
         {
             if (this.dragging)
             {
-                this.sliderValue = (par2 - (this.xPosition + 4)) / (float)(this.width - 8);
+                this.sliderValue = (par2 - (this.x + 4)) / (float)(this.width - 8);
                 updateSlider();
             }
 
-            GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
-            this.drawTexturedModalRect(this.xPosition + (int)(this.sliderValue * (float)(this.width - 8)), this.yPosition, 0, 66, 4, 20);
-            this.drawTexturedModalRect(this.xPosition + (int)(this.sliderValue * (float)(this.width - 8)) + 4, this.yPosition, 196, 66, 4, 20);
+            GuiUtils.drawContinuousTexturedBox(BUTTON_TEXTURES, this.x + (int)(this.sliderValue * (float)(this.width - 8)), this.y, 0, 66, 8, this.height, 200, 20, 2, 3, 2, 2, this.zLevel);
         }
     }
 
@@ -129,7 +129,7 @@ public class GuiSlider extends GuiButtonExt
     {
         if (super.mousePressed(par1Minecraft, par2, par3))
         {
-            this.sliderValue = (float)(par2 - (this.xPosition + 4)) / (float)(this.width - 8);
+            this.sliderValue = (float)(par2 - (this.x + 4)) / (float)(this.width - 8);
             updateSlider();
             this.dragging = true;
             return true;

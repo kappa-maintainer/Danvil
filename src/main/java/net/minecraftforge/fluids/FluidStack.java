@@ -1,7 +1,6 @@
-
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,8 +21,11 @@ package net.minecraftforge.fluids;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.FMLLog;
-import net.minecraftforge.fml.common.registry.RegistryDelegate;
+import net.minecraftforge.registries.IRegistryDelegate;
+
+import javax.annotation.Nullable;
 
 /**
  * ItemStack substitute for Fluids.
@@ -37,7 +39,7 @@ public class FluidStack
 {
     public int amount;
     public NBTTagCompound tag;
-    private RegistryDelegate<Fluid> fluidDelegate;
+    private IRegistryDelegate<Fluid> fluidDelegate;
 
     public FluidStack(Fluid fluid, int amount)
     {
@@ -48,7 +50,7 @@ public class FluidStack
         }
         else if (!FluidRegistry.isFluidRegistered(fluid))
         {
-            FMLLog.bigWarning("Failed attempt to create a FluidStack for an unregistered Fluid %s (type %s)", fluid.getName(), fluid.getClass().getName());
+            FMLLog.bigWarning("Failed attempt to create a FluidStack for an unregistered Fluid {} (type {})", fluid.getName(), fluid.getClass().getName());
             throw new IllegalArgumentException("Cannot create a fluidstack from an unregistered fluid");
         }
         this.fluidDelegate = FluidRegistry.makeDelegate(fluid);
@@ -74,15 +76,20 @@ public class FluidStack
      * This provides a safe method for retrieving a FluidStack - if the Fluid is invalid, the stack
      * will return as null.
      */
+    @Nullable
     public static FluidStack loadFluidStackFromNBT(NBTTagCompound nbt)
     {
         if (nbt == null)
         {
             return null;
         }
-        String fluidName = nbt.getString("FluidName");
+        if (!nbt.hasKey("FluidName", Constants.NBT.TAG_STRING))
+        {
+            return null;
+        }
 
-        if (fluidName == null || FluidRegistry.getFluid(fluidName) == null)
+        String fluidName = nbt.getString("FluidName");
+        if (FluidRegistry.getFluid(fluidName) == null)
         {
             return null;
         }
@@ -137,7 +144,7 @@ public class FluidStack
      *            The FluidStack for comparison
      * @return true if the Fluids (IDs and NBT Tags) are the same
      */
-    public boolean isFluidEqual(FluidStack other)
+    public boolean isFluidEqual(@Nullable FluidStack other)
     {
         return other != null && getFluid() == other.getFluid() && isFluidStackTagEqual(other);
     }
@@ -150,7 +157,7 @@ public class FluidStack
     /**
      * Determines if the NBT Tags are equal. Useful if the FluidIDs are known to be equal.
      */
-    public static boolean areFluidStackTagsEqual(FluidStack stack1, FluidStack stack2)
+    public static boolean areFluidStackTagsEqual(@Nullable FluidStack stack1, @Nullable FluidStack stack2)
     {
         return stack1 == null && stack2 == null ? true : stack1 == null || stack2 == null ? false : stack1.isFluidStackTagEqual(stack2);
     }
@@ -161,7 +168,7 @@ public class FluidStack
      * @param other
      * @return true if this FluidStack contains the other FluidStack (same fluid and >= amount)
      */
-    public boolean containsFluid(FluidStack other)
+    public boolean containsFluid(@Nullable FluidStack other)
     {
         return isFluidEqual(other) && amount >= other.amount;
     }
@@ -201,7 +208,6 @@ public class FluidStack
     {
         int code = 1;
         code = 31*code + getFluid().hashCode();
-        code = 31*code + amount;
         if (tag != null)
             code = 31*code + tag.hashCode();
         return code;

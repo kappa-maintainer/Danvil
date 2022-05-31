@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,8 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
+import javax.annotation.Nonnull;
+
 public class PlayerEvent extends Event {
     public final EntityPlayer player;
     private PlayerEvent(EntityPlayer player)
@@ -33,18 +35,38 @@ public class PlayerEvent extends Event {
     }
 
     public static class ItemPickupEvent extends PlayerEvent {
+        @Deprecated
         public final EntityItem pickedUp;
-        public ItemPickupEvent(EntityPlayer player, EntityItem pickedUp)
+        /**
+        * Original EntityItem with current remaining stack size
+        */
+        private final EntityItem originalEntity;
+        /**
+         * Clone item stack, containing the item and amount picked up
+         */
+        private final ItemStack stack;
+        public ItemPickupEvent(EntityPlayer player, EntityItem entPickedUp, ItemStack stack)
         {
             super(player);
-            this.pickedUp = pickedUp;
+            this.originalEntity = entPickedUp;
+            this.pickedUp = entPickedUp;
+            this.stack = stack;
+        }
+
+        public ItemStack getStack() {
+            return stack;
+        }
+
+        public EntityItem getOriginalEntity() {
+            return originalEntity;
         }
     }
 
     public static class ItemCraftedEvent extends PlayerEvent {
+        @Nonnull
         public final ItemStack crafting;
         public final IInventory craftMatrix;
-        public ItemCraftedEvent(EntityPlayer player, ItemStack crafting, IInventory craftMatrix)
+        public ItemCraftedEvent(EntityPlayer player, @Nonnull ItemStack crafting, IInventory craftMatrix)
         {
             super(player);
             this.crafting = crafting;
@@ -52,8 +74,9 @@ public class PlayerEvent extends Event {
         }
     }
     public static class ItemSmeltedEvent extends PlayerEvent {
+        @Nonnull
         public final ItemStack smelting;
-        public ItemSmeltedEvent(EntityPlayer player, ItemStack crafting)
+        public ItemSmeltedEvent(EntityPlayer player, @Nonnull ItemStack crafting)
         {
             super(player);
             this.smelting = crafting;
@@ -75,10 +98,24 @@ public class PlayerEvent extends Event {
     }
 
     public static class PlayerRespawnEvent extends PlayerEvent {
-        public PlayerRespawnEvent(EntityPlayer player)
+        private final boolean endConquered;
+
+        public PlayerRespawnEvent(EntityPlayer player, boolean endConquered)
         {
             super(player);
+            this.endConquered = endConquered;
         }
+
+        /**
+         * Did this respawn event come from the player conquering the end?
+         * @return if this respawn was because the player conquered the end
+         */
+        public boolean isEndConquered()
+        {
+            return this.endConquered;
+        }
+
+
     }
 
     public static class PlayerChangedDimensionEvent extends PlayerEvent {

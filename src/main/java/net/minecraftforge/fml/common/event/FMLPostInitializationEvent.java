@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,14 @@
 
 package net.minecraftforge.fml.common.event;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.collect.Lists;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Optional;
+
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.LoaderState.ModState;
 
-import org.apache.logging.log4j.Level;
-
-import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 
 /**
@@ -66,25 +64,19 @@ public class FMLPostInitializationEvent extends FMLStateEvent
     {
         if (Loader.isModLoaded(modId))
         {
-            Class<?>[] args = Lists.transform(Lists.newArrayList(arguments),new Function<Object, Class<?>>() {
-                @Nullable
-                @Override
-                public Class<?> apply(@Nullable Object input) {
-                    return input.getClass();
-                }
-            }).toArray(new Class[0]);
+            Class<?>[] args = Arrays.stream(arguments).filter(Objects::nonNull).map(Object::getClass).toArray(Class<?>[]::new);
             try
             {
                 Class<?> clz = Class.forName(className,true,Loader.instance().getModClassLoader());
                 Constructor<?> ct = clz.getConstructor(args);
-                return Optional.fromNullable(ct.newInstance(arguments));
+                return Optional.of(ct.newInstance(arguments));
             }
             catch (Exception e)
             {
-                FMLLog.getLogger().log(Level.INFO, "An error occurred trying to build a soft depend proxy",e);
-                return Optional.absent();
+                FMLLog.log.info("An error occurred trying to build a soft depend proxy", e);
+                return Optional.empty();
             }
         }
-        return Optional.absent();
+        return Optional.empty();
     }
 }

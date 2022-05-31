@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,9 +19,7 @@
 
 package net.minecraftforge.fluids;
 
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockDispenser;
-import net.minecraft.block.material.Material;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Items;
@@ -29,30 +27,35 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.stats.StatList;
-import net.minecraft.util.*;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
+import net.minecraftforge.event.ForgeEventFactory;
+import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fluids.capability.wrappers.FluidBucketWrapper;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.ItemHandlerHelper;
 
-import java.util.List;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * A universal bucket that can hold any liquid
  */
-public class UniversalBucket extends Item implements IFluidContainerItem
+public class UniversalBucket extends Item
 {
 
     private final int capacity; // how much the bucket holds
+    @Nonnull
     private final ItemStack empty; // empty item to return and recognize when filling
     private final boolean nbtSensitive;
 
@@ -66,7 +69,7 @@ public class UniversalBucket extends Item implements IFluidContainerItem
      * @param empty           Item used for filling with the bucket event and returned when emptied
      * @param nbtSensitive    Whether the empty item is NBT sensitive (usually true if empty and full are the same items)
      */
-    public UniversalBucket(int capacity, ItemStack empty, boolean nbtSensitive)
+    public UniversalBucket(int capacity, @Nonnull ItemStack empty, boolean nbtSensitive)
     {
         this.capacity = capacity;
         this.empty = empty;
@@ -79,10 +82,29 @@ public class UniversalBucket extends Item implements IFluidContainerItem
         BlockDispenser.DISPENSE_BEHAVIOR_REGISTRY.putObject(this, DispenseFluidContainer.getInstance());
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
-    public void getSubItems(Item itemIn, CreativeTabs tab, List<ItemStack> subItems)
+    public boolean hasContainerItem(@Nonnull ItemStack stack)
     {
+        return !getEmpty().isEmpty();
+    }
+
+    @Nonnull
+    @Override
+    public ItemStack getContainerItem(@Nonnull ItemStack itemStack)
+    {
+        if (!getEmpty().isEmpty())
+        {
+            // Create a copy such that the game can't mess with it
+            return getEmpty().copy();
+        }
+        return super.getContainerItem(itemStack);
+    }
+
+    @Override
+    public void getSubItems(@Nullable CreativeTabs tab, @Nonnull NonNullList<ItemStack> subItems)
+    {
+        if (!this.isInCreativeTab(tab))
+            return;
         for (Fluid fluid : FluidRegistry.getRegisteredFluids().values())
         {
             if (fluid != FluidRegistry.WATER && fluid != FluidRegistry.LAVA && !fluid.getName().equals("milk"))
@@ -90,21 +112,24 @@ public class UniversalBucket extends Item implements IFluidContainerItem
                 // add all fluids that the bucket can be filled  with
                 FluidStack fs = new FluidStack(fluid, getCapacity());
                 ItemStack stack = new ItemStack(this);
-                if (fill(stack, fs, true) == fs.amount)
+                IFluidHandlerItem fluidHandler = new FluidBucketWrapper(stack);
+                if (fluidHandler.fill(fs, true) == fs.amount)
                 {
-                    subItems.add(stack);
+                    ItemStack filled = fluidHandler.getContainer();
+                    subItems.add(filled);
                 }
             }
         }
     }
 
     @Override
-    public String getItemStackDisplayName(ItemStack stack)
+    @Nonnull
+    public String getItemStackDisplayName(@Nonnull ItemStack stack)
     {
         FluidStack fluidStack = getFluid(stack);
         if (fluidStack == null)
         {
-            if(getEmpty() != null)
+            if(!getEmpty().isEmpty())
             {
                 return getEmpty().getDisplayName();
             }
@@ -122,8 +147,10 @@ public class UniversalBucket extends Item implements IFluidContainerItem
     }
 
     @Override
-    public ActionResult<ItemStack> onItemRightClick(ItemStack itemstack, World world, EntityPlayer player, EnumHand hand)
+    @Nonnull
+    public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand)
     {
+        ItemStack itemstack = player.getHeldItem(hand);
         FluidStack fluidStack = getFluid(itemstack);
         // empty bucket shouldn't exist, do nothing since it should be handled by the bucket event
         if (fluidStack == null)
@@ -133,6 +160,9 @@ public class UniversalBucket extends Item implements IFluidContainerItem
 
         // clicked on a block?
         RayTraceResult mop = this.rayTrace(world, player, false);
+
+        ActionResult<ItemStack> ret = ForgeEventFactory.onBucketUse(player, world, itemstack, mop);
+        if (ret != null) return ret;
 
         if(mop == null || mop.typeOfHit != RayTraceResult.Type.BLOCK)
         {
@@ -150,17 +180,18 @@ public class UniversalBucket extends Item implements IFluidContainerItem
             if (player.canPlayerEdit(targetPos, mop.sideHit, itemstack))
             {
                 // try placing liquid
-                if (FluidUtil.tryPlaceFluid(player, player.getEntityWorld(), fluidStack, targetPos)
-                        && !player.capabilities.isCreativeMode)
+                FluidActionResult result = FluidUtil.tryPlaceFluid(player, world, targetPos, itemstack, fluidStack);
+                if (result.isSuccess() && !player.capabilities.isCreativeMode)
                 {
                     // success!
                     player.addStat(StatList.getObjectUseStats(this));
 
-                    itemstack.stackSize--;
-                    ItemStack emptyStack = getEmpty() != null ? getEmpty().copy() : new ItemStack(this);
+                    itemstack.shrink(1);
+                    ItemStack drained = result.getResult();
+                    ItemStack emptyStack = !drained.isEmpty() ? drained.copy() : new ItemStack(this);
 
                     // check whether we replace the item or add the empty one to the inventory
-                    if (itemstack.stackSize <= 0)
+                    if (itemstack.isEmpty())
                     {
                         return ActionResult.newResult(EnumActionResult.SUCCESS, emptyStack);
                     }
@@ -178,26 +209,6 @@ public class UniversalBucket extends Item implements IFluidContainerItem
         return ActionResult.newResult(EnumActionResult.FAIL, itemstack);
     }
 
-    // compatibility
-    @Deprecated
-    public boolean tryPlaceFluid(Block block, World worldIn, BlockPos pos)
-    {
-        if (block instanceof IFluidBlock)
-        {
-            IFluidBlock fluidBlock = (IFluidBlock) block;
-            return FluidUtil.tryPlaceFluid(null, worldIn, new FluidStack(fluidBlock.getFluid(), Fluid.BUCKET_VOLUME), pos);
-        }
-        else if (block.getDefaultState().getMaterial() == Material.WATER)
-        {
-            FluidUtil.tryPlaceFluid(null, worldIn, new FluidStack(FluidRegistry.WATER, Fluid.BUCKET_VOLUME), pos);
-        }
-        else if (block.getDefaultState().getMaterial() == Material.LAVA)
-        {
-            FluidUtil.tryPlaceFluid(null, worldIn, new FluidStack(FluidRegistry.LAVA, Fluid.BUCKET_VOLUME), pos);
-        }
-        return false;
-    }
-
     @SubscribeEvent(priority = EventPriority.LOW) // low priority so other mods can handle their stuff first
     public void onFillBucket(FillBucketEvent event)
     {
@@ -209,7 +220,7 @@ public class UniversalBucket extends Item implements IFluidContainerItem
 
         // not for us to handle
         ItemStack emptyBucket = event.getEmptyBucket();
-        if (emptyBucket == null ||
+        if (emptyBucket.isEmpty() ||
                 !emptyBucket.isItemEqual(getEmpty()) ||
                 (isNbtSensitive() && ItemStack.areItemStackTagsEqual(emptyBucket, getEmpty())))
         {
@@ -227,13 +238,13 @@ public class UniversalBucket extends Item implements IFluidContainerItem
         BlockPos pos = target.getBlockPos();
 
         ItemStack singleBucket = emptyBucket.copy();
-        singleBucket.stackSize = 1;
+        singleBucket.setCount(1);
 
-        ItemStack filledBucket = FluidUtil.tryPickUpFluid(singleBucket, event.getEntityPlayer(), world, pos, target.sideHit);
-        if (filledBucket != null)
+        FluidActionResult filledResult = FluidUtil.tryPickUpFluid(singleBucket, event.getEntityPlayer(), world, pos, target.sideHit);
+        if (filledResult.isSuccess())
         {
             event.setResult(Event.Result.ALLOW);
-            event.setFilledBucket(filledBucket);
+            event.setFilledBucket(filledResult.getResult());
         }
         else
         {
@@ -243,112 +254,20 @@ public class UniversalBucket extends Item implements IFluidContainerItem
         }
     }
 
-    public static ItemStack getFilledBucket(UniversalBucket item, Fluid fluid)
+    /**
+     * @deprecated use the NBT-sensitive version {@link FluidUtil#getFilledBucket(FluidStack)}
+     */
+    @Deprecated
+    @Nonnull
+    public static ItemStack getFilledBucket(@Nonnull UniversalBucket item, Fluid fluid)
     {
-        ItemStack stack = new ItemStack(item);
-        item.fill(stack, new FluidStack(fluid, item.getCapacity()), true);
-        return stack;
+        return FluidUtil.getFilledBucket(new FluidStack(fluid, Fluid.BUCKET_VOLUME));
     }
 
-  /* FluidContainer Management */
-
-    @Override
-    public FluidStack getFluid(ItemStack container)
+    @Nullable
+    public FluidStack getFluid(@Nonnull ItemStack container)
     {
         return FluidStack.loadFluidStackFromNBT(container.getTagCompound());
-    }
-
-    @Override
-    public int getCapacity(ItemStack container)
-    {
-        return getCapacity();
-    }
-
-    @Override
-    public int fill(ItemStack container, FluidStack resource, boolean doFill)
-    {
-        // has to be exactly 1, must be handled from the caller
-        if (container.stackSize != 1)
-        {
-            return 0;
-        }
-
-        // can only fill exact capacity
-        if (resource == null || resource.amount < getCapacity())
-        {
-            return 0;
-        }
-
-        // already contains fluid?
-        if (getFluid(container) != null)
-        {
-            return 0;
-        }
-
-        // registered in the registry?
-        if (FluidRegistry.getBucketFluids().contains(resource.getFluid()))
-        {
-            // fill the container
-            if (doFill)
-            {
-                NBTTagCompound tag = container.getTagCompound();
-                if (tag == null)
-                {
-                    tag = new NBTTagCompound();
-                }
-                resource.writeToNBT(tag);
-                container.setTagCompound(tag);
-            }
-            return getCapacity();
-        }
-        else if (resource.getFluid() == FluidRegistry.WATER)
-        {
-            if (doFill)
-            {
-                container.deserializeNBT(new ItemStack(Items.WATER_BUCKET).serializeNBT());
-            }
-            return getCapacity();
-        }
-        else if (resource.getFluid() == FluidRegistry.LAVA)
-        {
-            if (doFill)
-            {
-                container.deserializeNBT(new ItemStack(Items.LAVA_BUCKET).serializeNBT());
-            }
-            return getCapacity();
-        }
-
-        return 0;
-    }
-
-    @Override
-    public FluidStack drain(ItemStack container, int maxDrain, boolean doDrain)
-    {
-        // has to be exactly 1, must be handled from the caller
-        if (container.stackSize != 1)
-        {
-            return null;
-        }
-
-        // can only drain everything at once
-        if (maxDrain < getCapacity(container))
-        {
-            return null;
-        }
-
-        FluidStack fluidStack = getFluid(container);
-        if (doDrain && fluidStack != null)
-        {
-            if(getEmpty() != null)
-            {
-                container.deserializeNBT(getEmpty().serializeNBT());
-            }
-            else {
-                container.stackSize = 0;
-            }
-        }
-
-        return fluidStack;
     }
 
     public int getCapacity()
@@ -356,6 +275,7 @@ public class UniversalBucket extends Item implements IFluidContainerItem
         return capacity;
     }
 
+    @Nonnull
     public ItemStack getEmpty()
     {
         return empty;
@@ -366,8 +286,17 @@ public class UniversalBucket extends Item implements IFluidContainerItem
         return nbtSensitive;
     }
 
+    @Nullable
     @Override
-    public ICapabilityProvider initCapabilities(ItemStack stack, NBTTagCompound nbt)
+    public String getCreatorModId(@Nonnull ItemStack itemStack)
+    {
+        FluidStack fluidStack = getFluid(itemStack);
+        String modId = FluidRegistry.getModId(fluidStack);
+        return modId != null ? modId : super.getCreatorModId(itemStack);
+    }
+
+    @Override
+    public ICapabilityProvider initCapabilities(@Nonnull ItemStack stack, NBTTagCompound nbt)
     {
         return new FluidBucketWrapper(stack);
     }

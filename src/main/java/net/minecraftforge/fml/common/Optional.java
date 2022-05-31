@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,6 +20,7 @@
 package net.minecraftforge.fml.common;
 
 import java.lang.annotation.ElementType;
+import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -49,13 +50,14 @@ public final class Optional {
          * Mark a list of interfaces for optional removal.
          * @return
          */
-        public Interface[] value();
+        Interface[] value();
     }
     /**
      * Used to remove optional interfaces
      * @author cpw
      *
      */
+    @Repeatable(InterfaceList.class)
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     public @interface Interface {
@@ -63,20 +65,20 @@ public final class Optional {
          * The fully qualified name of the interface to be stripped
          * @return the interface name
          */
-        public String iface();
+        String iface();
 
         /**
          * The modid that is required to be present for stripping NOT to occur
          * @return the modid
          */
-        public String modid();
+        String modid();
 
         /**
          * Strip references to this interface in method declarations? (Useful to kill synthetic methods from scala f.e.)
          *
          * @return if references should be stripped
          */
-        public boolean striprefs() default false;
+        boolean striprefs() default false;
     }
     /**
      * Used to remove optional methods
@@ -90,6 +92,6 @@ public final class Optional {
          * The modid that is required to be present for stripping NOT to occur
          * @return the modid
          */
-        public String modid();
+        String modid();
     }
 }

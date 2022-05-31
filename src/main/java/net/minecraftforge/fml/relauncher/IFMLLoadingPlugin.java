@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
 
 package net.minecraftforge.fml.relauncher;
 
+import javax.annotation.Nullable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -57,8 +58,10 @@ public interface IFMLLoadingPlugin
      * main thread, to perform any additional setup this coremod may require. It will be
      * run <strong>prior</strong> to Minecraft starting, so it CANNOT operate on minecraft
      * itself. The game will deliberately crash if this code is detected to trigger a
-     * minecraft class loading (TODO: implement crash ;) )
+     * minecraft class loading
+     * TODO: implement crash ;)
      */
+    @Nullable
     String getSetupClass();
 
     /**
@@ -90,9 +93,9 @@ public interface IFMLLoadingPlugin
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface TransformerExclusions
+    @interface TransformerExclusions
     {
-        public String[] value() default "";
+        String[] value() default "";
     }
 
     /**
@@ -104,9 +107,9 @@ public interface IFMLLoadingPlugin
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface MCVersion
+    @interface MCVersion
     {
-        public String value() default "";
+        String value() default "";
     }
 
     /**
@@ -116,16 +119,16 @@ public interface IFMLLoadingPlugin
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface Name
+    @interface Name
     {
-        public String value() default "";
+        String value() default "";
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface DependsOn
+    @interface DependsOn
     {
-        public String[] value() default {};
+        String[] value() default {};
     }
 
     /**
@@ -135,9 +138,9 @@ public interface IFMLLoadingPlugin
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
-    public @interface SortingIndex
+    @interface SortingIndex
     {
-        public int value() default 0;
+        int value() default 0;
     }
 
 }

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/**
- * This software is provided under the terms of the Minecraft Forge Public
- * License v1.0.
  */
 
 package net.minecraftforge.common.config;
@@ -348,6 +343,8 @@ public class ConfigCategory implements Map<String, Property>
                 char type = prop.getType().getID();
                 write(out, pad1, String.valueOf(type), ":", propName, "=", prop.getString());
             }
+            
+            prop.resetChangedState();
         }
 
         if (children.size() > 0)

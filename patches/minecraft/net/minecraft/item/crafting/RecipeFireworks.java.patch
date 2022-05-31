@@ -1,37 +1,67 @@
 --- ../src-base/minecraft/net/minecraft/item/crafting/RecipeFireworks.java
 +++ ../src-work/minecraft/net/minecraft/item/crafting/RecipeFireworks.java
-@@ -87,9 +87,9 @@
-             {
-                 this.field_92102_a = new ItemStack(Items.field_151152_bP, 3);
+@@ -10,10 +10,8 @@
+ import net.minecraft.nbt.NBTTagList;
+ import net.minecraft.util.NonNullList;
+ import net.minecraft.world.World;
+-import net.minecraftforge.fml.relauncher.Side;
+-import net.minecraftforge.fml.relauncher.SideOnly;
  
-+                NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-                 if (l > 0)
+-public class RecipeFireworks implements IRecipe
++public class RecipeFireworks extends net.minecraftforge.registries.IForgeRegistryEntry.Impl<IRecipe> implements IRecipe
+ {
+     private ItemStack field_92102_a = ItemStack.field_190927_a;
+ 
+@@ -41,7 +39,7 @@
                  {
--                    NBTTagCompound nbttagcompound1 = new NBTTagCompound();
-                     NBTTagCompound nbttagcompound3 = new NBTTagCompound();
-                     NBTTagList nbttaglist = new NBTTagList();
- 
-@@ -106,9 +106,9 @@
-                     nbttagcompound3.func_74782_a("Explosions", nbttaglist);
-                     nbttagcompound3.func_74774_a("Flight", (byte)j);
-                     nbttagcompound1.func_74782_a("Fireworks", nbttagcompound3);
--                    this.field_92102_a.func_77982_d(nbttagcompound1);
+                     ++l;
                  }
+-                else if (itemstack.func_77973_b() == Items.field_151100_aR)
++                else if (net.minecraftforge.oredict.DyeUtils.isDye(itemstack))
+                 {
+                     ++k;
+                 }
+@@ -127,9 +125,9 @@
  
-+                this.field_92102_a.func_77982_d(nbttagcompound1); //Forge BugFix: NPE Protection
-                 return true;
-             }
-             else if (j == 1 && i == 0 && l == 0 && k > 0 && j1 <= 1)
-@@ -252,11 +252,7 @@
-         for (int i = 0; i < aitemstack.length; ++i)
+                     if (!itemstack2.func_190926_b())
+                     {
+-                        if (itemstack2.func_77973_b() == Items.field_151100_aR)
++                        if (net.minecraftforge.oredict.DyeUtils.isDye(itemstack2))
+                         {
+-                            list.add(Integer.valueOf(ItemDye.field_150922_c[itemstack2.func_77960_j() & 15]));
++                            list.add(Integer.valueOf(ItemDye.field_150922_c[net.minecraftforge.oredict.DyeUtils.rawDyeDamageFromStack(itemstack2) & 15]));
+                         }
+                         else if (itemstack2.func_77973_b() == Items.field_151114_aO)
+                         {
+@@ -181,9 +179,9 @@
+ 
+                     if (!itemstack1.func_190926_b())
+                     {
+-                        if (itemstack1.func_77973_b() == Items.field_151100_aR)
++                        if (net.minecraftforge.oredict.DyeUtils.isDye(itemstack1))
+                         {
+-                            list1.add(Integer.valueOf(ItemDye.field_150922_c[itemstack1.func_77960_j() & 15]));
++                            list1.add(Integer.valueOf(ItemDye.field_150922_c[net.minecraftforge.oredict.DyeUtils.rawDyeDamageFromStack(itemstack1) & 15]));
+                         }
+                         else if (itemstack1.func_77973_b() == Items.field_151154_bQ)
+                         {
+@@ -248,10 +246,7 @@
          {
              ItemStack itemstack = p_179532_1_.func_70301_a(i);
--
--            if (itemstack != null && itemstack.func_77973_b().func_77634_r())
+ 
+-            if (itemstack.func_77973_b().func_77634_r())
 -            {
--                aitemstack[i] = new ItemStack(itemstack.func_77973_b().func_77668_q());
+-                nonnulllist.set(i, new ItemStack(itemstack.func_77973_b().func_77668_q()));
 -            }
-+            aitemstack[i] = net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack);
++            nonnulllist.set(i, net.minecraftforge.common.ForgeHooks.getContainerItem(itemstack));
          }
  
-         return aitemstack;
+         return nonnulllist;
+@@ -262,7 +257,6 @@
+         return true;
+     }
+ 
+-    @SideOnly(Side.CLIENT)
+     public boolean func_194133_a(int p_194133_1_, int p_194133_2_)
+     {
+         return p_194133_1_ * p_194133_2_ >= 1;

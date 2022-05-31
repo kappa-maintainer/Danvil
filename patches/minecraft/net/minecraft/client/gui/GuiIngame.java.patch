@@ -1,6 +1,6 @@
 --- ../src-base/minecraft/net/minecraft/client/gui/GuiIngame.java
 +++ ../src-work/minecraft/net/minecraft/client/gui/GuiIngame.java
-@@ -360,7 +360,8 @@
+@@ -379,7 +379,8 @@
  
                  BlockPos blockpos = raytraceresult.func_178782_a();
  
@@ -10,7 +10,7 @@
                  {
                      return;
                  }
-@@ -418,7 +419,10 @@
+@@ -449,7 +450,10 @@
              {
                  Potion potion = potioneffect.func_188419_a();
  
@@ -22,14 +22,14 @@
                  {
                      int k = p_184048_1_.func_78326_a();
                      int l = 1;
-@@ -455,7 +459,10 @@
+@@ -492,7 +496,10 @@
                      }
  
                      GlStateManager.func_179131_c(1.0F, 1.0F, 1.0F, f);
 +                    // FORGE - Move status icon check down from above so renderHUDEffect will still be called without a status icon
 +                    if (potion.func_76400_d())
                      this.func_73729_b(k + 3, l + 3, i1 % 8 * 18, 198 + i1 / 8 * 18, 18, 18);
-+                    potion.renderHUDEffect(k, l, potioneffect, field_73839_d, f);
++                    potion.renderHUDEffect(potioneffect, this, k, l, this.field_73735_i, f);
                  }
              }
          }

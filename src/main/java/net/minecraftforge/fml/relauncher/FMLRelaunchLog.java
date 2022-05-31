@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,16 +19,18 @@
 
 package net.minecraftforge.fml.relauncher;
 
-import java.io.File;
-import java.util.Locale;
-
-import net.minecraftforge.fml.common.TracingPrintStream;
+import net.minecraftforge.fml.common.FMLLog;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 
+/**
+ * Legacy FML logging class. Mods use {@link FMLPreInitializationEvent#getModLog()} instead, for Forge internal use use FMLLog.
+ * TODO 1.13 remove this class
+ */
+@Deprecated
 public class FMLRelaunchLog {
 
     /**
@@ -37,31 +39,8 @@ public class FMLRelaunchLog {
      */
     public static final FMLRelaunchLog log = new FMLRelaunchLog();
 
-    static File minecraftHome;
-    private static boolean configured;
-
-    private Logger myLog;
-
-    static Side side;
-
     private FMLRelaunchLog()
     {
-    }
-
-    /**
-     * Configure the FML logger and inject tracing printstreams.
-     */
-    private static void configureLogging()
-    {
-        log.myLog = LogManager.getLogger("FML");
-        // Default side to client for test harness purposes
-        if (side == null) side = Side.CLIENT;
-        ThreadContext.put("side", side.name().toLowerCase(Locale.ENGLISH));
-        configured = true;
-        
-        FMLRelaunchLog.fine("Injecting tracing printstreams for STDOUT/STDERR.");
-        System.setOut(new TracingPrintStream(LogManager.getLogger("STDOUT"), System.out));
-        System.setErr(new TracingPrintStream(LogManager.getLogger("STDERR"), System.err));
     }
 
     public static void log(String targetLog, Level level, String format, Object... data)
@@ -71,11 +50,7 @@ public class FMLRelaunchLog {
 
     public static void log(Level level, String format, Object... data)
     {
-        if (!configured)
-        {
-            configureLogging();
-        }
-        log.myLog.log(level, String.format(format, data));
+        FMLLog.log.log(level, String.format(format, data));
     }
 
     public static void log(String targetLog, Level level, Throwable ex, String format, Object... data)
@@ -85,11 +60,7 @@ public class FMLRelaunchLog {
 
     public static void log(Level level, Throwable ex, String format, Object... data)
     {
-        if (!configured)
-        {
-            configureLogging();
-        }
-        log.myLog.log(level, String.format(format, data), ex);
+        FMLLog.log.log(level, String.format(format, data), ex);
     }
 
     public static void severe(String format, Object... data)
@@ -119,6 +90,6 @@ public class FMLRelaunchLog {
 
     public Logger getLogger()
     {
-        return myLog;
+        return FMLLog.log;
     }
 }

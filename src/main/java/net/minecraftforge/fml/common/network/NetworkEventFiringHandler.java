@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -59,7 +59,7 @@ public class NetworkEventFiringHandler extends SimpleChannelInboundHandler<FMLPr
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
     {
-        FMLLog.log(Level.ERROR, cause, "NetworkEventFiringHandler exception");
+        FMLLog.log.error("NetworkEventFiringHandler exception", cause);
         super.exceptionCaught(ctx, cause);
     }
 }

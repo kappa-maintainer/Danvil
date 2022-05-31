@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,8 +23,6 @@ import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import net.minecraftforge.fml.common.network.internal.FMLMessage.CompleteHandshake;
 
-import org.apache.logging.log4j.Level;
-
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -34,14 +32,14 @@ public class HandshakeCompletionHandler extends SimpleChannelInboundHandler<FMLM
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, CompleteHandshake msg) throws Exception
     {
-        NetworkDispatcher dispatcher = ctx.channel().attr(NetworkDispatcher.FML_DISPATCHER).getAndRemove();
+        NetworkDispatcher dispatcher = ctx.channel().attr(NetworkDispatcher.FML_DISPATCHER).getAndSet(null);
         dispatcher.completeHandshake(msg.target);
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
     {
-        FMLLog.log(Level.ERROR, cause, "HandshakeCompletionHandler exception");
+        FMLLog.log.error("HandshakeCompletionHandler exception", cause);
         super.exceptionCaught(ctx, cause);
     }
 }

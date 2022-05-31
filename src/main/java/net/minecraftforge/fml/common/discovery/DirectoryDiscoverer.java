@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package net.minecraftforge.fml.common.discovery;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -33,10 +34,11 @@ import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.ModContainerFactory;
 import net.minecraftforge.fml.common.discovery.asm.ASMModParser;
 
-import org.apache.logging.log4j.Level;
+import org.apache.commons.io.IOUtils;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+
+import javax.annotation.Nullable;
 
 public class DirectoryDiscoverer implements ITypeDiscoverer
 {
@@ -56,7 +58,7 @@ public class DirectoryDiscoverer implements ITypeDiscoverer
     {
         this.table = table;
         List<ModContainer> found = Lists.newArrayList();
-        FMLLog.fine("Examining directory %s for potential mods", candidate.getModContainer().getName());
+        FMLLog.log.debug("Examining directory {} for potential mods", candidate.getModContainer().getName());
         exploreFileSystem("", candidate.getModContainer(), found, candidate, null);
         for (ModContainer mc : found)
         {
@@ -65,7 +67,7 @@ public class DirectoryDiscoverer implements ITypeDiscoverer
         return found;
     }
 
-    public void exploreFileSystem(String path, File modDir, List<ModContainer> harvestedMods, ModCandidate candidate, MetadataCollection mc)
+    public void exploreFileSystem(String path, File modDir, List<ModContainer> harvestedMods, ModCandidate candidate, @Nullable MetadataCollection mc)
     {
         if (path.length() == 0)
         {
@@ -73,14 +75,20 @@ public class DirectoryDiscoverer implements ITypeDiscoverer
             try
             {
                 FileInputStream fis = new FileInputStream(metadata);
-                mc = MetadataCollection.from(fis,modDir.getName());
-                fis.close();
-                FMLLog.fine("Found an mcmod.info file in directory %s", modDir.getName());
+                try
+                {
+                    mc = MetadataCollection.from(fis, modDir.getName());
+                }
+                finally
+                {
+                    IOUtils.closeQuietly(fis);
+                }
+                FMLLog.log.debug("Found an mcmod.info file in directory {}", modDir.getName());
             }
             catch (Exception e)
             {
                 mc = MetadataCollection.from(null,"");
-                FMLLog.fine("No mcmod.info file found in directory %s", modDir.getName());
+                FMLLog.log.debug("No mcmod.info file found in directory {}", modDir.getName());
             }
         }
 
@@ -92,7 +100,7 @@ public class DirectoryDiscoverer implements ITypeDiscoverer
         {
             if (file.isDirectory())
             {
-                FMLLog.finer("Recursing into package %s", path + file.getName());
+                FMLLog.log.trace("Recursing into package {}", path + file.getName());
                 exploreFileSystem(path + file.getName() + "/", file, harvestedMods, candidate, mc);
                 continue;
             }
@@ -101,21 +109,25 @@ public class DirectoryDiscoverer implements ITypeDiscoverer
             if (match.matches())
             {
                 ASMModParser modParser = null;
+                FileInputStream fis = null;
                 try
                 {
-                    FileInputStream fis = new FileInputStream(file);
+                    fis = new FileInputStream(file);
                     modParser = new ASMModParser(fis);
-                    fis.close();
                     candidate.addClassEntry(path+file.getName());
                 }
                 catch (LoaderException e)
                 {
-                    FMLLog.log(Level.ERROR, e, "There was a problem reading the file %s - probably this is a corrupt file", file.getPath());
+                    FMLLog.log.error("There was a problem reading the file {} - probably this is a corrupt file", file.getPath(), e);
                     throw e;
                 }
-                catch (Exception e)
+                catch (IOException e)
                 {
-                    Throwables.propagate(e);
+                    throw new RuntimeException(e);
+                }
+                finally
+                {
+                    IOUtils.closeQuietly(fis);
                 }
 
                 modParser.validate();

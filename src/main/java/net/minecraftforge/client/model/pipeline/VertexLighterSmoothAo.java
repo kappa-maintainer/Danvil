@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,26 +33,20 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
     @Override
     protected void updateLightmap(float[] normal, float[] lightmap, float x, float y, float z)
     {
-        lightmap[0] = calcLightmap(blockInfo.getBlockLight(), x, y, z);
-        lightmap[1] = calcLightmap(blockInfo.getSkyLight(), x, y, z);
+        calcLightmap(lightmap, x, y, z);
     }
 
     @Override
     protected void updateColor(float[] normal, float[] color, float x, float y, float z, float tint, int multiplier)
     {
-        if(tint != -1)
-        {
-            color[0] *= (float)(multiplier >> 0x10 & 0xFF) / 0xFF;
-            color[1] *= (float)(multiplier >> 0x8 & 0xFF) / 0xFF;
-            color[2] *= (float)(multiplier & 0xFF) / 0xFF;
-        }
+        super.updateColor(normal, color, x, y, z, tint, multiplier);
         float a = getAo(x, y, z);
         color[0] *= a;
         color[1] *= a;
         color[2] *= a;
     }
 
-    protected float calcLightmap(float[][][][] light, float x, float y, float z)
+    protected void calcLightmap(float[] lightmap, float x, float y, float z)
     {
         x *= 2;
         y *= 2;
@@ -71,18 +65,15 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
         float e1 = 1 + 1e-4f;
         if(ax > 2 - 1e-4f && ay <= e1 && az <= e1)
         {
-            if(x > -2 + 1e-4f) x = -2 + 1e-4f;
-            if(x <  2 - 1e-4f) x =  2 - 1e-4f;
+            x = x < 0 ? -2 + 1e-4f : 2 - 1e-4f;
         }
         else if(ay > 2 - 1e-4f && az <= e1 && ax <= e1)
         {
-            if(y > -2 + 1e-4f) y = -2 + 1e-4f;
-            if(y <  2 - 1e-4f) y =  2 - 1e-4f;
+            y = y < 0 ? -2 + 1e-4f : 2 - 1e-4f;
         }
         else if(az > 2 - 1e-4f && ax <= e1 && ay <= e1)
         {
-            if(z > -2 + 1e-4f) z = -2 + 1e-4f;
-            if(z <  2 - 1e-4f) z =  2 - 1e-4f;
+            z = z < 0 ? -2 + 1e-4f : 2 - 1e-4f;
         }
         ax = x > 0 ? x : -x;
         ay = y > 0 ? y : -y;
@@ -113,8 +104,12 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
             z *= s;
         }
 
-        float l = 0;
-        float s = 0;
+        float[][][][] blockLight = blockInfo.getBlockLight();
+        float[][][][] skyLight   = blockInfo.getSkyLight();
+
+        float bl = 0f;
+        float sl = 0f;
+        float s  = 0f;
 
         for(int ix = 0; ix <= 1; ix++)
         {
@@ -132,26 +127,28 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
                     float sz = vx + vy + 3;
 
                     float bx = (2 * vx + vy + vz + 6) / (s3 * sy * sz * (vx + 2));
-                    s += bx;
-                    l += bx * light[0][ix][iy][iz];
+                    s  += bx;
+                    bl += bx * blockLight[0][ix][iy][iz];
+                    sl += bx *   skyLight[0][ix][iy][iz];
 
                     float by = (2 * vy + vz + vx + 6) / (s3 * sz * sx * (vy + 2));
-                    s += by;
-                    l += by * light[1][ix][iy][iz];
+                    s  += by;
+                    bl += by * blockLight[1][ix][iy][iz];
+                    sl += by *   skyLight[1][ix][iy][iz];
 
                     float bz = (2 * vz + vx + vy + 6) / (s3 * sx * sy * (vz + 2));
-                    s += bz;
-                    l += bz * light[2][ix][iy][iz];
+                    s  += bz;
+                    bl += bz * blockLight[2][ix][iy][iz];
+                    sl += bz *   skyLight[2][ix][iy][iz];
                 }
             }
         }
 
-        l /= s;
+        bl /= s;
+        sl /= s;
 
-        if(l > 15f * 0x20 / 0xFFFF) l = 15f * 0x20 / 0xFFFF;
-        if(l < 0) l = 0;
-
-        return l;
+        lightmap[0] = MathHelper.clamp(bl, 0f, 15f * 0x20 / 0xFFFF);
+        lightmap[1] = MathHelper.clamp(sl, 0f, 15f * 0x20 / 0xFFFF);
     }
 
     protected float getAo(float x, float y, float z)
@@ -175,14 +172,14 @@ public class VertexLighterSmoothAo extends VertexLighterFlat
         a += ao[sx - 0][sy - 0][sz - 1] * (0 + x) * (0 + y) * (1 - z);
         a += ao[sx - 0][sy - 0][sz - 0] * (0 + x) * (0 + y) * (0 + z);
 
-        a = MathHelper.clamp_float(a, 0, 1);
+        a = MathHelper.clamp(a, 0, 1);
         return a;
     }
 
     @Override
     public void updateBlockInfo()
     {
-        blockInfo.updateShift(false);
+        blockInfo.updateShift();
         blockInfo.updateLightMatrix();
     }
 }

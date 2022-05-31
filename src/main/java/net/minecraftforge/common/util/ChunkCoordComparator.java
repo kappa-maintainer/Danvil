@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,7 @@ public class ChunkCoordComparator implements java.util.Comparator<ChunkPos>
         z = (int) entityplayer.posZ >> 4;
     }
 
+    @Override
     public int compare(ChunkPos a, ChunkPos b)
     {
         if (a.equals(b))
@@ -42,10 +43,10 @@ public class ChunkCoordComparator implements java.util.Comparator<ChunkPos>
         }
 
         // Subtract current position to set center point
-        int ax = a.chunkXPos - this.x;
-        int az = a.chunkZPos - this.z;
-        int bx = b.chunkXPos - this.x;
-        int bz = b.chunkZPos - this.z;
+        int ax = a.x - this.x;
+        int az = a.z - this.z;
+        int bx = b.x - this.x;
+        int bz = b.z - this.z;
         int result = ((ax - bx) * (ax + bx)) + ((az - bz) * (az + bz));
 
         if (result != 0)

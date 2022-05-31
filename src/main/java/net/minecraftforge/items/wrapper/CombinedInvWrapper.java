@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,8 @@ package net.minecraftforge.items.wrapper;
 
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandlerModifiable;
+
+import javax.annotation.Nonnull;
 
 // combines multiple IItemHandlerModifiable into one interface
 public class CombinedInvWrapper implements IItemHandlerModifiable
@@ -78,7 +80,7 @@ public class CombinedInvWrapper implements IItemHandlerModifiable
     }
 
     @Override
-    public void setStackInSlot(int slot, ItemStack stack)
+    public void setStackInSlot(int slot, @Nonnull ItemStack stack)
     {
         int index = getIndexForSlot(slot);
         IItemHandlerModifiable handler = getHandlerFromIndex(index);
@@ -93,6 +95,7 @@ public class CombinedInvWrapper implements IItemHandlerModifiable
     }
 
     @Override
+    @Nonnull
     public ItemStack getStackInSlot(int slot)
     {
         int index = getIndexForSlot(slot);
@@ -102,7 +105,8 @@ public class CombinedInvWrapper implements IItemHandlerModifiable
     }
 
     @Override
-    public ItemStack insertItem(int slot, ItemStack stack, boolean simulate)
+    @Nonnull
+    public ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate)
     {
         int index = getIndexForSlot(slot);
         IItemHandlerModifiable handler = getHandlerFromIndex(index);
@@ -111,11 +115,30 @@ public class CombinedInvWrapper implements IItemHandlerModifiable
     }
 
     @Override
+    @Nonnull
     public ItemStack extractItem(int slot, int amount, boolean simulate)
     {
         int index = getIndexForSlot(slot);
         IItemHandlerModifiable handler = getHandlerFromIndex(index);
         slot = getSlotFromIndex(slot, index);
         return handler.extractItem(slot, amount, simulate);
+    }
+
+    @Override
+    public int getSlotLimit(int slot)
+    {
+        int index = getIndexForSlot(slot);
+        IItemHandlerModifiable handler = getHandlerFromIndex(index);
+        int localSlot = getSlotFromIndex(slot, index);
+        return handler.getSlotLimit(localSlot);
+    }
+
+    @Override
+    public boolean isItemValid(int slot, @Nonnull ItemStack stack)
+    {
+        int index = getIndexForSlot(slot);
+        IItemHandlerModifiable handler = getHandlerFromIndex(index);
+        int localSlot = getSlotFromIndex(slot, index);
+        return handler.isItemValid(localSlot, stack);
     }
 }

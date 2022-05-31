@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,14 +22,12 @@ package net.minecraftforge.fml.common;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import net.minecraftforge.fml.common.versioning.ArtifactVersion;
 import net.minecraftforge.fml.common.versioning.VersionParser;
 
-import org.apache.logging.log4j.Level;
-
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -41,20 +39,22 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 
+import javax.annotation.Nullable;
+
 public class MetadataCollection
 {
     private String modListVersion;
     private ModMetadata[] modList;
     private Map<String, ModMetadata> metadatas = Maps.newHashMap();
 
-    public static MetadataCollection from(InputStream inputStream, String sourceName)
+    public static MetadataCollection from(@Nullable InputStream inputStream, String sourceName)
     {
         if (inputStream == null)
         {
             return new MetadataCollection();
         }
 
-        InputStreamReader reader = new InputStreamReader(inputStream);
+        InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
         try
         {
             MetadataCollection collection;
@@ -81,15 +81,10 @@ public class MetadataCollection
         }
         catch (JsonParseException e)
         {
-            FMLLog.log(Level.ERROR, e, "The mcmod.info file in %s cannot be parsed as valid JSON. It will be ignored", sourceName);
+            FMLLog.log.error("The mcmod.info file in {} cannot be parsed as valid JSON. It will be ignored", sourceName, e);
             return new MetadataCollection();
         }
-        catch (Exception e)
-        {
-            throw Throwables.propagate(e);
-        }
     }
-
 
     private void parseModMetadataList()
     {

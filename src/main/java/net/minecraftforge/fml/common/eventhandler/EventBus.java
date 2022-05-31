@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,8 +33,6 @@ import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 
-import org.apache.logging.log4j.Level;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.MapMaker;
@@ -49,6 +47,7 @@ public class EventBus implements IEventExceptionHandler
     private Map<Object,ModContainer> listenerOwners = new MapMaker().weakKeys().weakValues().makeMap();
     private final int busID = maxID++;
     private IEventExceptionHandler exceptionHandler;
+    private boolean shutdown;
 
     public EventBus()
     {
@@ -59,7 +58,7 @@ public class EventBus implements IEventExceptionHandler
     public EventBus(@Nonnull IEventExceptionHandler handler)
     {
         this();
-        Preconditions.checkArgument(handler != null, "EventBus exception handler can not be null");
+        Preconditions.checkNotNull(handler, "EventBus exception handler can not be null");
         exceptionHandler = handler;
     }
 
@@ -73,7 +72,7 @@ public class EventBus implements IEventExceptionHandler
         ModContainer activeModContainer = Loader.instance().activeModContainer();
         if (activeModContainer == null)
         {
-            FMLLog.log(Level.ERROR, new Throwable(), "Unable to determine registrant mod for %s. This is a critical error and should be impossible", target);
+            FMLLog.log.error("Unable to determine registrant mod for {}. This is a critical error and should be impossible", target, new Throwable());
             activeModContainer = Loader.instance().getMinecraftModContainer();
         }
         listenerOwners.put(target, activeModContainer);
@@ -116,33 +115,46 @@ public class EventBus implements IEventExceptionHandler
                 }
                 catch (NoSuchMethodException e)
                 {
-                    ;
+                    ; // Eat the error, this is not unexpected
                 }
             }
         }
     }
 
-    private void register(Class<?> eventType, Object target, Method method, ModContainer owner)
+    private void register(Class<?> eventType, Object target, Method method, final ModContainer owner)
     {
         try
         {
             Constructor<?> ctr = eventType.getConstructor();
             ctr.setAccessible(true);
             Event event = (Event)ctr.newInstance();
-            ASMEventHandler listener = new ASMEventHandler(target, method, owner);
-            event.getListenerList().register(busID, listener.getPriority(), listener);
+            final ASMEventHandler asm = new ASMEventHandler(target, method, owner, IGenericEvent.class.isAssignableFrom(eventType));
 
-            ArrayList<IEventListener> others = listeners.get(target);
-            if (others == null)
+            IEventListener listener = asm;
+            if (IContextSetter.class.isAssignableFrom(eventType))
             {
-                others = new ArrayList<IEventListener>();
-                listeners.put(target, others);
+                listener = new IEventListener()
+                {
+                    @Override
+                    public void invoke(Event event)
+                    {
+                        ModContainer old = Loader.instance().activeModContainer();
+                        Loader.instance().setActiveModContainer(owner);
+                        ((IContextSetter)event).setModContainer(owner);
+                        asm.invoke(event);
+                        Loader.instance().setActiveModContainer(old);
+                    }
+                };
             }
+
+            event.getListenerList().register(busID, asm.getPriority(), listener);
+
+            ArrayList<IEventListener> others = listeners.computeIfAbsent(target, k -> new ArrayList<>());
             others.add(listener);
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error registering event handler: {} {} {}", owner, eventType, method, e);
         }
     }
 
@@ -159,6 +171,8 @@ public class EventBus implements IEventExceptionHandler
 
     public boolean post(Event event)
     {
+        if (shutdown) return false;
+
         IEventListener[] listeners = event.getListenerList().getListeners(busID);
         int index = 0;
         try
@@ -171,19 +185,26 @@ public class EventBus implements IEventExceptionHandler
         catch (Throwable throwable)
         {
             exceptionHandler.handleException(this, event, listeners, index, throwable);
-            Throwables.propagate(throwable);
+            Throwables.throwIfUnchecked(throwable);
+            throw new RuntimeException(throwable);
         }
-        return (event.isCancelable() ? event.isCanceled() : false);
+        return event.isCancelable() && event.isCanceled();
+    }
+
+    public void shutdown()
+    {
+        FMLLog.log.warn("EventBus {} shutting down - future events will not be posted.", busID);
+        shutdown = true;
     }
 
     @Override
     public void handleException(EventBus bus, Event event, IEventListener[] listeners, int index, Throwable throwable)
     {
-        FMLLog.log(Level.ERROR, throwable, "Exception caught during firing event %s:", event);
-        FMLLog.log(Level.ERROR, "Index: %d Listeners:", index);
+        FMLLog.log.error("Exception caught during firing event {}:", event, throwable);
+        FMLLog.log.error("Index: {} Listeners:", index);
         for (int x = 0; x < listeners.length; x++)
         {
-            FMLLog.log(Level.ERROR, "%d: %s", x, listeners[x]);
+            FMLLog.log.error("{}: {}", x, listeners[x]);
         }
     }
 }

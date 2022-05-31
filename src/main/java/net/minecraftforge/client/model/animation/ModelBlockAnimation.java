@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,19 +22,20 @@ package net.minecraftforge.client.model.animation;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.TreeMap;
 
+import javax.annotation.Nullable;
 import javax.vecmath.AxisAngle4f;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Quat4f;
 import javax.vecmath.Vector3f;
-
-import org.apache.logging.log4j.Level;
 
 import net.minecraft.client.renderer.block.model.BlockPart;
 import net.minecraft.client.resources.IResource;
@@ -54,7 +55,6 @@ import net.minecraftforge.common.model.animation.JointClips;
 import net.minecraftforge.common.util.JsonUtils;
 import net.minecraftforge.fml.common.FMLLog;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -79,7 +79,7 @@ public class ModelBlockAnimation
         this.clips = clips;
     }
 
-    public ImmutableMap<String, MBClip> getClips()
+    public ImmutableMap<String, ? extends IClip> getClips()
     {
         return clips;
     }
@@ -198,6 +198,7 @@ public class ModelBlockAnimation
             initialize();
             return new Iterable<Event>()
             {
+                @Override
                 public Iterator<Event> iterator()
                 {
                     return new UnmodifiableIterator<Event>()
@@ -256,6 +257,7 @@ public class ModelBlockAnimation
                             }
                         }
 
+                        @Override
                         public boolean hasNext()
                         {
                             return curKey != null;
@@ -320,17 +322,19 @@ public class ModelBlockAnimation
                 }
             }
 
+            @Override
             public TRSRTransformation apply(float time)
             {
                 time -= Math.floor(time);
                 Vector3f translation = new Vector3f(0, 0, 0);
                 Vector3f scale = new Vector3f(1, 1, 1);
+                Vector3f origin = new Vector3f(0, 0, 0);
                 AxisAngle4f rotation = new AxisAngle4f(0, 0, 0, 0);
                 for(MBVariableClip var : variables)
                 {
                     int length = loop ? var.samples.length : (var.samples.length - 1);
                     float timeScaled = time * length;
-                    int s1 = MathHelper.clamp_int((int)Math.round(Math.floor(timeScaled)), 0, length - 1);
+                    int s1 = MathHelper.clamp((int)Math.round(Math.floor(timeScaled)), 0, length - 1);
                     float progress = timeScaled - s1;
                     int s2 = s1 + 1;
                     if(s2 == length && loop) s2 = 0;
@@ -389,11 +393,24 @@ public class ModelBlockAnimation
                         case ZS:
                             scale.z = value;
                             break;
+                        case XORIGIN:
+                            origin.x = value - 0.5F;
+                            break;
+                        case YORIGIN:
+                            origin.y = value - 0.5F;
+                            break;
+                        case ZORIGIN:
+                            origin.z = value - 0.5F;
+                            break;
                     }
                 }
                 Quat4f rot = new Quat4f();
                 rot.set(rotation);
-                return TRSRTransformation.blockCenterToCorner(new TRSRTransformation(translation, rot, scale, null));
+                TRSRTransformation base = new TRSRTransformation(translation, rot, scale, null);
+                Vector3f negOrigin = new Vector3f(origin);
+                negOrigin.negate();
+                base = new TRSRTransformation(origin, null, null, null).compose(base).compose(new TRSRTransformation(negOrigin, null, null, null));
+                return TRSRTransformation.blockCenterToCorner(base);
             }
         }
     }
@@ -401,47 +418,22 @@ public class ModelBlockAnimation
     protected static class MBJoint implements IJoint
     {
         private final String name;
-        private final TRSRTransformation invBindPose;
 
-        public MBJoint(String name, BlockPart part)
+        public MBJoint(String name)
         {
             this.name = name;
-            if(part.partRotation != null)
-            {
-                float x = 0, y = 0, z = 0;
-                switch(part.partRotation.axis)
-                {
-                    case X:
-                        x = 1;
-                    case Y:
-                        y = 1;
-                    case Z:
-                        z = 1;
-                }
-                Quat4f rotation = new Quat4f();
-                rotation.set(new AxisAngle4f(x, y, z, 0));
-                Matrix4f m = new TRSRTransformation(
-                    TRSRTransformation.toVecmath(part.partRotation.origin),
-                    rotation,
-                    null,
-                    null).getMatrix();
-                m.invert();
-                invBindPose = new TRSRTransformation(m);
-            }
-            else
-            {
-                invBindPose = TRSRTransformation.identity();
-            }
         }
 
+        @Override
         public TRSRTransformation getInvBindPose()
         {
-            return invBindPose;
+            return TRSRTransformation.identity();
         }
 
+        @Override
         public Optional<? extends IJoint> getParent()
         {
-            return Optional.absent();
+            return Optional.empty();
         }
 
         public String getName()
@@ -497,7 +489,13 @@ public class ModelBlockAnimation
             @SerializedName("scale_y")
             YS,
             @SerializedName("scale_z")
-            ZS;
+            ZS,
+            @SerializedName("origin_x")
+            XORIGIN,
+            @SerializedName("origin_y")
+            YORIGIN,
+            @SerializedName("origin_z")
+            ZORIGIN;
         }
 
         public static enum Type
@@ -515,6 +513,7 @@ public class ModelBlockAnimation
         }
     }
 
+    @Nullable
     public TRSRTransformation getPartTransform(IModelState state, BlockPart part, int i)
     {
         ImmutableCollection<MBJointWeight> infos = getJoint(i);
@@ -526,9 +525,9 @@ public class ModelBlockAnimation
             {
                 if(info.getWeights().containsKey(i))
                 {
-                    ModelBlockAnimation.MBJoint joint = new ModelBlockAnimation.MBJoint(info.getName(), part);
+                    ModelBlockAnimation.MBJoint joint = new ModelBlockAnimation.MBJoint(info.getName());
                     Optional<TRSRTransformation> trOp = state.apply(Optional.of(joint));
-                    if(trOp.isPresent() && trOp.get() != TRSRTransformation.identity())
+                    if(trOp.isPresent() && !trOp.get().isIdentity())
                     {
                         float w = info.getWeights().get(i)[0];
                         tmp = trOp.get().getMatrix();
@@ -554,28 +553,21 @@ public class ModelBlockAnimation
     {
         try
         {
-            IResource resource = null;
-            try
+            try (IResource resource = manager.getResource(armatureLocation))
             {
-                resource = manager.getResource(armatureLocation);
+                ModelBlockAnimation mba = mbaGson.fromJson(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8), ModelBlockAnimation.class);
+                //String json = mbaGson.toJson(mba);
+                return mba;
             }
             catch(FileNotFoundException e)
             {
                 // this is normal. FIXME: error reporting?
                 return defaultModelBlockAnimation;
             }
-            ModelBlockAnimation mba = mbaGson.fromJson(new InputStreamReader(resource.getInputStream(), "UTF-8"), ModelBlockAnimation.class);
-            //String json = mbaGson.toJson(mba);
-            return mba;
         }
-        catch(IOException e)
+        catch(IOException | JsonParseException e)
         {
-            FMLLog.log(Level.ERROR, e, "Exception loading vanilla model animation %s, skipping", armatureLocation);
-            return defaultModelBlockAnimation;
-        }
-        catch(JsonParseException e)
-        {
-            FMLLog.log(Level.ERROR, e, "Exception loading vanilla model animation %s, skipping", armatureLocation);
+            FMLLog.log.error("Exception loading vanilla model animation {}, skipping", armatureLocation, e);
             return defaultModelBlockAnimation;
         }
     }

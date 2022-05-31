@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,10 +26,11 @@ import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemBucket;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
@@ -39,7 +40,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 
 /**
  * Wrapper to handle vanilla Water or Lava as an IFluidHandler.
- * Methods are modeled after {@link net.minecraft.item.ItemBucket#onItemRightClick(ItemStack, World, EntityPlayer, EnumHand)}
+ * Methods are modeled after {@link ItemBucket#onItemRightClick(World, EntityPlayer, EnumHand)}
  */
 public class BlockLiquidWrapper implements IFluidHandler
 {
@@ -69,7 +70,20 @@ public class BlockLiquidWrapper implements IFluidHandler
     @Override
     public int fill(FluidStack resource, boolean doFill)
     {
-        return 0;
+        // NOTE: "Filling" means placement in this context!
+        if (resource.amount < Fluid.BUCKET_VOLUME)
+        {
+            return 0;
+        }
+
+        if (doFill)
+        {
+            Material material = blockLiquid.getDefaultState().getMaterial();
+            BlockLiquid block = BlockLiquid.getFlowingBlock(material);
+            world.setBlockState(blockPos, block.getDefaultState().withProperty(BlockLiquid.LEVEL, 0), 11);
+        }
+
+        return Fluid.BUCKET_VOLUME;
     }
 
     @Nullable
@@ -89,7 +103,7 @@ public class BlockLiquidWrapper implements IFluidHandler
             {
                 if (doDrain)
                 {
-                    world.setBlockState(blockPos, Blocks.AIR.getDefaultState(), 11);
+                    world.setBlockState(blockPos, Blocks.AIR.getDefaultState(), Constants.BlockFlags.DEFAULT_AND_RERENDER);
                 }
                 return containedStack;
             }
@@ -115,7 +129,7 @@ public class BlockLiquidWrapper implements IFluidHandler
             {
                 if (doDrain)
                 {
-                    world.setBlockState(blockPos, Blocks.AIR.getDefaultState(), 11);
+                    world.setBlockState(blockPos, Blocks.AIR.getDefaultState(), Constants.BlockFlags.DEFAULT_AND_RERENDER);
                 }
                 return containedStack;
             }

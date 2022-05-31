@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,16 +17,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-/**
- * This software is provided under the terms of the Minecraft Forge Public
- * License v1.0.
- */
-
 package net.minecraftforge.common;
+
 import static net.minecraftforge.common.ForgeVersion.Status.*;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,35 +35,43 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.InjectedModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.versioning.ComparableVersion;
 
+import javax.annotation.Nullable;
+
 public class ForgeVersion
 {
+    // This is Forge's Mod Id, used for the ForgeModContainer and resource locations
+    public static final String MOD_ID = "forge";
     //This number is incremented every time we remove deprecated code/major API changes, never reset
-    public static final int majorVersion    = 12;
+    public static final int majorVersion    = 14;
     //This number is incremented every minecraft release, never reset
-    public static final int minorVersion    = 18;
+    public static final int minorVersion    = 23;
     //This number is incremented every time a interface changes or new major feature is added, and reset every Minecraft version
-    public static final int revisionVersion = 1;
+    public static final int revisionVersion = 5;
     //This number is incremented every time Jenkins builds Forge, and never reset. Should always be 0 in the repo code.
     public static final int buildVersion    = 0;
     // This is the minecraft version we're building for - used in various places in Forge/FML code
-    public static final String mcVersion = "1.10.2";
+    public static final String mcVersion = "1.12.2";
     // This is the MCP data version we're using
-    public static final String mcpVersion = "9.32";
+    public static final String mcpVersion = "9.42";
     @SuppressWarnings("unused")
     private static Status status = PENDING;
     @SuppressWarnings("unused")
     private static String target = null;
+
+    private static final Logger log = LogManager.getLogger(MOD_ID + ".VersionCheck");
+
+    private static final int MAX_HTTP_REDIRECTS = Integer.getInteger("http.maxRedirects", 20);
 
     public static int getMajorVersion()
     {
@@ -91,6 +98,7 @@ public class ForgeVersion
         return getResult(ForgeModContainer.getInstance()).status;
     }
 
+    @Nullable
     public static String getTarget()
     {
         CheckResult res = getResult(ForgeModContainer.getInstance());
@@ -157,15 +165,17 @@ public class ForgeVersion
     public static class CheckResult
     {
         public final Status status;
+        @Nullable
         public final ComparableVersion target;
         public final Map<ComparableVersion, String> changes;
+        @Nullable
         public final String url;
 
-        private CheckResult(Status status, ComparableVersion target, Map<ComparableVersion, String> changes, String url)
+        private CheckResult(Status status, @Nullable ComparableVersion target, @Nullable Map<ComparableVersion, String> changes, @Nullable String url)
         {
             this.status = status;
             this.target = target;
-            this.changes = changes == null ? null : Collections.unmodifiableMap(changes);
+            this.changes = changes == null ? Collections.<ComparableVersion, String>emptyMap() : Collections.unmodifiableMap(changes);
             this.url = url;
         }
     }
@@ -179,7 +189,7 @@ public class ForgeVersion
             {
                 if (!ForgeModContainer.getConfig().get(ForgeModContainer.VERSION_CHECK_CAT, "Global", true).getBoolean())
                 {
-                    FMLLog.log("ForgeVersionCheck", Level.INFO, "Global Forge version check system disabled, no further processing.");
+                    log.info("Global Forge version check system disabled, no further processing.");
                     return;
                 }
 
@@ -192,24 +202,58 @@ public class ForgeVersion
                     }
                     else
                     {
-                        FMLLog.log("ForgeVersionCheck", Level.INFO, "[%s] Skipped version check", mod.getModId());
+                        log.info("[{}] Skipped version check", mod.getModId());
                     }
                 }
+            }
+
+            /**
+             * Opens stream for given URL while following redirects
+             */
+            private InputStream openUrlStream(URL url) throws IOException
+            {
+                URL currentUrl = url;
+                for (int redirects = 0; redirects < MAX_HTTP_REDIRECTS; redirects++)
+                {
+                    URLConnection c = currentUrl.openConnection();
+                    if (c instanceof HttpURLConnection)
+                    {
+                        HttpURLConnection huc = (HttpURLConnection) c;
+                        huc.setInstanceFollowRedirects(false);
+                        int responseCode = huc.getResponseCode();
+                        if (responseCode >= 300 && responseCode <= 399)
+                        {
+                            try
+                            {
+                                String loc = huc.getHeaderField("Location");
+                                currentUrl = new URL(currentUrl, loc);
+                                continue;
+                            }
+                            finally
+                            {
+                                huc.disconnect();
+                            }
+                        }
+                    }
+
+                    return c.getInputStream();
+                }
+                throw new IOException("Too many redirects while trying to fetch " + url);
             }
 
             private void process(ModContainer mod, URL url)
             {
                 try
                 {
-                    FMLLog.log("ForgeVersionCheck", Level.INFO, "[%s] Starting version check at %s", mod.getModId(), url.toString());
+                    log.info("[{}] Starting version check at {}", mod.getModId(), url.toString());
                     Status status = PENDING;
                     ComparableVersion target = null;
 
-                    InputStream con = url.openStream();
+                    InputStream con = openUrlStream(url);
                     String data = new String(ByteStreams.toByteArray(con), "UTF-8");
                     con.close();
 
-                    FMLLog.log("ForgeVersionCheck", Level.DEBUG, "[%s] Received version check data:\n%s", mod.getModId(), data);
+                    log.debug("[{}] Received version check data:\n{}", mod.getModId(), data);
 
 
                     @SuppressWarnings("unchecked")
@@ -262,7 +306,7 @@ public class ForgeVersion
                     else
                         status = BETA;
 
-                    FMLLog.log("ForgeVersionCheck", Level.INFO, "[%s] Found status: %s Target: %s", mod.getModId(), status, target);
+                    log.info("[{}] Found status: {} Target: {}", mod.getModId(), status, target);
 
                     Map<ComparableVersion, String> changes = new LinkedHashMap<ComparableVersion, String>();
                     @SuppressWarnings("unchecked")
@@ -291,7 +335,7 @@ public class ForgeVersion
                 }
                 catch (Exception e)
                 {
-                    FMLLog.log("ForgeVersionCheck", Level.DEBUG, e, "Failed to process update information");
+                    log.debug("Failed to process update information", e);
                     status = FAILED;
                 }
             }

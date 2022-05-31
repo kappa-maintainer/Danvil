@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 
-import javax.imageio.ImageIO;
+import javax.annotation.Nullable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
@@ -39,9 +39,10 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.gui.GuiUtilRenderComponents;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.VertexBuffer;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.client.renderer.texture.TextureUtil;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.resources.IResourcePack;
@@ -60,10 +61,10 @@ import net.minecraftforge.fml.common.ModContainer.Disableable;
 import net.minecraftforge.fml.common.versioning.ComparableVersion;
 import static net.minecraft.util.text.TextFormatting.*;
 
-import org.apache.logging.log4j.Level;
 import org.lwjgl.input.Mouse;
 
 import com.google.common.base.Strings;
+import org.lwjgl.opengl.GL11;
 
 /**
  * @author cpw
@@ -84,6 +85,7 @@ public class GuiModList extends GuiScreen
             this.buttonID = buttonID;
         }
 
+        @Nullable
         public static SortType getTypeForButton(GuiButton button)
         {
             for (SortType t : values())
@@ -196,7 +198,7 @@ public class GuiModList extends GuiScreen
     {
         super.mouseClicked(x, y, button);
         search.mouseClicked(x, y, button);
-        if (button == 1 && x >= search.xPosition && x < search.xPosition + search.width && y >= search.yPosition && y < search.yPosition + search.height) {
+        if (button == 1 && x >= search.x && x < search.x + search.width && y >= search.y && y < search.y + search.height) {
             search.setText("");
         }
     }
@@ -280,12 +282,12 @@ public class GuiModList extends GuiScreen
                         try
                         {
                             IModGuiFactory guiFactory = FMLClientHandler.instance().getGuiFactoryFor(selectedMod);
-                            GuiScreen newScreen = guiFactory.mainConfigGuiClass().getConstructor(GuiScreen.class).newInstance(this);
+                            GuiScreen newScreen = guiFactory.createConfigGui(this);
                             this.mc.displayGuiScreen(newScreen);
                         }
                         catch (Exception e)
                         {
-                            FMLLog.log(Level.ERROR, e, "There was a critical issue trying to build the config GUI for %s", selectedMod.getModId());
+                            FMLLog.log.error("There was a critical issue trying to build the config GUI for {}", selectedMod.getModId(), e);
                         }
                         return;
                     }
@@ -297,7 +299,7 @@ public class GuiModList extends GuiScreen
 
     public int drawLine(String line, int offset, int shifty)
     {
-        this.fontRendererObj.drawString(line, offset, shifty, 0xd7edea);
+        this.fontRenderer.drawString(line, offset, shifty, 0xd7edea);
         return shifty + 10;
     }
 
@@ -309,7 +311,7 @@ public class GuiModList extends GuiScreen
             this.modInfo.drawScreen(mouseX, mouseY, partialTicks);
 
         int left = ((this.width - this.listWidth - 38) / 2) + this.listWidth + 30;
-        this.drawCenteredString(this.fontRendererObj, "Mod List", left, 16, 0xFFFFFF);
+        this.drawCenteredString(this.fontRenderer, "Mod List", left, 16, 0xFFFFFF);
         super.drawScreen(mouseX, mouseY, partialTicks);
 
         String text = I18n.format("fml.menu.mods.search");
@@ -337,7 +339,7 @@ public class GuiModList extends GuiScreen
 
     FontRenderer getFontRenderer()
     {
-        return fontRendererObj;
+        return fontRenderer;
     }
 
     public void selectModIndex(int index)
@@ -385,7 +387,7 @@ public class GuiModList extends GuiScreen
                 {
                     InputStream logoResource = getClass().getResourceAsStream(logoFile);
                     if (logoResource != null)
-                        logo = ImageIO.read(logoResource);
+                        logo = TextureUtil.readBufferedImage(logoResource);
                 }
                 if (logo != null)
                 {
@@ -413,8 +415,11 @@ public class GuiModList extends GuiScreen
 
             IModGuiFactory guiFactory = FMLClientHandler.instance().getGuiFactoryFor(selectedMod);
             configModButton.visible = true;
-            configModButton.enabled = guiFactory != null && guiFactory.mainConfigGuiClass() != null;
-
+            configModButton.enabled = false;
+            if (guiFactory != null)
+            {
+                configModButton.enabled = guiFactory.hasConfigGui();
+            }
             lines.add(selectedMod.getMetadata().name);
             lines.add(String.format("Version: %s (%s)", selectedMod.getDisplayVersion(), selectedMod.getVersion()));
             lines.add(String.format("Mod ID: '%s' Mod State: %s", selectedMod.getModId(), Loader.instance().getModState(selectedMod)));
@@ -468,11 +473,12 @@ public class GuiModList extends GuiScreen
 
     private class Info extends GuiScrollingList
     {
+        @Nullable
         private ResourceLocation logoPath;
         private Dimension logoDims;
         private List<ITextComponent> lines = null;
 
-        public Info(int width, List<String> lines, ResourceLocation logoPath, Dimension logoDims)
+        public Info(int width, List<String> lines, @Nullable ResourceLocation logoPath, Dimension logoDims)
         {
             super(GuiModList.this.getMinecraftInstance(),
                   width,
@@ -506,7 +512,11 @@ public class GuiModList extends GuiScreen
                 }
 
                 ITextComponent chat = ForgeHooks.newChatWithLinks(line, false);
-                ret.addAll(GuiUtilRenderComponents.splitText(chat, this.listWidth-8, GuiModList.this.fontRendererObj, false, true));
+                int maxTextLength = this.listWidth - 8;
+                if (maxTextLength >= 0)
+                {
+                    ret.addAll(GuiUtilRenderComponents.splitText(chat, maxTextLength, GuiModList.this.fontRenderer, false, true));
+                }
             }
             return ret;
         }
@@ -535,6 +545,7 @@ public class GuiModList extends GuiScreen
         }
 
 
+        @Override
         protected void drawHeader(int entryRight, int relativeY, Tessellator tess)
         {
             int top = relativeY;
@@ -543,9 +554,9 @@ public class GuiModList extends GuiScreen
             {
                 GlStateManager.enableBlend();
                 GuiModList.this.mc.renderEngine.bindTexture(logoPath);
-                VertexBuffer wr = tess.getBuffer();
+                BufferBuilder wr = tess.getBuffer();
                 int offset = (this.left + this.listWidth/2) - (logoDims.width / 2);
-                wr.begin(7, DefaultVertexFormats.POSITION_TEX);
+                wr.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
                 wr.pos(offset,                  top + logoDims.height, zLevel).tex(0, 1).endVertex();
                 wr.pos(offset + logoDims.width, top + logoDims.height, zLevel).tex(1, 1).endVertex();
                 wr.pos(offset + logoDims.width, top,                   zLevel).tex(1, 0).endVertex();
@@ -560,7 +571,7 @@ public class GuiModList extends GuiScreen
                 if (line != null)
                 {
                     GlStateManager.enableBlend();
-                    GuiModList.this.fontRendererObj.drawStringWithShadow(line.getFormattedText(), this.left + 4, top, 0xFFFFFF);
+                    GuiModList.this.fontRenderer.drawStringWithShadow(line.getFormattedText(), this.left + 4, top, 0xFFFFFF);
                     GlStateManager.disableAlpha();
                     GlStateManager.disableBlend();
                 }
@@ -589,7 +600,7 @@ public class GuiModList extends GuiScreen
                 for (ITextComponent part : line) {
                     if (!(part instanceof TextComponentString))
                         continue;
-                    k += GuiModList.this.fontRendererObj.getStringWidth(((TextComponentString)part).getText());
+                    k += GuiModList.this.fontRenderer.getStringWidth(((TextComponentString)part).getText());
                     if (k >= x)
                     {
                         GuiModList.this.handleComponentClick(part);

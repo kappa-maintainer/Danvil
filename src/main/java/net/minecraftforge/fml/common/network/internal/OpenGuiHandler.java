@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,8 +18,6 @@
  */
 
 package net.minecraftforge.fml.common.network.internal;
-
-import org.apache.logging.log4j.Level;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.IThreadListener;
@@ -42,27 +40,21 @@ public class OpenGuiHandler extends SimpleChannelInboundHandler<FMLMessage.OpenG
         }
         else
         {
-            thread.addScheduledTask(new Runnable()
-            {
-                public void run()
-                {
-                    OpenGuiHandler.this.process(msg);
-                }
-            });
+            thread.addScheduledTask(() -> OpenGuiHandler.this.process(msg));
         }
     }
 
     private void process(OpenGui msg)
     {
-        EntityPlayer player = FMLClientHandler.instance().getClient().thePlayer;
-        player.openGui(msg.modId, msg.modGuiId, player.worldObj, msg.x, msg.y, msg.z);
+        EntityPlayer player = FMLClientHandler.instance().getClient().player;
+        player.openGui(msg.modId, msg.modGuiId, player.world, msg.x, msg.y, msg.z);
         player.openContainer.windowId = msg.windowId;
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
     {
-        FMLLog.log(Level.ERROR, cause, "OpenGuiHandler exception");
+        FMLLog.log.error("OpenGuiHandler exception", cause);
         super.exceptionCaught(ctx, cause);
     }
 

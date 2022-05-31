@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,8 @@ import net.minecraftforge.fml.common.versioning.VersionRange;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.eventbus.EventBus;
+
+import javax.annotation.Nullable;
 
 public class DummyModContainer implements ModContainer
 {
@@ -164,6 +166,7 @@ public class DummyModContainer implements ModContainer
     }
 
     @Override
+    @Nullable
     public Certificate getSigningCertificate()
     {
         return null;

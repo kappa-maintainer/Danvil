@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package net.minecraftforge.fml.common.network.handshake;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import net.minecraft.network.NetworkManager;
@@ -30,9 +31,6 @@ import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
 import net.minecraftforge.fml.relauncher.Side;
 
-import org.apache.logging.log4j.Level;
-
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableSet;
 
 public class ChannelRegistrationHandler extends SimpleChannelInboundHandler<FMLProxyPacket> {
@@ -45,10 +43,11 @@ public class ChannelRegistrationHandler extends SimpleChannelInboundHandler<FMLP
         {
             byte[] data = new byte[msg.payload().readableBytes()];
             msg.payload().readBytes(data);
-            String channels = new String(data,Charsets.UTF_8);
+            String channels = new String(data, StandardCharsets.UTF_8);
             String[] split = channels.split("\0");
             Set<String> channelSet = ImmutableSet.copyOf(split);
             FMLCommonHandler.instance().fireNetRegistrationEvent(manager, channelSet, msg.channel(), side);
+            msg.payload().release();
         }
         else
         {
@@ -59,7 +58,7 @@ public class ChannelRegistrationHandler extends SimpleChannelInboundHandler<FMLP
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
     {
-        FMLLog.log(Level.ERROR, cause, "ChannelRegistrationHandler exception");
+        FMLLog.log.error("ChannelRegistrationHandler exception", cause);
         super.exceptionCaught(ctx, cause);
     }
 }

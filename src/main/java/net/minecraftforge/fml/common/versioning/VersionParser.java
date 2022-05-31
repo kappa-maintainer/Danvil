@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,10 +21,7 @@ package net.minecraftforge.fml.common.versioning;
 
 import java.util.List;
 
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.LoaderException;
-
-import org.apache.logging.log4j.Level;
 
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
@@ -35,7 +32,7 @@ import com.google.common.collect.Lists;
  * http://docs.codehaus.org/display/MAVEN/Versioning
  * and allows for comparison of versions based on that document.
  * Bounded version specifications are defined as
- * http://maven.apache.org/plugins/maven-enforcer-plugin/rules/versionRanges.html
+ * https://maven.apache.org/enforcer/enforcer-rules/versionRanges.html
  *
  * Borrows heavily from maven version range management code
  *
@@ -76,8 +73,7 @@ public class VersionParser
         }
         catch (InvalidVersionSpecificationException e)
         {
-            FMLLog.log(Level.ERROR, e, "Unable to parse a version range specification successfully %s", range);
-            throw new LoaderException(e);
+            throw new LoaderException("Unable to parse a version range specification successfully " + range, e);
         }
     }
 }

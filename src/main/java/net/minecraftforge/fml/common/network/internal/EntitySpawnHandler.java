@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,8 +22,6 @@ package net.minecraftforge.fml.common.network.internal;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-import org.apache.logging.log4j.Level;
-
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.entity.Entity;
@@ -43,8 +41,6 @@ import net.minecraftforge.fml.common.registry.IEntityAdditionalSpawnData;
 import net.minecraftforge.fml.common.registry.IThrowableEntity;
 import net.minecraftforge.fml.common.registry.EntityRegistry.EntityRegistration;
 
-import com.google.common.base.Throwables;
-
 public class EntitySpawnHandler extends SimpleChannelInboundHandler<FMLMessage.EntityMessage> {
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, final EntityMessage msg) throws Exception
@@ -56,13 +52,7 @@ public class EntitySpawnHandler extends SimpleChannelInboundHandler<FMLMessage.E
         }
         else
         {
-            thread.addScheduledTask(new Runnable()
-            {
-                public void run()
-                {
-                    EntitySpawnHandler.this.process(msg);
-                }
-            });
+            thread.addScheduledTask(() -> EntitySpawnHandler.this.process(msg));
         }
     }
 
@@ -70,7 +60,9 @@ public class EntitySpawnHandler extends SimpleChannelInboundHandler<FMLMessage.E
     {
         if (msg.getClass().equals(FMLMessage.EntitySpawnMessage.class))
         {
-            spawnEntity((FMLMessage.EntitySpawnMessage)msg);
+            FMLMessage.EntitySpawnMessage spawnMsg = (FMLMessage.EntitySpawnMessage) msg;
+            spawnEntity(spawnMsg);
+            spawnMsg.dataStream.release();
         }
     }
 
@@ -84,7 +76,6 @@ public class EntitySpawnHandler extends SimpleChannelInboundHandler<FMLMessage.E
                     " at ( " + spawnMsg.rawX + "," + spawnMsg.rawY + ", " + spawnMsg.rawZ + ") Please contact mod author or server admin.");
         }
         WorldClient wc = FMLClientHandler.instance().getWorldClient();
-        Class<? extends Entity> cls = er.getEntityClass();
         try
         {
             Entity entity;
@@ -93,7 +84,7 @@ public class EntitySpawnHandler extends SimpleChannelInboundHandler<FMLMessage.E
                 entity = er.doCustomSpawning(spawnMsg);
             } else
             {
-                entity = cls.getConstructor(World.class).newInstance(wc);
+                entity = er.newInstance(wc);
 
                 int offset = spawnMsg.entityId - entity.getEntityId();
                 entity.setEntityId(spawnMsg.entityId);
@@ -138,17 +129,17 @@ public class EntitySpawnHandler extends SimpleChannelInboundHandler<FMLMessage.E
                 ((IEntityAdditionalSpawnData) entity).readSpawnData(spawnMsg.dataStream);
             }
             wc.addEntityToWorld(spawnMsg.entityId, entity);
-        } catch (Exception e)
+        }
+        catch (Exception e)
         {
-            FMLLog.log(Level.ERROR, e, "A severe problem occurred during the spawning of an entity at ( " + spawnMsg.rawX + "," + spawnMsg.rawY + ", " + spawnMsg.rawZ +")");
-            throw Throwables.propagate(e);
+            throw new RuntimeException("A severe problem occurred during the spawning of an entity at (" + spawnMsg.rawX + ", " + spawnMsg.rawY + ", " + spawnMsg.rawZ + ")", e);
         }
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception
     {
-        FMLLog.log(Level.ERROR, cause, "EntitySpawnHandler exception");
+        FMLLog.log.error("EntitySpawnHandler exception", cause);
         super.exceptionCaught(ctx, cause);
     }
 }

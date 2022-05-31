@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,7 +52,7 @@ public class WorldTypeEvent extends Event
     /**
      * BiomeSize is fired when vanilla Minecraft attempts to generate biomes.<br>
      * This event is fired during biome generation in
-     * {@link GenLayer#initializeAllBiomeGenerators(long, WorldType, String)}. <br>
+     * {@link GenLayer#initializeAllBiomeGenerators(long, WorldType, ChunkProviderSettings)}. <br>
      * <br>
      * {@link #originalSize} the original size of the Biome. <br>
      * {@link #newSize} the new size of the biome. Initially set to the {@link #originalSize}. <br>

@@ -1,47 +1,51 @@
 buildscript {
     repositories {
+        mavenLocal()
         mavenCentral()
         maven {
             name = "forge"
-            url = "http://files.minecraftforge.net/maven"
+            url = "https://files.minecraftforge.net/maven"
         }
         maven {
             name = "sonatype"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
     }
     dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.2-SNAPSHOT'
+        classpath 'edu.sc.seis.launch4j:launch4j:2.4.6'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
     }
 }
 
-repositories {
-        maven {
-            name = "local"
-            url = "file:///home/cpw/projects/repo"
-        }
+plugins {
+    id 'net.minecrell.licenser' version '0.4'
 }
 
 apply plugin: "maven"
-apply plugin: "net.minecraftforge.gradle.patcher"
-apply plugin: "net.minecraftforge.gradle.launch4j"
+def patcher_plugin = plugins.apply('net.minecraftforge.gradle.patcher')
+apply plugin: 'edu.sc.seis.launch4j'
 
-minecraft.version = "1.10.2"
+minecraft.version = "1.12.2"
 
 minecraft {
-    mappings = 'snapshot_nodoc_20160518'
+    mappings = 'snapshot_nodoc_20171003'
     workspaceDir = "projects"
     versionJson = "jsons/${minecraft.version}-dev.json"
     buildUserdev = true
     buildInstaller = true
-    installerVersion = "1.4"
+    installerVersion = "1.5"
 
     def common = {
         patchPrefixOriginal "../src-base/minecraft"
         patchPrefixChanged "../src-work/minecraft"
-        mainClassClient "net.minecraft.launchwrapper.Launch"
+        // mainClassClient "net.minecraft.launchwrapper.Launch"
+        mainClassClient "com.cleanroommc.bouncepad.Bouncepad"
         tweakClassClient "net.minecraftforge.fml.common.launcher.FMLTweaker"
-        mainClassServer "net.minecraft.launchwrapper.Launch"
+        // mainClassServer "net.minecraft.launchwrapper.Launch"
+        mainClassServer "com.cleanroommc.bouncepad.Bouncepad"
         tweakClassServer "net.minecraftforge.fml.common.launcher.FMLServerTweaker"
     }
 
@@ -59,13 +63,33 @@ minecraft {
     }
 }
 
+ext {
+    //Dirty hack, but keeps our unique version system on new jenkins
+    BUILD_NUMBER = 2838 + (System.getenv('BUILD_NUMBER') ?: project.ext.properties.buildNumber ?: 0).toInteger()
+    
+    JAR_SIGNER = [:]
+    if (project.hasProperty('keystore')) {
+        JAR_SIGNER = [
+            storepass: project.properties.keystoreStorePass,
+            keypass: project.properties.keystoreKeyPass,
+            keystore: project.properties.keystore
+        ]
+    }
+}
+
 group = 'net.minecraftforge'
 version = getVersionFromJava(file("src/main/java/net/minecraftforge/common/ForgeVersion.java"))
 
 extractForgeSources { exclude "**/SideOnly.java", "**/Side.java" }
 extractForgeResources { exclude "**/log4j2.xml" }
 
-genGradleProjects { addTestCompileDep "junit:junit:4.12" }
+genGradleProjects {
+    addTestCompileDep "junit:junit:4.12" // TODO update unit tests to junit 5 and remove this
+    addTestCompileDep "org.junit.jupiter:junit-jupiter-api:5.0.0"
+    addTestCompileDep "org.opentest4j:opentest4j:1.0.0" // needed for junit 5
+    addTestCompileDep "org.hamcrest:hamcrest-core:1.3"
+    filter { dep -> !dep.contains("scala") }
+}
 
 processJson {
     releaseJson = "jsons/${minecraft.version}-rel.json"
@@ -79,22 +103,43 @@ processJson {
     ])
 }
 
-task changelog(type: JenkinsChangelog) {
 
-    // skip if there is no forge jenkins pass
-    onlyIf {
-        project.hasProperty('forgeJenkinsPass')
-        // Not sure what abrar was trying to do here...
-        //project.file("build/distributions/${project.name}-${project.version}-changelog.txt").text = ""
+license {
+    header = project.file('LICENSE-header.txt')
+
+    include 'net/minecraftforge/'
+    exclude 'net/minecraftforge/api/distmarker/'
+    exclude 'net/minecraftforge/fml/repackage/'
+    exclude 'net/minecraftforge/server/terminalconsole/'
+    exclude 'net/minecraftforge/fml/common/versioning/ComparableVersion.java'
+    exclude 'net/minecraftforge/fml/common/versioning/InvalidVersionSpecificationException.java'
+    exclude 'net/minecraftforge/fml/common/versioning/Restriction.java'
+    exclude 'net/minecraftforge/fml/common/versioning/VersionRange.java'
+
+    tasks {
+        main {
+            files = project.files('src/main/java')
+        }
+        test {
+            files = project.files('src/test/java')
+        }
     }
+}
 
-    outputs.upToDateWhen { false } // never up to date
-    serverRoot = "http://ci.jenkins.minecraftforge.net/"
-    jobName = "minecraftforge"
-    targetBuild = System.env['BUILD_NUMBER'] ?: project.ext.properties.buildNumber ?:0;
-    authName = "console_script"
-    authPassword = project.hasProperty('forgeJenkinsPass') ? project.getProperty('forgeJenkinsPass') : "";
-    output = "build/distributions/${project.name}-${project.version}-changelog.txt"
+task changelog() {
+    ext {
+        changelog_old = rootProject.file('legacy_changelog.txt')
+        changelog_new = rootProject.file('build/changelog_new.txt')
+        output = rootProject.file('build/changelog.txt')
+    }
+    inputs.file changelog_old
+    if (changelog_new.exists())
+        inputs.file changelog_new
+    outputs.file output
+    
+    doLast {
+        output.text = changelog_new.text + '\n' + changelog_old.text
+    }
 }
 
 task crowdin(type: CrowdinDownload) {
@@ -108,17 +153,72 @@ task crowdin(type: CrowdinDownload) {
 }
 
 def extraTxts = [
-    changelog, // yeah we can do thi, because gradle and groovy are awesome
-    "CREDITS-fml.txt",
-    "LICENSE-new.txt",
-    "MinecraftForge-Credits.txt",
-    "Paulscode SoundSystem CodecIBXM License.txt",
-    "Paulscode IBXM Library License.txt"
+    "CREDITS.txt",
+    "LICENSE.txt",
+    "LICENSE-Paulscode SoundSystem CodecIBXM.txt",
+    "LICENSE-Paulscode IBXM Library.txt",
+    changelog
 ]
+
+import groovy.json.JsonSlurper;
+import groovy.json.JsonBuilder;
+
+task extractAnnotationsVanilla(type: net.minecraftforge.gradle.tasks.TaskExtractAnnotationsText, dependsOn: deobfuscateJar) {
+    jar = deobfuscateJar.outJar
+    output = 'build/vanilla_annotations_raw.json'
+    doLast { //Re-dump it so it's in groovy's sorted order. Because I like being able to do diffs against things.
+        def json = new JsonSlurper().parseText(file(output).text)
+        file(output).write(new JsonBuilder(json).toPrettyString())
+    }
+}
+
+task reobfToSRG(type: net.minecraftforge.gradle.patcher.TaskReobfuscate, dependsOn: reobfuscate) {
+    srg = patcher_plugin.delayedFile('{CACHE_DIR}/de/oceanlabs/mcp/mcp_{MAPPING_CHANNEL}/{MAPPING_VERSION}/{MC_VERSION}/srgs/mcp-srg.srg')
+    exc = reobfuscate.exc
+    preFFJar = reobfuscate.preFFJar
+    methodsCsv = reobfuscate.methodsCsv
+    fieldsCsv = reobfuscate.fieldsCsv
+    addLibs reobfuscate.libs
+    inJar = patcher_plugin.delayedFile('{BUILD_DIR}/localCache/Forge/recompiled.jar')
+    outJar = 'build/forge_srg.jar'
+}
+
+task extractAnnotationsForgeSRG(type: net.minecraftforge.gradle.tasks.TaskExtractAnnotationsText, dependsOn: reobfToSRG) {
+    jar = reobfToSRG.outJar
+    output = 'build/forge_annotations.json'
+    doLast { //Re-dump it so it's in groovy's sorted order. Because I like being able to do diffs against things.
+        def json = new JsonSlurper().parseText(file(output).text)
+        json.entrySet().removeIf{e -> (!e.key.startsWith('net/minecraft/') && !e.key.startsWith('net/minecraftforge/')) || e.key.endsWith('/package-info')}
+        file(output).write(new JsonBuilder(json).toPrettyString())
+    }
+}
+
+task fixAnnotationsJson(dependsOn: [extractAnnotationsVanilla, extractAnnotationsForgeSRG, genPatches]) {
+    inputs.file(extractAnnotationsVanilla.output)
+    inputs.file(extractAnnotationsForgeSRG.output)
+    outputs.file('build/vanilla_annotations.json')
+    doLast {
+        def json_vanilla = new JsonSlurper().parseText(file(extractAnnotationsVanilla.output).text) as TreeMap
+        def json_forge = new JsonSlurper().parseText(file(extractAnnotationsForgeSRG.output).text) as TreeMap
+        def start = minecraft.projects.forge.patchDir.absolutePath.length()
+        file(minecraft.projects.forge.patchDir).traverse(type: groovy.io.FileType.FILES, nameFilter: {nf -> nf.endsWith('.java.patch')}) { f ->
+            def cls = f.absolutePath.substring(start+1).replace('\\', '/').replace('.java.patch', '')
+            json_vanilla.entrySet().removeIf{e -> e.key == cls || e.key.startsWith(cls + '$')}
+            json_forge.entrySet().stream().filter{e -> e.key == cls || e.key.startsWith(cls + '$')}.forEach{e -> json_vanilla.put(e.key, e.value)} 
+        }
+        json_forge.entrySet().stream().filter{e -> e.key.startsWith('net/minecraftforge/')}.forEach{e -> json_vanilla.put(e.key, e.value)} 
+        outputs.files.singleFile.write(new JsonBuilder(json_vanilla).toPrettyString())
+    }
+}
+
 
 outputJar {
     classifier = 'universal'
     from extraTxts
+    from(fixAnnotationsJson){
+        into 'META-INF'
+    }
+    dependsOn fixAnnotationsJson
 
     // add crowdin locales
     from { crowdin.getDidWork() ? zipTree(crowdin.output) : null}
@@ -135,6 +235,7 @@ installer {
     classifier = 'installer'
     from extraTxts
     from "src/main/resources/forge_logo.png"
+    from "src/main/resources/url.png"
     rename "forge_logo\\.png", "big_logo.png"
 }
 
@@ -143,16 +244,11 @@ task signUniversal(type: SignJar, dependsOn: 'outputJar') {
         project.hasProperty('jarsigner')
     }
 
-    def jarsigner = [:];
-
-    if (project.hasProperty('jarsigner'))
-        jarsigner = project.jarsigner;
-
     alias = 'forge'
     exclude "paulscode/**"
-    storePass = jarsigner.storepass
-    keyPass = jarsigner.keypass
-    keyStore = jarsigner.keystore
+    storePass = JAR_SIGNER.storepass
+    keyPass = JAR_SIGNER.keypass
+    keyStore = JAR_SIGNER.keystore
     inputFile = outputJar.archivePath
     outputFile = outputJar.archivePath
 }
@@ -171,13 +267,13 @@ task makeMdk(type: Zip) {
 
     from 'gradlew'
     from 'gradlew.bat'
+    from extraTxts
     into ('gradle') {
         from 'gradle'
     }
     into ('eclipse') {
         from 'mdk/eclipse'
     }
-    from changelog.output
     from ('mdk') {
         filter(ReplaceTokens, tokens: [
         VERSION: project.version,
@@ -185,11 +281,6 @@ task makeMdk(type: Zip) {
         ])
         exclude 'eclipse'
         rename 'gitignore\\.txt', '.gitignore'
-        from 'MinecraftForge-Credits.txt'
-        from 'LICENSE-new.txt'
-        from 'Paulscode IBXM Library License.txt'
-        from 'Paulscode SoundSystem CodecIBXM License.txt'
-        from 'CREDITS-fml.txt'
     }
 }
 tasks.build.dependsOn makeMdk
@@ -198,33 +289,34 @@ tasks.build.dependsOn makeMdk
 
 launch4j {
     jar = installer.archivePath.canonicalPath
-    outfile = file("build/distributions/${project.name}-${project.version}-installer-win.exe").canonicalPath
+    outfile = "${project.name}-${project.version}-installer-win.exe"
     icon = file('icon.ico').canonicalPath
     manifest = file('l4jManifest.xml').canonicalPath
-    jreMinVersion = '1.6.0'
-    initialHeapPercent = 5;
-    maxHeapPercent = 100;
+    jreMinVersion = '1.8.0_101'
+    initialHeapPercent = 5
+    maxHeapPercent = 100
 }
-tasks.generateXmlConfig.dependsOn installer
+tasks.createExe.dependsOn installer
 tasks.build.dependsOn 'launch4j'
 
 // MAVEN
 
 artifacts {
-    archives changelog.output
-    archives file("build/distributions/${project.name}-${project.version}-installer-win.exe")
+    archives(changelog.outputs.files.singleFile) {
+        classifier = 'changelog'
+    }
+    archives file('build/' + launch4j.outputDir + '/' + launch4j.outfile)
     archives makeMdk
 }
 
 task ciWriteBuildNumber << {
     def file = file("src/main/java/net/minecraftforge/common/ForgeVersion.java");
-    def bn = System.getenv("BUILD_NUMBER")?:project.ext.properties.buildNumber?:0;
     def outfile = "";
     def ln = "\n"; //Linux line endings because we're on git!
 
     file.eachLine{ String s ->
         if (s.matches("^    public static final int buildVersion    = [\\d]+;\$"))
-            s = "    public static final int buildVersion    = ${bn};";
+            s = "    public static final int buildVersion    = ${BUILD_NUMBER};";
         if (s.matches('^    public static final String mcVersion = "[^\\"]+";'))
             s = "    public static final String mcVersion = \"${minecraft.version}\";";
         outfile += (s+ln);
@@ -237,15 +329,14 @@ uploadArchives {
 
         dependsOn 'build'
 
-        if (project.hasProperty('forgeMavenPass'))
+        if (project.hasProperty('forgeMavenPassword'))
         {
-            repository(url: "http://files.minecraftforge.net/maven/manage/upload") {
-                authentication(userName: "forge", password: project.getProperty('forgeMavenPass')) // the elvis operator. look it up.
+            repository(url: "https://files.minecraftforge.net/maven/manage/upload") {
+                authentication(userName: project.getProperty('forgeMavenUser'), password: project.getProperty('forgeMavenPassword'))
             }
         }
         else
         {
-            // local repo folder. Might wanna juset use  gradle install   if you wanans end it to maven-local
             repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
         }
 
@@ -302,7 +393,6 @@ uploadArchives {
 
 // HELPER METHODS
 
-import groovy.json.JsonSlurper;
 
 String getServerClasspath(File file)
 {
@@ -346,8 +436,7 @@ String getVersionFromJava(File file)
         }
     }
 
-    build = System.getenv("BUILD_NUMBER") ?: project.ext.properties.buildNumber ?: 0
-
+    build = BUILD_NUMBER
 
     String branch = null;
     if (!System.getenv().containsKey("GIT_BRANCH"))
@@ -365,11 +454,17 @@ String getVersionFromJava(File file)
 
     if (branch && branch != 'master' && branch != 'HEAD' && branch != minecraft.version && branch != minecraft.version + '.0')
     {
-        if (!(branch.endsWith('.x') && minecraft.version.startsWith(branch.substring(0, branch.length() -1))))
+        if (!(branch.endsWith('.x') && minecraft.version.startsWith(branch.substring(0, branch.length() -2))))
             out += "-$branch"
     }
 
     return out;
+}
+
+reobfuscate {
+    extraSrg = [
+    'MD: net/minecraftforge/fml/common/registry/FMLControlledNamespacedRegistry/getKeys ()Ljava/util/Set; net/minecraftforge/fml/common/registry/FMLControlledNamespacedRegistry/getKeys ()Ljava/util/Set;'
+    ]
 }
 
 task resetBuildNumber << {
@@ -377,7 +472,7 @@ task resetBuildNumber << {
     ciWriteBuildNumber.execute()
 }
 // re-add old tasks for jenkins compat
-// should be remvoed, and the jenkisn fixed when no longer building with FG 1.2
+// should be removed, and the jenkins fixed when no longer building with FG 1.2
 task setupForge { dependsOn 'setup', 'ciWriteBuildNumber' }
 task buildPackages { dependsOn 'build' }
 

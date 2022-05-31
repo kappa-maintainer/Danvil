@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,6 +22,7 @@ package net.minecraftforge.client.settings;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.IntHashMap;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EnumMap;
@@ -38,6 +39,7 @@ public class KeyBindingMap
         }
     }
 
+    @Nullable
     public KeyBinding lookupActive(int keyCode)
     {
         KeyModifier activeModifier = KeyModifier.getActiveModifier();
@@ -52,6 +54,7 @@ public class KeyBindingMap
         return getBinding(keyCode, KeyModifier.NONE);
     }
 
+    @Nullable
     private KeyBinding getBinding(int keyCode, KeyModifier keyModifier)
     {
         Collection<KeyBinding> bindings = map.get(keyModifier).lookup(keyCode);

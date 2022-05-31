@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,11 +22,14 @@ package net.minecraftforge.event.world;
 import java.util.EnumSet;
 import java.util.List;
 
+import net.minecraft.block.BlockPortal;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Enchantments;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
@@ -36,6 +39,9 @@ import net.minecraftforge.fml.common.eventhandler.Cancelable;
 import net.minecraftforge.fml.common.eventhandler.Event;
 
 import com.google.common.collect.ImmutableList;
+
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class BlockEvent extends Event
 {
@@ -158,39 +164,101 @@ public class BlockEvent extends Event
     }
 
     /**
+     * Called when a block is placed.
+     *
+     * If a Block Place event is cancelled, the block will not be placed.
+     */
+    @Cancelable
+    public static class EntityPlaceEvent extends BlockEvent
+    {
+        private final Entity entity;
+        private final BlockSnapshot blockSnapshot;
+        private final IBlockState placedBlock;
+        private final IBlockState placedAgainst;
+
+        public EntityPlaceEvent(@Nonnull BlockSnapshot blockSnapshot, @Nonnull IBlockState placedAgainst, @Nullable Entity entity)
+        {
+            super(blockSnapshot.getWorld(), blockSnapshot.getPos(), !(entity instanceof EntityPlayer) ? blockSnapshot.getReplacedBlock() : blockSnapshot.getCurrentBlock());
+            this.entity = entity;
+            this.blockSnapshot = blockSnapshot;
+            this.placedBlock = !(entity instanceof EntityPlayer) ? blockSnapshot.getReplacedBlock() : blockSnapshot.getCurrentBlock();
+            this.placedAgainst = placedAgainst;
+
+            if (DEBUG)
+            {
+                System.out.printf("Created EntityPlaceEvent - [PlacedBlock: %s ][PlacedAgainst: %s ][Entity: %s ]\n", getPlacedBlock(), placedAgainst, entity);
+            }
+        }
+
+        @Nullable
+        public Entity getEntity() { return entity; }
+        public BlockSnapshot getBlockSnapshot() { return blockSnapshot; }
+        public IBlockState getPlacedBlock() { return placedBlock; }
+        public IBlockState getPlacedAgainst() { return placedAgainst; }
+    }
+
+    /**
      * Called when a block is placed by a player.
      *
      * If a Block Place event is cancelled, the block will not be placed.
      */
     @Cancelable
-    public static class PlaceEvent extends BlockEvent
+    @Deprecated // Remove in 1.13
+    public static class PlaceEvent extends EntityPlaceEvent
     {
         private final EntityPlayer player;
-        private final ItemStack itemInHand;
-        private final BlockSnapshot blockSnapshot;
-        private final IBlockState placedBlock;
-        private final IBlockState placedAgainst;
+        private final EnumHand hand;
 
-        public PlaceEvent(BlockSnapshot blockSnapshot, IBlockState placedAgainst, EntityPlayer player)
-        {
-            super(blockSnapshot.getWorld(), blockSnapshot.getPos(), blockSnapshot.getCurrentBlock());
+        public PlaceEvent(@Nonnull BlockSnapshot blockSnapshot, @Nonnull IBlockState placedAgainst, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
+            super(blockSnapshot, placedAgainst, player);
             this.player = player;
-            this.itemInHand = player.getHeldItemMainhand();
-            this.blockSnapshot = blockSnapshot;
-            this.placedBlock = blockSnapshot.getCurrentBlock();
-            this.placedAgainst = placedAgainst;
+            this.hand = hand;
             if (DEBUG)
             {
-                System.out.printf("Created PlaceEvent - [PlacedBlock: %s ][PlacedAgainst: %s ][ItemStack: %s ][Player: %s ]\n", getPlacedBlock(), placedAgainst, getItemInHand(), player);
+                System.out.printf("Created PlaceEvent - [PlacedBlock: %s ][PlacedAgainst: %s ][ItemStack: %s ][Player: %s ][Hand: %s]\n", getPlacedBlock(), placedAgainst, player.getHeldItem(hand), player, hand);
             }
         }
 
         public EntityPlayer getPlayer() { return player; }
-        public ItemStack getItemInHand() { return itemInHand; }
-        public BlockSnapshot getBlockSnapshot() { return blockSnapshot; }
-        public IBlockState getPlacedBlock() { return placedBlock; }
-        public IBlockState getPlacedAgainst() { return placedAgainst; }
+        @Nonnull
+        @Deprecated
+        public ItemStack getItemInHand() { return player.getHeldItem(hand); }
+        public EnumHand getHand() { return hand; }
     }
+
+    /**
+     * Fired when a single block placement triggers the
+     * creation of multiple blocks(e.g. placing a bed block). The block returned
+     * by {@link #state} and its related methods is the block where
+     * the placed block would exist if the placement only affected a single
+     * block.
+     */
+    @Cancelable
+    public static class EntityMultiPlaceEvent extends EntityPlaceEvent
+    {
+        private final List<BlockSnapshot> blockSnapshots;
+
+        public EntityMultiPlaceEvent(@Nonnull List<BlockSnapshot> blockSnapshots, @Nonnull IBlockState placedAgainst, @Nullable Entity entity) {
+            super(blockSnapshots.get(0), placedAgainst, entity);
+            this.blockSnapshots = ImmutableList.copyOf(blockSnapshots);
+            if (DEBUG)
+            {
+                System.out.printf("Created EntityMultiPlaceEvent - [PlacedAgainst: %s ][Entity: %s ]\n", placedAgainst, entity);
+            }
+        }
+
+        /**
+         * Gets a list of BlockSnapshots for all blocks which were replaced by the
+         * placement of the new blocks. Most of these blocks will just be of type AIR.
+         *
+         * @return immutable list of replaced BlockSnapshots
+         */
+        public List<BlockSnapshot> getReplacedBlockSnapshots()
+        {
+            return blockSnapshots;
+        }
+    }
+
 
     /**
      * Fired when a single block placement action of a player triggers the
@@ -204,13 +272,12 @@ public class BlockEvent extends Event
     {
         private final List<BlockSnapshot> blockSnapshots;
 
-        public MultiPlaceEvent(List<BlockSnapshot> blockSnapshots, IBlockState placedAgainst, EntityPlayer player)
-        {
-            super(blockSnapshots.get(0), placedAgainst, player);
+        public MultiPlaceEvent(@Nonnull List<BlockSnapshot> blockSnapshots, @Nonnull IBlockState placedAgainst, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
+            super(blockSnapshots.get(0), placedAgainst, player, hand);
             this.blockSnapshots = ImmutableList.copyOf(blockSnapshots);
             if (DEBUG)
             {
-                System.out.printf("Created MultiPlaceEvent - [PlacedAgainst: %s ][ItemInHand: %s ][Player: %s ]\n", placedAgainst, this.getItemInHand(), player);
+                System.out.printf("Created MultiPlaceEvent - [PlacedAgainst: %s ][ItemInHand: %s ][Player: %s ]\n", placedAgainst, player.getHeldItem(hand), player);
             }
         }
 
@@ -235,11 +302,13 @@ public class BlockEvent extends Event
     public static class NeighborNotifyEvent extends BlockEvent
     {
         private final EnumSet<EnumFacing> notifiedSides;
+        private final boolean forceRedstoneUpdate;
 
-        public NeighborNotifyEvent(World world, BlockPos pos, IBlockState state, EnumSet<EnumFacing> notifiedSides)
+        public NeighborNotifyEvent(World world, BlockPos pos, IBlockState state, EnumSet<EnumFacing> notifiedSides, boolean forceRedstoneUpdate)
         {
             super(world, pos, state);
             this.notifiedSides = notifiedSides;
+            this.forceRedstoneUpdate = forceRedstoneUpdate;
         }
 
         /**
@@ -250,6 +319,189 @@ public class BlockEvent extends Event
         public EnumSet<EnumFacing> getNotifiedSides()
         {
             return notifiedSides;
+        }
+
+        /**
+         * Get if redstone update was forced during setBlock call (0x16 to flags)
+         * @return if the flag was set
+         */
+        public boolean getForceRedstoneUpdate()
+        {
+            return forceRedstoneUpdate;
+        }
+    }
+
+    /**
+     * Fired to check whether a non-source block can turn into a source block.
+     * A result of ALLOW causes a source block to be created even if the liquid
+     * usually doesn't do that (like lava), and a result of DENY prevents creation
+     * even if the liquid usually does do that (like water).
+     */
+    @HasResult
+    public static class CreateFluidSourceEvent extends BlockEvent
+    {
+        public CreateFluidSourceEvent(World world, BlockPos pos, IBlockState state)
+        {
+            super(world, pos, state);
+        }
+    }
+
+    /**
+     * Fired when a liquid places a block. Use {@link #setNewState(IBlockState)} to change the result of
+     * a cobblestone generator or add variants of obsidian. Alternatively, you  could execute
+     * arbitrary code when lava sets blocks on fire, even preventing it.
+     *
+     * {@link #getState()} will return the block that was originally going to be placed.
+     * {@link #getPos()} will return the position of the block to be changed.
+     */
+    @Cancelable
+    public static class FluidPlaceBlockEvent extends BlockEvent
+    {
+        private final BlockPos liquidPos;
+        private IBlockState newState;
+        private IBlockState origState;
+
+        public FluidPlaceBlockEvent(World world, BlockPos pos, BlockPos liquidPos, IBlockState state)
+        {
+            super(world, pos, state);
+            this.liquidPos = liquidPos;
+            this.newState = state;
+            this.origState = world.getBlockState(pos);
+        }
+
+        /**
+         * @return The position of the liquid this event originated from. This may be the same as {@link #getPos()}.
+         */
+        public BlockPos getLiquidPos()
+        {
+            return liquidPos;
+        }
+
+        /**
+         * @return The block state that will be placed after this event resolves.
+         */
+        public IBlockState getNewState()
+        {
+            return newState;
+        }
+
+        public void setNewState(IBlockState state)
+        {
+            this.newState = state;
+        }
+
+        /**
+         * @return The state of the block to be changed before the event was fired.
+         */
+        public IBlockState getOriginalState()
+        {
+            return origState;
+        }
+    }
+
+    /**
+     * Fired when a crop block grows.  See subevents.
+     *
+     */
+    public static class CropGrowEvent extends BlockEvent
+    {
+        public CropGrowEvent(World world, BlockPos pos, IBlockState state)
+        {
+            super(world, pos, state);
+        }
+
+        /**
+         * Fired when any "growing age" blocks (for example cacti, chorus plants, or crops
+         * in vanilla) attempt to advance to the next growth age state during a random tick.<br>
+         * <br>
+         * {@link Result#DEFAULT} will pass on to the vanilla growth mechanics.<br>
+         * {@link Result#ALLOW} will force the plant to advance a growth stage.<br>
+         * {@link Result#DENY} will prevent the plant from advancing a growth stage.<br>
+         * <br>
+         * This event is not {@link Cancelable}.<br>
+         * <br>
+         */
+        @HasResult
+        public static class Pre extends CropGrowEvent
+        {
+            public Pre(World world, BlockPos pos, IBlockState state)
+            {
+                super(world, pos, state);
+            }
+        }
+
+        /**
+         * Fired when "growing age" blocks (for example cacti, chorus plants, or crops
+         * in vanilla) have successfully grown. The block's original state is available,
+         * in addition to its new state.<br>
+         * <br>
+         * This event is not {@link Cancelable}.<br>
+         * <br>
+         * This event does not have a result. {@link HasResult}<br>
+         */
+        public static class Post extends CropGrowEvent
+        {
+            private final IBlockState originalState;
+            public Post(World world, BlockPos pos, IBlockState original, IBlockState state)
+            {
+                super(world, pos, state);
+                originalState = original;
+            }
+
+            public IBlockState getOriginalState()
+            {
+                return originalState;
+            }
+        }
+    }
+
+    /**
+     * Fired when when farmland gets trampled
+     * This event is {@link Cancelable}
+     */
+    @Cancelable
+    public static class FarmlandTrampleEvent extends BlockEvent
+    {
+
+        private final Entity entity;
+        private final float fallDistance;
+
+        public FarmlandTrampleEvent(World world, BlockPos pos, IBlockState state, float fallDistance, Entity entity)
+        {
+            super(world, pos, state);
+            this.entity = entity;
+            this.fallDistance = fallDistance;
+        }
+
+        public Entity getEntity() {
+            return entity;
+        }
+
+        public float getFallDistance() {
+            return fallDistance;
+        }
+
+    }
+
+    /* Fired when an attempt is made to spawn a nether portal from
+     * {@link net.minecraft.block.BlockPortal#trySpawnPortal(World, BlockPos)}.
+     *
+     * If cancelled, the portal will not be spawned.
+     */
+    @Cancelable
+    public static class PortalSpawnEvent extends BlockEvent
+    {
+        private final BlockPortal.Size size;
+
+        public PortalSpawnEvent(World world, BlockPos pos, IBlockState state, BlockPortal.Size size)
+        {
+            super(world, pos, state);
+            this.size = size;
+        }
+
+        public BlockPortal.Size getPortalSize()
+        {
+            return size;
         }
     }
 }

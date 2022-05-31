@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,8 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 
+import javax.annotation.Nonnull;
+
 /**
  * ArrowLooseEvent is fired when a player stops using a bow.<br>
  * This event is fired whenever a player stops using a bow in
@@ -50,7 +52,7 @@ public class ArrowLooseEvent extends PlayerEvent
     private final boolean hasAmmo;
     private int charge;
 
-    public ArrowLooseEvent(EntityPlayer player, ItemStack bow, World world, int charge, boolean hasAmmo)
+    public ArrowLooseEvent(EntityPlayer player, @Nonnull ItemStack bow, World world, int charge, boolean hasAmmo)
     {
         super(player);
         this.bow = bow;
@@ -59,6 +61,7 @@ public class ArrowLooseEvent extends PlayerEvent
         this.hasAmmo = hasAmmo;
     }
 
+    @Nonnull
     public ItemStack getBow() { return this.bow; }
     public World getWorld() { return this.world; }
     public boolean hasAmmo() { return this.hasAmmo; }

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -30,14 +30,13 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumHand;
 
+import javax.annotation.Nonnull;
+
 /**
  * MinecartInteractEvent is fired when a player interacts with a minecart. <br>
  * This event is fired whenever a player interacts with a minecart in
- * {@link EntityMinecartContainer#processInitialInteract(EntityPlayer, ItemStack, EnumHand)},
- * {@link EntityMinecartEmpty#processInitialInteract(EntityPlayer, ItemStack, EnumHand)},
- * {@link EntityMinecartFurnace#processInitialInteract(EntityPlayer, ItemStack, EnumHand)},
- * {@link EntityMinecartHopper#processInitialInteract(EntityPlayer, ItemStack, EnumHand)},
- * etc.<br>
+ * {@link EntityMinecart#processInitialInteract(EntityPlayer, EnumHand)}.
+ * <br>
  * <br>
  * {@link #player} contains the EntityPlayer that is involved with this minecart interaction.<br>
  * <br>
@@ -52,18 +51,17 @@ import net.minecraft.util.EnumHand;
 public class MinecartInteractEvent extends MinecartEvent
 {
     private final EntityPlayer player;
-    private final ItemStack item;
     private final EnumHand hand;
 
-    public MinecartInteractEvent(EntityMinecart minecart, EntityPlayer player, ItemStack item, EnumHand hand)
+    public MinecartInteractEvent(EntityMinecart minecart, EntityPlayer player, EnumHand hand)
     {
         super(minecart);
         this.player = player;
-        this.item = item;
         this.hand = hand;
     }
 
     public EntityPlayer getPlayer() { return player; }
-    public ItemStack getItem() { return item; }
+    @Nonnull
+    public ItemStack getItem() { return player.getHeldItem(hand); }
     public EnumHand getHand() { return hand; }
 }

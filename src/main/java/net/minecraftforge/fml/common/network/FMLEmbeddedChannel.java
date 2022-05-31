@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,8 +28,11 @@ import net.minecraft.network.Packet;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 import net.minecraftforge.fml.common.network.FMLOutboundHandler.OutboundTarget;
+import net.minecraftforge.fml.common.network.handshake.NetworkDispatcher;
 import net.minecraftforge.fml.common.network.internal.FMLProxyPacket;
 import net.minecraftforge.fml.relauncher.Side;
+
+import javax.annotation.Nullable;
 
 /**
  * Utility wrapper around {@link EmbeddedChannel}. Provides some convenience methods
@@ -72,6 +75,7 @@ public class FMLEmbeddedChannel extends EmbeddedChannel {
         return pkt;
     }
 
+    @Nullable
     public String findChannelHandlerNameForType(Class<? extends ChannelHandler> type)
     {
         String targetName = null;
@@ -84,5 +88,12 @@ public class FMLEmbeddedChannel extends EmbeddedChannel {
             }
         }
         return targetName;
+    }
+
+    public void cleanAttributes()
+    {
+        this.attr(FMLOutboundHandler.FML_MESSAGETARGETARGS).set(null);
+        this.attr(NetworkRegistry.NET_HANDLER).set(null);
+        this.attr(NetworkDispatcher.FML_DISPATCHER).set(null);
     }
 }

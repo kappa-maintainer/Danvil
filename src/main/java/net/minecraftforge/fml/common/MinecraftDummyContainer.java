@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,12 +19,16 @@
 
 package net.minecraftforge.fml.common;
 
+import java.io.File;
 import java.security.cert.Certificate;
 
+import com.google.common.eventbus.EventBus;
 import net.minecraftforge.fml.common.versioning.VersionParser;
 import net.minecraftforge.fml.common.versioning.VersionRange;
 import net.minecraftforge.fml.relauncher.FMLLaunchHandler;
 import net.minecraftforge.fml.relauncher.Side;
+
+import javax.annotation.Nullable;
 
 public class MinecraftDummyContainer extends DummyModContainer
 {
@@ -33,12 +37,29 @@ public class MinecraftDummyContainer extends DummyModContainer
     public MinecraftDummyContainer(String actualMCVersion)
     {
         super(new ModMetadata());
-        getMetadata().modId = "Minecraft";
+        getMetadata().modId = "minecraft";
         getMetadata().name = "Minecraft";
         getMetadata().version = actualMCVersion;
         staticRange = VersionParser.parseRange("["+actualMCVersion+"]");
     }
 
+    @Override
+    public boolean isImmutable()
+    {
+        return true;
+    }
+
+    @Override
+    public File getSource()
+    {
+        return new File("minecraft.jar");
+    }
+
+    @Override
+    public boolean registerBus(EventBus bus, LoadController controller)
+    {
+        return true;
+    }
 
     public VersionRange getStaticVersionRange()
     {
@@ -46,6 +67,7 @@ public class MinecraftDummyContainer extends DummyModContainer
     }
 
     @Override
+    @Nullable
     public Certificate getSigningCertificate()
     {
         if (FMLLaunchHandler.side() != Side.CLIENT)
@@ -57,7 +79,7 @@ public class MinecraftDummyContainer extends DummyModContainer
             Certificate[] certificates = cbr.getProtectionDomain().getCodeSource().getCertificates();
             return certificates != null ? certificates[0] : null;
         }
-        catch (Exception e){} // Errors don't matter just return null.
+        catch (Exception ignored){} // Errors don't matter just return null.
         return null;
     }
 }

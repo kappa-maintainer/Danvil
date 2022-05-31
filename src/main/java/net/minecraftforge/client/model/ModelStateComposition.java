@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,11 +19,12 @@
 
 package net.minecraftforge.client.model;
 
+import com.google.common.base.Objects;
 import net.minecraftforge.common.model.IModelPart;
 import net.minecraftforge.common.model.IModelState;
 import net.minecraftforge.common.model.TRSRTransformation;
 
-import com.google.common.base.Optional;
+import java.util.Optional;
 
 public class ModelStateComposition implements IModelState
 {
@@ -36,6 +37,7 @@ public class ModelStateComposition implements IModelState
         this.second = second;
     }
 
+    @Override
     public Optional<TRSRTransformation> apply(Optional<? extends IModelPart> part)
     {
         Optional<TRSRTransformation> f = first.apply(part), s = second.apply(part);
@@ -43,6 +45,30 @@ public class ModelStateComposition implements IModelState
         {
             return Optional.of(f.get().compose(s.get()));
         }
-        return f.or(s);
+        if (f.isPresent()) {
+            return f;
+        }
+        return s;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o)
+        {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass())
+        {
+            return false;
+        }
+        ModelStateComposition that = (ModelStateComposition) o;
+        return Objects.equal(first, that.first) && Objects.equal(second, that.second);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hashCode(first, second);
     }
 }

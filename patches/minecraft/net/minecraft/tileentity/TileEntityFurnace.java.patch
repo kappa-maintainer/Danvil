@@ -1,83 +1,79 @@
 --- ../src-base/minecraft/net/minecraft/tileentity/TileEntityFurnace.java
 +++ ../src-work/minecraft/net/minecraft/tileentity/TileEntityFurnace.java
-@@ -122,9 +122,9 @@
-             }
-         }
- 
+@@ -121,9 +121,9 @@
+         super.func_145839_a(p_145839_1_);
+         this.field_145957_n = NonNullList.<ItemStack>func_191197_a(this.func_70302_i_(), ItemStack.field_190927_a);
+         ItemStackHelper.func_191283_b(p_145839_1_, this.field_145957_n);
 -        this.field_145956_a = p_145839_1_.func_74765_d("BurnTime");
 -        this.field_174906_k = p_145839_1_.func_74765_d("CookTime");
 -        this.field_174905_l = p_145839_1_.func_74765_d("CookTimeTotal");
 +        this.field_145956_a = p_145839_1_.func_74762_e("BurnTime");
 +        this.field_174906_k = p_145839_1_.func_74762_e("CookTime");
 +        this.field_174905_l = p_145839_1_.func_74762_e("CookTimeTotal");
-         this.field_145963_i = func_145952_a(this.field_145957_n[1]);
+         this.field_145963_i = func_145952_a(this.field_145957_n.get(1));
  
          if (p_145839_1_.func_150297_b("CustomName", 8))
-@@ -136,9 +136,9 @@
+@@ -135,9 +135,9 @@
      public NBTTagCompound func_189515_b(NBTTagCompound p_189515_1_)
      {
          super.func_189515_b(p_189515_1_);
 -        p_189515_1_.func_74777_a("BurnTime", (short)this.field_145956_a);
 -        p_189515_1_.func_74777_a("CookTime", (short)this.field_174906_k);
 -        p_189515_1_.func_74777_a("CookTimeTotal", (short)this.field_174905_l);
-+        p_189515_1_.func_74768_a("BurnTime", this.field_145956_a);
-+        p_189515_1_.func_74768_a("CookTime", this.field_174906_k);
-+        p_189515_1_.func_74768_a("CookTimeTotal", this.field_174905_l);
-         NBTTagList nbttaglist = new NBTTagList();
++        p_189515_1_.func_74768_a("BurnTime", (short)this.field_145956_a);
++        p_189515_1_.func_74768_a("CookTime", (short)this.field_174906_k);
++        p_189515_1_.func_74768_a("CookTimeTotal", (short)this.field_174905_l);
+         ItemStackHelper.func_191282_a(p_189515_1_, this.field_145957_n);
  
-         for (int i = 0; i < this.field_145957_n.length; ++i)
-@@ -207,8 +207,7 @@
+         if (this.func_145818_k_())
+@@ -196,8 +196,8 @@
  
-                             if (this.field_145957_n[1].field_77994_a == 0)
+                             if (itemstack.func_190926_b())
                              {
--                                Item item = this.field_145957_n[1].func_77973_b().func_77668_q();
--                                this.field_145957_n[1] = item != null ? new ItemStack(item) : null;
-+                                this.field_145957_n[1] = field_145957_n[1].func_77973_b().getContainerItem(field_145957_n[1]);
+-                                Item item1 = item.func_77668_q();
+-                                this.field_145957_n.set(1, item1 == null ? ItemStack.field_190927_a : new ItemStack(item1));
++                                ItemStack item1 = item.getContainerItem(itemstack);
++                                this.field_145957_n.set(1, item1);
                              }
                          }
                      }
-@@ -263,7 +262,11 @@
-         else
-         {
-             ItemStack itemstack = FurnaceRecipes.func_77602_a().func_151395_a(this.field_145957_n[0]);
--            return itemstack == null ? false : (this.field_145957_n[2] == null ? true : (!this.field_145957_n[2].func_77969_a(itemstack) ? false : (this.field_145957_n[2].field_77994_a < this.func_70297_j_() && this.field_145957_n[2].field_77994_a < this.field_145957_n[2].func_77976_d() ? true : this.field_145957_n[2].field_77994_a < itemstack.func_77976_d())));
-+            if (itemstack == null) return false;
-+            if (this.field_145957_n[2] == null) return true;
-+            if (!this.field_145957_n[2].func_77969_a(itemstack)) return false;
-+            int result = field_145957_n[2].field_77994_a + itemstack.field_77994_a;
-+            return result <= func_70297_j_() && result <= this.field_145957_n[2].func_77976_d(); //Forge BugFix: Make it respect stack sizes properly.
-         }
-     }
- 
-@@ -279,7 +282,7 @@
-             }
-             else if (this.field_145957_n[2].func_77973_b() == itemstack.func_77973_b())
-             {
--                ++this.field_145957_n[2].field_77994_a;
-+                this.field_145957_n[2].field_77994_a += itemstack.field_77994_a; // Forge BugFix: Results may have multiple items
-             }
- 
-             if (this.field_145957_n[0].func_77973_b() == Item.func_150898_a(Blocks.field_150360_v) && this.field_145957_n[0].func_77960_j() == 1 && this.field_145957_n[1] != null && this.field_145957_n[1].func_77973_b() == Items.field_151133_ar)
-@@ -326,7 +329,15 @@
+@@ -269,13 +269,13 @@
+                 {
+                     return false;
+                 }
+-                else if (itemstack1.func_190916_E() < this.func_70297_j_() && itemstack1.func_190916_E() < itemstack1.func_77976_d())
++                else if (itemstack1.func_190916_E() + itemstack.func_190916_E() <= this.func_70297_j_() && itemstack1.func_190916_E() + itemstack.func_190916_E() <= itemstack1.func_77976_d())  // Forge fix: make furnace respect stack sizes in furnace recipes
+                 {
+                     return true;
+                 }
+                 else
+                 {
+-                    return itemstack1.func_190916_E() < itemstack.func_77976_d();
++                    return itemstack1.func_190916_E() + itemstack.func_190916_E() <= itemstack.func_77976_d(); // Forge fix: make furnace respect stack sizes in furnace recipes
                  }
              }
- 
--            return item instanceof ItemTool && "WOOD".equals(((ItemTool)item).func_77861_e()) ? 200 : (item instanceof ItemSword && "WOOD".equals(((ItemSword)item).func_150932_j()) ? 200 : (item instanceof ItemHoe && "WOOD".equals(((ItemHoe)item).func_77842_f()) ? 200 : (item == Items.field_151055_y ? 100 : (item == Items.field_151044_h ? 1600 : (item == Items.field_151129_at ? 20000 : (item == Item.func_150898_a(Blocks.field_150345_g) ? 100 : (item == Items.field_151072_bj ? 2400 : 0)))))));
-+            if (item instanceof ItemTool && "WOOD".equals(((ItemTool)item).func_77861_e())) return 200;
-+            if (item instanceof ItemSword && "WOOD".equals(((ItemSword)item).func_150932_j())) return 200;
-+            if (item instanceof ItemHoe && "WOOD".equals(((ItemHoe)item).func_77842_f())) return 200;
-+            if (item == Items.field_151055_y) return 100;
-+            if (item == Items.field_151044_h) return 1600;
-+            if (item == Items.field_151129_at) return 20000;
-+            if (item == Item.func_150898_a(Blocks.field_150345_g)) return 100;
-+            if (item == Items.field_151072_bj) return 2400;
-+            return net.minecraftforge.fml.common.registry.GameRegistry.getFuelValue(p_145952_0_);
          }
-     }
+@@ -295,7 +295,7 @@
+             }
+             else if (itemstack2.func_77973_b() == itemstack1.func_77973_b())
+             {
+-                itemstack2.func_190917_f(1);
++                itemstack2.func_190917_f(itemstack1.func_190916_E());
+             }
  
-@@ -447,4 +458,22 @@
-             this.field_145957_n[i] = null;
+             if (itemstack.func_77973_b() == Item.func_150898_a(Blocks.field_150360_v) && itemstack.func_77960_j() == 1 && !((ItemStack)this.field_145957_n.get(1)).func_190926_b() && ((ItemStack)this.field_145957_n.get(1)).func_77973_b() == Items.field_151133_ar)
+@@ -315,6 +315,8 @@
          }
+         else
+         {
++            int burnTime = net.minecraftforge.event.ForgeEventFactory.getItemBurnTime(p_145952_0_);
++            if (burnTime >= 0) return burnTime;
+             Item item = p_145952_0_.func_77973_b();
+ 
+             if (item == Item.func_150898_a(Blocks.field_150376_bx))
+@@ -530,4 +532,23 @@
+     {
+         this.field_145957_n.clear();
      }
 +
 +    net.minecraftforge.items.IItemHandler handlerTop = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.UP);
@@ -86,7 +82,8 @@
 +
 +    @SuppressWarnings("unchecked")
 +    @Override
-+    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, net.minecraft.util.EnumFacing facing)
++    @javax.annotation.Nullable
++    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @javax.annotation.Nullable net.minecraft.util.EnumFacing facing)
 +    {
 +        if (facing != null && capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)
 +            if (facing == EnumFacing.DOWN)

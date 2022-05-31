@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,17 +23,16 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-import org.apache.logging.log4j.Level;
+import net.minecraftforge.fml.common.FMLLog;
+import org.apache.logging.log4j.LogManager;
 
 import javax.imageio.ImageIO;
 
 import net.minecraft.client.resources.FolderResourcePack;
 import net.minecraftforge.fml.common.FMLContainerHolder;
-import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.ModContainer;
-
-import com.google.common.base.Charsets;
 
 public class FMLFolderResourcePack extends FolderResourcePack implements FMLContainerHolder {
 
@@ -66,13 +65,13 @@ public class FMLFolderResourcePack extends FolderResourcePack implements FMLCont
         {
             if ("pack.mcmeta".equals(resourceName))
             {
-                FMLLog.log(container.getName(), Level.DEBUG, "Mod %s is missing a pack.mcmeta file, substituting a dummy one", container.getName());
+                FMLLog.log.debug("Mod {} is missing a pack.mcmeta file, substituting a dummy one", container.getName());
                 return new ByteArrayInputStream(("{\n" +
                         " \"pack\": {\n"+
                         "   \"description\": \"dummy FML pack for "+container.getName()+"\",\n"+
-                        "   \"pack_format\": 1\n"+
+                        "   \"pack_format\": 2\n"+
                         "}\n" +
-                        "}").getBytes(Charsets.UTF_8));
+                        "}").getBytes(StandardCharsets.UTF_8));
             }
             else throw ioe;
         }

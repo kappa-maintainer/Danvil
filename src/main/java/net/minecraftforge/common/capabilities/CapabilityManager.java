@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,12 +26,10 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import org.apache.logging.log4j.Level;
 import org.objectweb.asm.Type;
 
-import com.google.common.base.Function;
+import java.util.function.Function;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -51,23 +49,20 @@ public enum CapabilityManager
      * @param type The Interface to be registered
      * @param storage A default implementation of the storage handler.
      * @param implementation A default implementation of the interface.
+     * @deprecated Use the overload that takes a factory instead of a class.
+     *  You can easily do this by passing a constructor reference
+     *  (MyImpl::new instead of MyImpl.class). TODO remove in 1.13.
      */
+    @Deprecated
     public <T> void register(Class<T> type, Capability.IStorage<T> storage, final Class<? extends T> implementation)
     {
         Preconditions.checkArgument(implementation != null, "Attempted to register a capability with no default implementation");
-        register(type, storage, new Callable<T>()
+        register(type, storage, () ->
         {
-            @Override
-            public T call() throws Exception
-            {
-                try {
-                    return implementation.newInstance();
-                } catch (InstantiationException e) {
-                    Throwables.propagate(e);
-                } catch (IllegalAccessException e) {
-                    Throwables.propagate(e);
-                }
-                return null;
+            try {
+                return implementation.newInstance();
+            } catch (InstantiationException | IllegalAccessException e) {
+                throw new RuntimeException(e);
             }
         });
     }
@@ -114,16 +109,12 @@ public enum CapabilityManager
             Type type = (Type)entry.getAnnotationInfo().get("value");
             if (type == null)
             {
-                FMLLog.log(Level.WARN, "Unable to inject capability at %s.%s (Invalid Annotation)", targetClass, targetName);
+                FMLLog.log.warn("Unable to inject capability at {}.{} (Invalid Annotation)", targetClass, targetName);
+                continue;
             }
             final String capabilityName = type.getInternalName().replace('/', '.').intern();
 
-            List<Function<Capability<?>, Object>> list = callbacks.get(capabilityName);
-            if (list == null)
-            {
-                list = Lists.newArrayList();
-                callbacks.put(capabilityName, list);
-            }
+            List<Function<Capability<?>, Object>> list = callbacks.computeIfAbsent(capabilityName, k -> Lists.newArrayList());
 
             if (entry.getObjectName().indexOf('(') > 0)
             {
@@ -140,7 +131,7 @@ public enum CapabilityManager
                                 {
                                     if ((mtd.getModifiers() & Modifier.STATIC) != Modifier.STATIC)
                                     {
-                                        FMLLog.log(Level.WARN, "Unable to inject capability %s at %s.%s (Non-Static)", capabilityName, targetClass, targetName);
+                                        FMLLog.log.warn("Unable to inject capability {} at {}.{} (Non-Static)", capabilityName, targetClass, targetName);
                                         return null;
                                     }
 
@@ -149,11 +140,11 @@ public enum CapabilityManager
                                     return null;
                                 }
                             }
-                            FMLLog.log(Level.WARN, "Unable to inject capability %s at %s.%s (Method Not Found)", capabilityName, targetClass, targetName);
+                            FMLLog.log.warn("Unable to inject capability {} at {}.{} (Method Not Found)", capabilityName, targetClass, targetName);
                         }
                         catch (Exception e)
                         {
-                            FMLLog.log(Level.WARN, e, "Unable to inject capability %s at %s.%s", capabilityName, targetClass, targetName);
+                            FMLLog.log.warn("Unable to inject capability {} at {}.{}", capabilityName, targetClass, targetName, e);
                         }
                         return null;
                     }
@@ -171,14 +162,14 @@ public enum CapabilityManager
                             Field field = Class.forName(targetClass).getDeclaredField(targetName);
                             if ((field.getModifiers() & Modifier.STATIC) != Modifier.STATIC)
                             {
-                                FMLLog.log(Level.WARN, "Unable to inject capability %s at %s.%s (Non-Static)", capabilityName, targetClass, targetName);
+                                FMLLog.log.warn("Unable to inject capability {} at {}.{} (Non-Static)", capabilityName, targetClass, targetName);
                                 return null;
                             }
                             EnumHelper.setFailsafeFieldValue(field, null, input);
                         }
                         catch (Exception e)
                         {
-                            FMLLog.log(Level.WARN, e, "Unable to inject capability %s at %s.%s", capabilityName, targetClass, targetName);
+                            FMLLog.log.warn("Unable to inject capability {} at {}.{}", capabilityName, targetClass, targetName, e);
                         }
                         return null;
                     }

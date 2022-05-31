@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -27,6 +27,7 @@ import net.minecraft.network.INetHandler;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.IThreadListener;
+import net.minecraftforge.common.util.CompoundDataFixer;
 import net.minecraftforge.fml.common.eventhandler.EventBus;
 import net.minecraftforge.fml.relauncher.Side;
 
@@ -49,6 +50,8 @@ public interface IFMLSidedHandler
     File getSavesDirectory();
 
     MinecraftServer getServer();
+
+    boolean isDisplayCloseRequested();
 
     boolean shouldServerShouldBeKilledQuietly();
 
@@ -73,4 +76,18 @@ public interface IFMLSidedHandler
     void processWindowMessages();
 
     String stripSpecialChars(String message);
+
+    void reloadRenderers();
+
+    void fireSidedRegistryEvents();
+
+    CompoundDataFixer getDataFixer();
+
+    boolean isDisplayVSyncForced();
+
+    default void resetClientRecipeBook(){}
+
+    default void reloadSearchTrees(){}
+
+    default void reloadCreativeSettings(){}
 }

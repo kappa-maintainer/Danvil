@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -69,9 +69,8 @@ public @interface SidedProxy
     String serverSide() default "";
 
     /**
-     * The (optional) name of a mod to load this proxy for. This will help ensure correct behaviour when loading a combined
-     * scala/java mod package. It is almost never going to be required, unless you ship both Scala and Java {@link Mod} content
-     * in a single jar.
+     * The name of a mod to load this proxy for. This is required if this annotation is not in the class with @Mod annotation.
+     * Or there is no other way to determine the mod this annotation belongs to. When in doubt, add this value.
      */
     String modId() default "";
 }

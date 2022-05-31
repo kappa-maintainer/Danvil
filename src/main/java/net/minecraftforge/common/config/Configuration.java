@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,11 +15,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
- */
-
-/**
- * This software is provided under the terms of the Minecraft Forge Public
- * License v1.0.
  */
 
 package net.minecraftforge.common.config;
@@ -55,6 +50,7 @@ import java.util.regex.Pattern;
 import com.google.common.base.CharMatcher;
 import com.google.common.collect.ImmutableSet;
 
+import com.google.common.primitives.Floats;
 import net.minecraftforge.fml.client.config.GuiConfig;
 import net.minecraftforge.fml.client.config.GuiConfigEntries;
 import net.minecraftforge.fml.client.config.GuiConfigEntries.IConfigEntry;
@@ -62,6 +58,7 @@ import net.minecraftforge.fml.client.config.IConfigElement;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.relauncher.FMLInjectionData;
+import org.apache.commons.io.IOUtils;
 
 /**
  * This class offers advanced configurations capabilities, allowing to provide
@@ -79,7 +76,7 @@ public class Configuration
     private static final String CONFIG_VERSION_MARKER = "~CONFIG_VERSION";
     private static final Pattern CONFIG_START = Pattern.compile("START: \"([^\\\"]+)\"");
     private static final Pattern CONFIG_END = Pattern.compile("END: \"([^\\\"]+)\"");
-    public static final CharMatcher allowedProperties = CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.anyOf(ALLOWED_CHARS));
+    public static final CharMatcher allowedProperties = CharMatcher.javaLetterOrDigit().or(CharMatcher.anyOf(ALLOWED_CHARS));
     private static Configuration PARENT = null;
 
     File file;
@@ -113,7 +110,7 @@ public class Configuration
     /**
      * Create a configuration file for the file given in parameter with the provided config version number.
      */
-    public Configuration(File file, String configVersion)
+    private void runConfiguration(File file, String configVersion)
     {
         this.file = file;
         this.definedConfigVersion = configVersion;
@@ -135,9 +132,8 @@ public class Configuration
             {
                 File fileBak = new File(file.getAbsolutePath() + "_" +
                         new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".errored");
-                FMLLog.severe("An exception occurred while loading config file %s. This file will be renamed to %s " +
-                        "and a new config file will be generated.", file.getName(), fileBak.getName());
-                e.printStackTrace();
+                FMLLog.log.fatal("An exception occurred while loading config file {}. This file will be renamed to {} " +
+                        "and a new config file will be generated.", file.getName(), fileBak.getName(), e);
 
                 file.renameTo(fileBak);
                 load();
@@ -145,10 +141,15 @@ public class Configuration
         }
     }
 
+    public Configuration(File file, String configVersion)
+    {
+        runConfiguration(file, configVersion);
+    }
+
     public Configuration(File file, String configVersion, boolean caseSensitiveCustomCategories)
     {
-        this(file, configVersion);
         this.caseSensitiveCustomCategories = caseSensitiveCustomCategories;
+        runConfiguration(file, configVersion);
     }
 
     public Configuration(File file, boolean caseSensitiveCustomCategories)
@@ -628,6 +629,25 @@ public class Configuration
     }
 
     /**
+     * Gets a string Property with a comment using the defined validValues array and otherwise default settings.
+     *
+     * @param category the config category
+     * @param key the Property key value
+     * @param defaultValue the default value
+     * @param comment a String comment
+     * @param validValues an array of valid values that this Property can be set to. If an array is provided the Config GUI control will be
+     *            a value cycle button.
+     * @param validValuesDisplay an array of the config GUI display versions of the valid values that this Property can be set to.
+     * @return a string Property with the defined validValues array, validationPattern = null
+     */
+    public Property get(String category, String key, String defaultValue, String comment, String[] validValues, String[] validValuesDisplay)
+    {
+        Property prop = get(category, key, defaultValue, comment, validValues);
+        prop.setValidValuesDisplay(validValuesDisplay);
+        return prop;
+    }
+
+    /**
      * Gets a string array Property without a comment using the default settings.
      *
      * @param category the config category
@@ -1046,24 +1066,12 @@ public class Configuration
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error while loading config {}.", fileName, e);
         }
         finally
         {
-            if (buffer != null)
-            {
-                try
-                {
-                    buffer.close();
-                } catch (IOException e){}
-            }
-            if (input != null)
-            {
-                try
-                {
-                    input.close();
-                } catch (IOException e){}
-            }
+            IOUtils.closeQuietly(buffer);
+            IOUtils.closeQuietly(input);
         }
 
         resetChangedState();
@@ -1119,7 +1127,7 @@ public class Configuration
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error while saving config {}.", fileName, e);
         }
     }
 
@@ -1423,10 +1431,12 @@ public class Configuration
     {
         if (hasCategory(category))
         {
-            if (getCategory(category).containsKey(oldPropName) && !oldPropName.equalsIgnoreCase(newPropName))
+            ConfigCategory cat = getCategory(category);
+            if (cat.containsKey(oldPropName) && !oldPropName.equalsIgnoreCase(newPropName))
             {
-                get(category, newPropName, getCategory(category).get(oldPropName).getString(), "");
-                getCategory(category).remove(oldPropName);
+                Property prop = cat.remove(oldPropName);
+                prop.setName(newPropName);
+                cat.put(newPropName, prop);
                 return true;
             }
         }
@@ -1558,13 +1568,52 @@ public class Configuration
      * @param defaultValue Default value of the property.
      * @param comment A brief description what the property does.
      * @param validValues A list of valid values that this property can be set to.
+     * @param validValuesDisplay an array of the config GUI display versions of the valid values that this Property can be set to.
+     * @return The value of the new string property.
+     */
+    public String getString(String name, String category, String defaultValue, String comment, String[] validValues, String[] validValuesDisplay)
+    {
+        return setPropertyAndGetString(name, category, defaultValue, comment, validValues, validValuesDisplay, name);
+    }
+
+    /**
+     * Creates a string property.
+     *
+     * @param name Name of the property.
+     * @param category Category of the property.
+     * @param defaultValue Default value of the property.
+     * @param comment A brief description what the property does.
+     * @param validValues A list of valid values that this property can be set to.
      * @param langKey A language key used for localization of GUIs
      * @return The value of the new string property.
      */
     public String getString(String name, String category, String defaultValue, String comment, String[] validValues, String langKey)
     {
+        return setPropertyAndGetString(name, category, defaultValue, comment, validValues, null, langKey);
+    }
+
+    /**
+     * Creates a string property.
+     *
+     * @param name Name of the property.
+     * @param category Category of the property.
+     * @param defaultValue Default value of the property.
+     * @param comment A brief description what the property does.
+     * @param validValues A list of valid values that this property can be set to.
+     * @param validValuesDisplay an array of the config GUI display versions of the valid values that this Property can be set to.
+     * @param langKey A language key used for localization of GUIs
+     * @return The value of the new string property.
+     */
+    public String getString(String name, String category, String defaultValue, String comment, String[] validValues, String[] validValuesDisplay, String langKey)
+    {
+        return setPropertyAndGetString(name, category, defaultValue, comment, validValues, validValuesDisplay, langKey);
+    }
+
+    private String setPropertyAndGetString(String name, String category, String defaultValue, String comment, String[] validValues, String[] validValuesDisplay, String langKey)
+    {
         Property prop = this.get(category, name, defaultValue);
         prop.setValidValues(validValues);
+        prop.setValidValuesDisplay(validValuesDisplay);
         prop.setLanguageKey(langKey);
         prop.setComment(comment + " [default: " + defaultValue + "]");
         return prop.getString();
@@ -1605,13 +1654,54 @@ public class Configuration
      * @param category Category of the property.
      * @param defaultValue Default value of the property.
      * @param comment A brief description what the property does.
+     * @param validValues A list of valid values that this property can be set to.
+     * @param validValuesDisplay an array of the config GUI display versions of the valid values that this Property can be set to.
+     * @return The value of the new string property.
+     */
+    public String[] getStringList(String name, String category, String[] defaultValue, String comment, String[] validValues, String[] validValuesDisplay)
+    {
+        return setPropertyAndGetStringList(name, category, defaultValue, comment, validValues, validValuesDisplay, name);
+    }
+
+    /**
+     * Creates a string list property.
+     *
+     * @param name Name of the property.
+     * @param category Category of the property.
+     * @param defaultValue Default value of the property.
+     * @param comment A brief description what the property does.
+     * @param validValues A list of valid values that this property can be set to.
+     * @param langKey A language key used for localization of GUIs
      * @return The value of the new string property.
      */
     public String[] getStringList(String name, String category, String[] defaultValue, String comment, String[] validValues, String langKey)
     {
+        return setPropertyAndGetStringList(name, category, defaultValue, comment, validValues, null, langKey);
+    }
+
+    /**
+     * Creates a string list property.
+     *
+     * @param name Name of the property.
+     * @param category Category of the property.
+     * @param defaultValue Default value of the property.
+     * @param comment A brief description what the property does.
+     * @param validValues A list of valid values that this property can be set to.
+     * @param validValuesDisplay an array of the config GUI display versions of the valid values that this Property can be set to.
+     * @param langKey A language key used for localization of GUIs
+     * @return The value of the new string property.
+     */
+    public String[] getStringList(String name, String category, String[] defaultValue, String comment, String[] validValues, String[] validValuesDisplay, String langKey)
+    {
+        return setPropertyAndGetStringList(name, category, defaultValue, comment, validValues, validValuesDisplay, langKey);
+    }
+
+    private String[] setPropertyAndGetStringList(String name, String category, String[] defaultValue, String comment, String[] validValues, String[] validValuesDisplay, String langKey)
+    {
         Property prop = this.get(category, name, defaultValue);
-        prop.setLanguageKey(langKey);
         prop.setValidValues(validValues);
+        prop.setValidValuesDisplay(validValuesDisplay);
+        prop.setLanguageKey(langKey);
         prop.setComment(comment + " [default: " + prop.getDefault() + "]");
         return prop.getStringList();
     }
@@ -1723,11 +1813,12 @@ public class Configuration
         prop.setMaxValue(maxValue);
         try
         {
-            return Float.parseFloat(prop.getString()) < minValue ? minValue : (Float.parseFloat(prop.getString()) > maxValue ? maxValue : Float.parseFloat(prop.getString()));
+            float parseFloat = Float.parseFloat(prop.getString());
+            return Floats.constrainToRange(parseFloat, minValue, maxValue);
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Failed to get float for {}/{}", name, category, e);
         }
         return defaultValue;
     }

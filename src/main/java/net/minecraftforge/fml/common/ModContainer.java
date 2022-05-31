@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,8 @@ import net.minecraftforge.fml.common.versioning.VersionRange;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.eventbus.EventBus;
+
+import javax.annotation.Nullable;
 
 /**
  * The container that wraps around mods in the system.
@@ -141,6 +143,7 @@ public interface ModContainer
 
     VersionRange acceptableMinecraftVersionRange();
 
+    @Nullable
     Certificate getSigningCertificate();
 
     public static final Map<String,String> EMPTY_PROPERTIES = ImmutableMap.of();

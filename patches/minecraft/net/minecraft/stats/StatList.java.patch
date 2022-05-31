@@ -99,9 +99,9 @@
  
          if (p_151180_0_[i] != null && p_151180_0_[j] == null)
          {
-@@ -306,4 +313,36 @@
+@@ -309,4 +316,36 @@
      {
-         return (StatBase)field_188093_a.get(p_151177_0_);
+         return field_188093_a.get(p_151177_0_);
      }
 +
 +    @Deprecated //MODDER DO NOT CALL THIS ITS JUST A EVENT CALLBACK FOR FORGE

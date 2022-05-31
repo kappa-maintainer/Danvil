@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,8 @@ import net.minecraft.client.resources.I18n;
 import net.minecraftforge.fml.client.config.GuiConfigEntries.IConfigEntry;
 import net.minecraftforge.fml.client.config.GuiEditArrayEntries.IArrayEntry;
 
+import javax.annotation.Nullable;
+
 
 /**
  * This class's main purpose is to provide the necessary objects for a sample Config GUI for FML, although
@@ -48,6 +50,7 @@ public class DummyConfigElement implements IConfigElement
     protected Object[] values;
     protected Object[] defaultValues;
     protected String[] validValues;
+    protected String[] validValuesDisplay;
     protected Pattern validStringPattern;
     protected Object minValue;
     protected Object maxValue;
@@ -56,6 +59,7 @@ public class DummyConfigElement implements IConfigElement
     protected boolean isListFixedLength = false;
     protected int maxListLength = -1;
     protected List<IConfigElement> childElements;
+    @Nullable
     protected Class<? extends IConfigEntry> configEntryClass;
     protected Class<? extends IArrayEntry> arrayEntryClass;
     
@@ -75,7 +79,7 @@ public class DummyConfigElement implements IConfigElement
             this(name, langKey, new ArrayList<IConfigElement>(), customListEntryClass);
         }
         
-        public DummyCategoryElement(String name, String langKey, List<IConfigElement> childElements, Class<? extends IConfigEntry> customListEntryClass)
+        public DummyCategoryElement(String name, String langKey, List<IConfigElement> childElements, @Nullable Class<? extends IConfigEntry> customListEntryClass)
         {
             super(name, null, ConfigGuiType.CONFIG_CATEGORY, langKey);
             this.childElements = childElements;
@@ -89,7 +93,7 @@ public class DummyConfigElement implements IConfigElement
      */
     public static class DummyListElement extends DummyConfigElement
     {
-        public DummyListElement(String name, Object[] defaultValues, ConfigGuiType type, String langKey, boolean isListFixedLength, int maxListLength, Pattern validStringPattern, Object minValue, Object maxValue)
+        public DummyListElement(String name, Object[] defaultValues, ConfigGuiType type, String langKey, boolean isListFixedLength, int maxListLength, @Nullable Pattern validStringPattern, @Nullable Object minValue, @Nullable Object maxValue)
         {
             super(name, null, type, langKey, minValue, maxValue);
             this.defaultValues = defaultValues;
@@ -162,8 +166,8 @@ public class DummyConfigElement implements IConfigElement
             return Arrays.toString(this.defaultValues);
         }
     }
-    
-    public DummyConfigElement(String name, Object defaultValue, ConfigGuiType type, String langKey, String[] validValues, Pattern validStringPattern, Object minValue, Object maxValue)
+
+    public DummyConfigElement(String name, Object defaultValue, ConfigGuiType type, String langKey, String[] validValues, String[] validValuesDisplay, Pattern validStringPattern, Object minValue, Object maxValue)
     {
         this.name = name;
         this.defaultValue = defaultValue;
@@ -171,6 +175,7 @@ public class DummyConfigElement implements IConfigElement
         this.type = type;
         this.langKey = langKey;
         this.validValues = validValues;
+        this.validValuesDisplay = validValuesDisplay;
         this.validStringPattern = validStringPattern;
         if (minValue == null)
         {
@@ -191,7 +196,12 @@ public class DummyConfigElement implements IConfigElement
         else
             this.maxValue = maxValue;
     }
-    
+
+    public DummyConfigElement(String name, Object defaultValue, ConfigGuiType type, String langKey, String[] validValues, Pattern validStringPattern, Object minValue, Object maxValue)
+    {
+        this(name, defaultValue, type, langKey, validValues, null, validStringPattern, minValue, maxValue);
+    }
+
     public DummyConfigElement(String name, Object defaultValue, ConfigGuiType type, String langKey, Pattern validStringPattern)
     {
         this(name, defaultValue, type, langKey, null, validStringPattern, null, null);
@@ -201,7 +211,12 @@ public class DummyConfigElement implements IConfigElement
     {
         this(name, defaultValue, type, langKey, validValues, null, null, null);
     }
-    
+
+    public DummyConfigElement(String name, Object defaultValue, ConfigGuiType type, String langKey, String[] validValues, String[] validValuesDisplay)
+    {
+        this(name, defaultValue, type, langKey, validValues, validValuesDisplay, null, null, null);
+    }
+
     public DummyConfigElement(String name, Object defaultValue, ConfigGuiType type, String langKey)
     {
         this(name, defaultValue, type, langKey, null, null, null, null);
@@ -378,6 +393,12 @@ public class DummyConfigElement implements IConfigElement
     public String[] getValidValues()
     {
         return validValues;
+    }
+ 
+    @Override
+    public String[] getValidValuesDisplay()
+    {
+        return validValuesDisplay;
     }
 
     @Override

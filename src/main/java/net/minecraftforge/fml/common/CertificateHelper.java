@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,8 @@
 
 package net.minecraftforge.fml.common;
 
+import com.google.common.collect.ImmutableList;
+
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.cert.Certificate;
@@ -26,6 +28,21 @@ import java.security.cert.Certificate;
 public class CertificateHelper {
 
     private static final String HEXES = "0123456789abcdef";
+
+    public static ImmutableList<String> getFingerprints(Certificate[] certificates)
+    {
+        int len = 0;
+        if (certificates != null)
+        {
+            len = certificates.length;
+        }
+        ImmutableList.Builder<String> certBuilder = ImmutableList.builder();
+        for (int i = 0; i < len; i++)
+        {
+            certBuilder.add(CertificateHelper.getFingerprint(certificates[i]));
+        }
+        return certBuilder.build();
+    }
 
     public static String getFingerprint(Certificate certificate)
     {
@@ -43,7 +60,7 @@ public class CertificateHelper {
         }
         catch (Exception e)
         {
-            return null;
+            return "CERTIFICATE FINGERPRINT EXCEPTION";
         }
     }
 
@@ -58,7 +75,7 @@ public class CertificateHelper {
         }
         catch (Exception e)
         {
-            return null;
+            return "CERTIFICATE FINGERPRINT EXCEPTION";
         }
     }
 

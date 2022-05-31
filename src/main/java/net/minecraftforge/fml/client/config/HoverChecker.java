@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -78,10 +78,10 @@ public class HoverChecker
     {
         if (this.button != null)
         {
-            this.top = button.yPosition;
-            this.bottom = button.yPosition + button.height;
-            this.left = button.xPosition;
-            this.right = button.xPosition + button.width;
+            this.top = button.y;
+            this.bottom = button.y + button.height;
+            this.left = button.x;
+            this.right = button.x + button.width;
             canHover = canHover && button.visible;
         }
         

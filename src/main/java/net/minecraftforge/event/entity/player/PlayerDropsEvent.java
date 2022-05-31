@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,9 +21,9 @@ package net.minecraftforge.event.entity.player;
 
 import java.util.List;
 
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.fml.common.eventhandler.Cancelable;
 
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
@@ -48,10 +48,7 @@ public class PlayerDropsEvent extends LivingDropsEvent
      */
     public PlayerDropsEvent(EntityPlayer entity, DamageSource source, List<EntityItem> drops, boolean recentlyHit)
     {
-        super(entity, source, drops,
-            (source.getEntity() instanceof EntityPlayer) ?
-                EnchantmentHelper.getLootingModifier(((EntityPlayer)source.getEntity())) : 0,
-            recentlyHit);
+        super(entity, source, drops, ForgeHooks.getLootingLevel(entity, source.getTrueSource(), source), recentlyHit);
 
         this.entityPlayer = entity;
     }

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -67,13 +67,13 @@ public class FakePlayerFactory
 
     public static void unloadWorld(WorldServer world)
     {
-        Iterator<Entry<GameProfile, FakePlayer>> itr = fakePlayers.entrySet().iterator();
-        while (itr.hasNext())
+        fakePlayers.entrySet().removeIf(entry -> entry.getValue().world == world);
+        if (MINECRAFT_PLAYER != null && MINECRAFT_PLAYER.get() != null && MINECRAFT_PLAYER.get().world == world) // This shouldn't be strictly necessary, but lets be aggressive.
         {
-            Entry<GameProfile, FakePlayer> entry = itr.next();
-            if (entry.getValue().worldObj == world)
+            FakePlayer mc = MINECRAFT_PLAYER.get();
+            if (mc != null && mc.world == world)
             {
-                itr.remove();
+                MINECRAFT_PLAYER = null;
             }
         }
     }

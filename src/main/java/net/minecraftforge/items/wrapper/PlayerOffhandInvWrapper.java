@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@ public class PlayerOffhandInvWrapper extends RangedWrapper
 {
     public PlayerOffhandInvWrapper(InventoryPlayer inv)
     {
-        super(new InvWrapper(inv), inv.mainInventory.length + inv.armorInventory.length,
-                inv.mainInventory.length + inv.armorInventory.length + inv.offHandInventory.length);
+        super(new InvWrapper(inv), inv.mainInventory.size() + inv.armorInventory.size(),
+                inv.mainInventory.size() + inv.armorInventory.size() + inv.offHandInventory.size());
     }
 }

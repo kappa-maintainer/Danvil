@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,24 +25,31 @@ import java.util.Map;
 import java.util.Random;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import net.minecraft.entity.monster.EntityZombieVillager;
 import org.apache.commons.lang3.Validate;
 
-import net.minecraft.entity.monster.EntityZombie;
-import net.minecraft.entity.monster.ZombieType;
 import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.passive.EntityVillager.ITradeList;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.registry.RegistryNamespaced;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.world.gen.structure.StructureVillagePieces.PieceWeight;
 import net.minecraft.world.gen.structure.StructureVillagePieces.Village;
+import net.minecraftforge.fml.common.registry.GameRegistry.ObjectHolder;
+import net.minecraftforge.registries.GameData;
+import net.minecraftforge.registries.IForgeRegistryEntry;
+
+import javax.annotation.Nullable;
+
 /**
  * Registry for villager trading control
  */
 public class VillagerRegistry
 {
-    public static final ResourceLocation PROFESSIONS = new ResourceLocation("minecraft:villagerprofessions");
+    @ObjectHolder("minecraft:farmer")
+    public static final VillagerProfession FARMER = null;
     private static final VillagerRegistry INSTANCE = new VillagerRegistry();
 
     private Map<Class<?>, IVillageCreationHandler> villageCreationHandlers = Maps.newHashMap();
@@ -121,21 +128,14 @@ public class VillagerRegistry
         return instance().villageCreationHandlers.get(villagePiece.villagePieceClass).buildComponent(villagePiece, startPiece, pieces, random, p1, p2, p3, facing, p5);
     }
 
-    public void register(VillagerProfession prof)
-    {
-        register(prof, -1);
-    }
+    RegistryNamespaced<ResourceLocation, VillagerProfession> REGISTRY = GameData.getWrapper(VillagerProfession.class);
 
     private void register(VillagerProfession prof, int id)
     {
-        professions.register(id, prof.name, prof);
+        REGISTRY.register(id, prof.name, prof);
     }
 
     private boolean hasInit = false;
-    private FMLControlledNamespacedRegistry<VillagerProfession> professions = PersistentRegistryManager.createRegistry(PROFESSIONS, VillagerProfession.class, null, 0, 1024, true, null, null, null);
-    public IForgeRegistry<VillagerProfession> getRegistry() { return this.professions; }
-
-
     private void init()
     {
         if (hasInit)
@@ -159,6 +159,7 @@ public class VillagerRegistry
         {
             register(prof, 1);
             (new VillagerCareer(prof, "librarian")).init(VanillaTrades.trades[1][0]);
+            (new VillagerCareer(prof, "cartographer")).init(VanillaTrades.trades[1][1]);
         }
         prof = new VillagerProfession("minecraft:priest",
                 "minecraft:textures/entity/villager/priest.png",
@@ -184,6 +185,13 @@ public class VillagerRegistry
             (new VillagerCareer(prof, "butcher")).init(VanillaTrades.trades[4][0]);
             (new VillagerCareer(prof, "leather")).init(VanillaTrades.trades[4][1]);
         }
+        prof = new VillagerProfession("minecraft:nitwit",
+                "minecraft:textures/entity/villager/villager.png",
+                "minecraft:textures/entity/zombie_villager/zombie_villager.png");
+        {
+            register(prof, 5);
+            (new VillagerCareer(prof, "nitwit")).init(VanillaTrades.trades[5][0]);
+        }
     }
 
     public static class VillagerProfession extends IForgeRegistryEntry.Impl<VillagerProfession>
@@ -193,11 +201,6 @@ public class VillagerRegistry
         private ResourceLocation zombie;
         private List<VillagerCareer> careers = Lists.newArrayList();
 
-        @Deprecated //Use Zombie texture
-        public VillagerProfession(String name, String texture)
-        {
-            this (name, texture, "minecraft:textures/entity/zombie_villager/zombie_villager.png");
-        }
         public VillagerProfession(String name, String texture, String zombie)
         {
             this.name = new ResourceLocation(name);
@@ -276,7 +279,7 @@ public class VillagerRegistry
             return this;
         }
 
-
+        @Nullable
         public List<ITradeList> getTrades(int level)
         {
             return level >= 0 && level < this.trades.size() ? Collections.unmodifiableList(this.trades.get(level)) : null;
@@ -312,37 +315,19 @@ public class VillagerRegistry
      */
     public static void setRandomProfession(EntityVillager entity, Random rand)
     {
-        List<VillagerProfession> entries = INSTANCE.professions.getValues();
-        entity.setProfession(entries.get(rand.nextInt(entries.size())));
+        entity.setProfession(INSTANCE.REGISTRY.getRandomObject(rand));
     }
-    public static void setRandomProfession(EntityZombie entity, Random rand)
+
+    public static void setRandomProfession(EntityZombieVillager entity, Random rand)
     {
-        List<VillagerProfession> entries = INSTANCE.professions.getValues();
-        entity.setVillagerType(entries.get(rand.nextInt(entries.size())));
+        entity.setForgeProfession(INSTANCE.REGISTRY.getRandomObject(rand));
     }
-
-
-
-
-
-
 
     //Below this is INTERNAL USE ONLY DO NOT USE MODDERS
-    public static void onSetProfession(EntityVillager entity, VillagerProfession prof)
-    {
-        int network = INSTANCE.professions.getId(prof);
-        if (network == -1 || prof != INSTANCE.professions.getObjectById(network))
-        {
-            throw new RuntimeException("Attempted to set villager profession to unregistered profession: " + network + " " + prof);
-        }
-
-        if (network != entity.getProfession())
-            entity.setProfession(network);
-    }
     public static void onSetProfession(EntityVillager entity, int network)
     {
-        VillagerProfession prof = INSTANCE.professions.getObjectById(network);
-        if (prof == null || INSTANCE.professions.getId(prof) != network)
+        VillagerProfession prof = INSTANCE.REGISTRY.getObjectById(network);
+        if (prof == null || INSTANCE.REGISTRY.getIDForObject(prof) != network)
         {
             throw new RuntimeException("Attempted to set villager profession to unregistered profession: " + network + " " + prof);
         }
@@ -351,55 +336,20 @@ public class VillagerRegistry
             entity.setProfession(prof);
     }
 
-    @SuppressWarnings("deprecation")
-    public static void onSetProfession(EntityZombie entity, VillagerProfession prof)
+    public static void onSetProfession(EntityZombieVillager entity, int network)
     {
-        if (prof == null)
-        {
-            if (entity.func_189777_di() != ZombieType.NORMAL && entity.func_189777_di() != ZombieType.HUSK)
-                entity.func_189778_a(ZombieType.NORMAL);
-            return;
-        }
-
-        int network = INSTANCE.professions.getId(prof);
-        if (network == -1 || prof != INSTANCE.professions.getObjectById(network))
+        VillagerProfession prof = INSTANCE.REGISTRY.getObjectById(network);
+        if (prof == null && network != -1 || INSTANCE.REGISTRY.getIDForObject(prof) != network)
         {
             throw new RuntimeException("Attempted to set villager profession to unregistered profession: " + network + " " + prof);
         }
 
-        if (network >= 0 && network < 5) // Vanilla
-        {
-            if (entity.func_189777_di() == null || entity.func_189777_di().func_190150_a() != network + 1)
-            {
-                entity.func_189778_a(ZombieType.func_190144_b(network));
-            }
-        }
-        else if (entity.func_189777_di() != null)
-            entity.func_189778_a(ZombieType.NORMAL);
-    }
-    public static void onSetProfession(EntityZombie entity, ZombieType type, int network)
-    {
-        if (type == ZombieType.NORMAL || type == ZombieType.HUSK)
-        {
-            if (entity.getVillagerTypeForge() != null)
-                entity.setVillagerType(null);
-            return;
-        }
-        int realID = network - 1;
-        if (type == null) //Forge type?
-            realID = network * -1; // Forge encoded as -ID
-        VillagerProfession prof = INSTANCE.professions.getObjectById(realID);
-        if (prof == null && network != 0 || INSTANCE.professions.getId(prof) != realID)
-        {
-            throw new RuntimeException("Attempted to set villager profession to unregistered profession: " + realID + " " + prof);
-        }
-
-        if (prof != entity.getVillagerTypeForge())
-            entity.setVillagerType(prof);
+        if (prof != entity.getForgeProfession())
+            entity.setForgeProfession(prof);
     }
 
-    @Deprecated public static VillagerProfession getById(int network){ return INSTANCE.professions.getObjectById(network); }
-    @Deprecated public static int getId(VillagerProfession prof){ return INSTANCE.professions.getId(prof); }
+    @Deprecated public static VillagerProfession getById(int network){ return INSTANCE.REGISTRY.getObjectById(network); }
+    @Deprecated public static int getId(@Nullable VillagerProfession prof){ return INSTANCE.REGISTRY.getIDForObject(prof); }
 
     //TODO: Figure out a good generic system for this. Put on hold for Patches.
 

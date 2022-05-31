@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,5 +29,5 @@ public interface ITypeDiscoverer
     // main class part, followed by an optional $ and an "inner class" part. $ cannot be last, otherwise scala breaks
     public static Pattern classFile = Pattern.compile("[^\\s\\$]+(\\$[^\\s]+)?\\.class$");
 
-    public List<ModContainer> discover(ModCandidate candidate, ASMDataTable table);
+    List<ModContainer> discover(ModCandidate candidate, ASMDataTable table);
 }

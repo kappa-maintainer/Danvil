@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2018.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,6 @@ package net.minecraftforge.fml.common.versioning;
 
 public class DefaultArtifactVersion implements ArtifactVersion
 {
-
     private ComparableVersion comparableVersion;
     private String label;
     private boolean unbounded;
@@ -71,7 +70,7 @@ public class DefaultArtifactVersion implements ArtifactVersion
     @Override
     public boolean containsVersion(ArtifactVersion source)
     {
-        if (!source.getLabel().equals(getLabel()))
+        if (source.getLabel() != null && !source.getLabel().equals(getLabel()))
         {
             return false;
         }
@@ -103,7 +102,11 @@ public class DefaultArtifactVersion implements ArtifactVersion
     @Override
     public String toString()
     {
-        return label == null ? comparableVersion.toString() : label + ( unbounded ? "" : "@" + range);
+        if (label == null)
+        {
+            return getVersionString();
+        }
+        return label + (unbounded ? "" : "@" + range);
     }
 
     public VersionRange getRange()
