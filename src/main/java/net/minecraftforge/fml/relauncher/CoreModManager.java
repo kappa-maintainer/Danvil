@@ -96,14 +96,16 @@ public class CoreModManager {
         public final String name;
         public final IFMLLoadingPlugin coreModInstance;
         public final List<String> predepends;
+        public final String[] exclusions;
         public final File location;
         public final int sortIndex;
 
-        public FMLPluginWrapper(String name, IFMLLoadingPlugin coreModInstance, File location, int sortIndex, String... predepends)
+        public FMLPluginWrapper(String name, IFMLLoadingPlugin coreModInstance, String[] exclusions, File location, int sortIndex, String... predepends)
         {
             super();
             this.name = name;
             this.coreModInstance = coreModInstance;
+            this.exclusions = exclusions;
             this.location = location;
             this.sortIndex = sortIndex;
             this.predepends = Lists.newArrayList(predepends);
@@ -129,7 +131,7 @@ public class CoreModManager {
             if (coreModInstance.getASMTransformerClass() != null) for (String transformer : coreModInstance.getASMTransformerClass())
             {
                 FMLLog.log.trace("Registering transformer {}", transformer);
-                classLoader.registerTransformer(ASMTransformerWrapper.getTransformerWrapper(classLoader, transformer, name));
+                classLoader.registerTransformer(ASMTransformerWrapper.getTransformerWrapper(classLoader, transformer, name, exclusions));
                 ts.add(transformer);
             }
             if(!rootNames.contains(name))
@@ -548,10 +550,13 @@ public class CoreModManager {
                 FMLLog.log.debug("The coremod {} requested minecraft version {} and minecraft is {}. It will be loaded.", coreModClass,
                         requiredMCVersion.value(), FMLInjectionData.mccversion);
             }
+            //Danvil: make TransformerExclusions applied only on a per class loading plugin basis rather than globally
             TransformerExclusions trExclusions = coreModClazz.getAnnotation(IFMLLoadingPlugin.TransformerExclusions.class);
-            if (trExclusions != null)
+            String[] exclusions = trExclusions != null ? trExclusions.value() : new String[0];
+            IFMLLoadingPlugin.LegacyTransformerExclusions globalTrExclusions = coreModClazz.getAnnotation(IFMLLoadingPlugin.LegacyTransformerExclusions.class);
+            if (globalTrExclusions != null) //Danvil: keep the legacy system as an option for mods that need it, what those mods are idk
             {
-                for (String st : trExclusions.value())
+                for (String st : globalTrExclusions.value())
                 {
                     classLoader.addTransformerExclusion(st);
                 }
@@ -598,7 +603,7 @@ public class CoreModManager {
                 FMLLog.log.debug("Added access transformer class {} to enqueued access transformers", accessTransformerClass);
                 accessTransformers.add(accessTransformerClass);
             }
-            FMLPluginWrapper wrap = new FMLPluginWrapper(coreModName, plugin, location, sortIndex, dependencies);
+            FMLPluginWrapper wrap = new FMLPluginWrapper(coreModName, plugin, exclusions, location, sortIndex, dependencies);
             loadPlugins.add(wrap);
             FMLLog.log.debug("Enqueued coremod {}", coreModName);
             return wrap;

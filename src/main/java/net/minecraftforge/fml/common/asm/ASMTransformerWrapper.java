@@ -51,6 +51,7 @@ public class ASMTransformerWrapper
 {
     private static final Map<String, String> wrapperModMap = Maps.newHashMap();
     private static final Map<String, String> wrapperParentMap = Maps.newHashMap();
+    private static final Map<String, String[]> wrapperExclusionsMap = Maps.newHashMap();
 
     private static final LoadingCache<String, byte[]> wrapperCache = CacheBuilder.newBuilder()
         .maximumSize(30)
@@ -137,7 +138,7 @@ public class ASMTransformerWrapper
         }
     }
 
-    public static String getTransformerWrapper(LaunchClassLoader launchLoader, String parentClass, String coreMod)
+    public static String getTransformerWrapper(LaunchClassLoader launchLoader, String parentClass, String coreMod, String[] exclusions)
     {
         if(!injected)
         {
@@ -149,6 +150,7 @@ public class ASMTransformerWrapper
         String fileName = name.replace('.', '/') + ".class";
         wrapperModMap.put(fileName, coreMod);
         wrapperParentMap.put(fileName, parentClass);
+        wrapperExclusionsMap.put(fileName, exclusions);
         return name;
     }
 
@@ -184,6 +186,12 @@ public class ASMTransformerWrapper
             m = Method.getMethod("java.lang.String getCoreMod ()");
             mg = new GeneratorAdapter(Opcodes.ACC_PROTECTED, m, null, null, writer);
             mg.push(wrapperModMap.get(fileName));
+            mg.returnValue();
+            mg.endMethod();
+
+            m = Method.getMethod("java.lang.String getFileName ()");
+            mg = new GeneratorAdapter(Opcodes.ACC_PROTECTED, m, null, null, writer);
+            mg.push(fileName);
             mg.returnValue();
             mg.endMethod();
 
@@ -235,12 +243,14 @@ public class ASMTransformerWrapper
     public static abstract class TransformerWrapper implements IClassTransformer
     {
         private final IClassTransformer parent;
+        private final String[] exclusions;
 
         public TransformerWrapper()
         {
             try
             {
                 this.parent = (IClassTransformer)this.getClass().getClassLoader().loadClass(getParentClass()).newInstance();
+                this.exclusions = wrapperExclusionsMap.getOrDefault(getFilename(), new String[0]);
             }
             catch(Exception e)
             {
@@ -251,6 +261,8 @@ public class ASMTransformerWrapper
         @Override
         public byte[] transform(String name, String transformedName, byte[] basicClass)
         {
+            //Danvil: apply transformer exclusions only to the plugin, not globally
+            for(String e : exclusions) if(transformedName.startsWith(e)) return basicClass;
             try
             {
                 return parent.transform(name, transformedName, basicClass);
@@ -270,6 +282,8 @@ public class ASMTransformerWrapper
         protected abstract String getParentClass();
 
         protected abstract String getCoreMod();
+
+        protected abstract String getFilename();
     }
 
     static class TransformerException extends RuntimeException

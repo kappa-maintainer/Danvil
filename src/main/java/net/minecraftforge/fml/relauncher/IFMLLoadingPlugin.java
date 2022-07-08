@@ -82,18 +82,33 @@ public interface IFMLLoadingPlugin
 
     /**
      * Annotate your load plugin with a list of package prefixes that will *not* be
-     * processed by the ASM transformation stack.
+     * processed by the plugin.
      *
      * Your plugin, and any transformers should *definitely* be in this list, because
      * otherwise you can face problems with the classloader trying to transform classes
      * with your transformer, whilst it is *loading* your transformer. Not pretty.
      *
-     * @author cpw
+     * @author cpw, danvil
      *
      */
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.TYPE)
     @interface TransformerExclusions
+    {
+        String[] value() default "";
+    }
+
+    /**
+     * Exclude package prefixes for all plugins, this is adapted from the old usage of {@link TransformerExclusions}.
+     * Using this is not recommended since it can lead to unresolvable mod conflicts with dead/unsupported mods
+     *
+     * @author danvil
+     *
+     */
+    @Deprecated
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    @interface LegacyTransformerExclusions
     {
         String[] value() default "";
     }
