@@ -5,17 +5,10 @@ buildscript {
             name = 'forge'
             url = 'https://maven.minecraftforge.net/'
         }
-        // TEMP: Applies <https://github.com/MinecraftForge/ForgeGradle/pull/822>
-        maven {
-            name = 'ateranimavis'
-            url = 'https://ateranimavis.github.io/maven/'
-        }
         mavenCentral()
     }
     dependencies {
-        // TODO: classpath 'net.minecraftforge.gradle:ForgeGradle:5.1.+'
-        // TEMP: Applies <https://github.com/MinecraftForge/ForgeGradle/pull/822>
-        classpath 'net.minecraftforge.gradle-legacy:ForgeGradle:5.1.+'
+        classpath 'net.minecraftforge.gradle:ForgeGradle:5.1.+'
     }
 }
 
