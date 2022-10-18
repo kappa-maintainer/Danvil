@@ -11,12 +11,6 @@ def GEMWIRE  = 'https://maven.gemwire.uk/'
 def ATERANIM = 'https://ateranimavis.github.io/maven/'
 
 //------------------------------------------------------------------------------------------------------------------------------------------
-// Configuration
-//------------------------------------------------------------------------------------------------------------------------------------------
-
-def MCP_CONFIG_SOURCE = ATERANIM
-
-//------------------------------------------------------------------------------------------------------------------------------------------
 // Additional Repositories
 //------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -26,18 +20,3 @@ allprojects {
         maven { url = ATERANIM }
     }
 }
-
-ensure(MCP_CONFIG_SOURCE, MC_VERSION)
-ensure(MCP_CONFIG_SOURCE, MC_VERSION + '-' + MCP_VERSION)
-
-private ensure(String source, String version) {
-    def mcpConf = project.file("${System.getProperty("user.home")}/.gradle/caches/forge_gradle/minecraft_repo/versions/$version/mcp.zip")
-    if (!mcpConf.exists()) {
-        mcpConf.getParentFile().mkdirs()
-        download("$source/de/oceanlabs/mcp/mcp_config/$version/mcp_config-${version}.zip", mcpConf)
-    }
-}
-
-private static download(String url, File destination) {
-    new URL(url).withInputStream {input -> destination.withOutputStream {output ->  output << input }}
-} 
