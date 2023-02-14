@@ -312,9 +312,9 @@ public final class ItemTextureQuadConverter
                     consumer.put(e, r, g, b, a);
                     break;
                 case NORMAL:
-                    float offX = (float) side.getFrontOffsetX();
-                    float offY = (float) side.getFrontOffsetY();
-                    float offZ = (float) side.getFrontOffsetZ();
+                    float offX = (float) side.getXOffset();
+                    float offY = (float) side.getYOffset();
+                    float offZ = (float) side.getZOffset();
                     consumer.put(e, offX, offY, offZ, 0f);
                     break;
                 case UV:

@@ -424,9 +424,9 @@ public final class ItemLayerModel implements IModel
                 consumer.put(e, 1f, 1f, 1f, 1f);
                 break;
             case NORMAL:
-                float offX = (float) side.getFrontOffsetX();
-                float offY = (float) side.getFrontOffsetY();
-                float offZ = (float) side.getFrontOffsetZ();
+                float offX = (float) side.getXOffset();
+                float offY = (float) side.getYOffset();
+                float offZ = (float) side.getZOffset();
                 consumer.put(e, offX, offY, offZ, 0f);
                 break;
             case UV:
@@ -453,10 +453,10 @@ public final class ItemLayerModel implements IModel
         @Override
         public boolean accepts(ResourceLocation modelLocation)
         {
-            return modelLocation.getResourceDomain().equals(ForgeVersion.MOD_ID) && (
-                modelLocation.getResourcePath().equals("item-layer") ||
-                modelLocation.getResourcePath().equals("models/block/item-layer") ||
-                modelLocation.getResourcePath().equals("models/item/item-layer"));
+            return modelLocation.getNamespace().equals(ForgeVersion.MOD_ID) && (
+                modelLocation.getPath().equals("item-layer") ||
+                modelLocation.getPath().equals("models/block/item-layer") ||
+                modelLocation.getPath().equals("models/item/item-layer"));
         }
 
         @Override

@@ -69,7 +69,7 @@ public class RecipeMatchingTest
         {
             ResourceLocation location2 = new ResourceLocation(MODID, "stone");
             CraftingHelper.ShapedPrimer primer1 = CraftingHelper.parseShaped("SSS", 'S', new ItemStack(Blocks.IRON_BLOCK));
-            ShapedRecipes recipe2 = new ShapedRecipes(location2.getResourcePath(), primer1.width, primer1.height, primer1.input, new ItemStack(Blocks.GOLD_BLOCK));
+            ShapedRecipes recipe2 = new ShapedRecipes(location2.getPath(), primer1.width, primer1.height, primer1.input, new ItemStack(Blocks.GOLD_BLOCK));
             recipe2.setRegistryName(location2);
             event.getRegistry().register(recipe2);
         }

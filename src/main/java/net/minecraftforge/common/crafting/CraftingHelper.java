@@ -887,12 +887,12 @@ public class CraftingHelper {
         {
             try(FileSystem fs = FileSystems.newFileSystem(mod.getSource().toPath(), (ClassLoader)null))
             {
-                fPath = fs.getPath("assets", path.getResourceDomain(), path.getResourcePath());
+                fPath = fs.getPath("assets", path.getNamespace(), path.getPath());
             }
         }
         else if (mod.getSource().isDirectory())
         {
-            fPath = mod.getSource().toPath().resolve(Paths.get("assets", path.getResourceDomain(), path.getResourcePath()));
+            fPath = mod.getSource().toPath().resolve(Paths.get("assets", path.getNamespace(), path.getPath()));
         }
 
         if (fPath != null && Files.exists(fPath))

@@ -75,9 +75,9 @@ public class VertexBufferConsumer implements IVertexConsumer
 
     private void checkVertexFormat()
     {
-        if (quadData == null || renderer.getVertexFormat().getNextOffset() != quadData.length)
+        if (quadData == null || renderer.getVertexFormat().getSize() != quadData.length)
         {
-            quadData = new int[renderer.getVertexFormat().getNextOffset()];
+            quadData = new int[renderer.getVertexFormat().getSize()];
         }
     }
 

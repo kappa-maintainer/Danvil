@@ -103,7 +103,7 @@ public class ForgeBlockStatesLoaderTest
                     for (Entry<IBlockState, ModelResourceLocation> e : map.entrySet())
                     {
                         ModelResourceLocation loc = e.getValue();
-                        newMap.put(e.getKey(), new ModelResourceLocation(ASSETS + loc.getResourcePath(), loc.getVariant()));
+                        newMap.put(e.getKey(), new ModelResourceLocation(ASSETS + loc.getPath(), loc.getVariant()));
                     }
 
                     return newMap;
