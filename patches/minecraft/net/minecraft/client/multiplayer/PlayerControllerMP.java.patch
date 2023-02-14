@@ -1,35 +1,32 @@
 --- ../src-base/minecraft/net/minecraft/client/multiplayer/PlayerControllerMP.java
 +++ ../src-work/minecraft/net/minecraft/client/multiplayer/PlayerControllerMP.java
-@@ -126,10 +126,16 @@
+@@ -126,7 +126,13 @@
              }
          }
  
 -        if (this.field_78779_k.func_77145_d() && !this.field_78776_a.field_71439_g.func_184614_ca().func_190926_b() && this.field_78776_a.field_71439_g.func_184614_ca().func_77973_b() instanceof ItemSword)
 +        ItemStack stack = field_78776_a.field_71439_g.func_184614_ca();
 +        if (!stack.func_190926_b() && stack.func_77973_b().onBlockStartBreak(stack, p_187103_1_, field_78776_a.field_71439_g))
-         {
-             return false;
-         }
-+
-+        if (this.field_78779_k.func_77145_d() && !stack.func_190926_b() && !stack.func_77973_b().canDestroyBlockInCreative(field_78776_a.field_71441_e, p_187103_1_, stack, field_78776_a.field_71439_g))
 +        {
 +            return false;
 +        }
-         else
++
++        if (this.field_78779_k.func_77145_d() && !stack.func_190926_b() && !stack.func_77973_b().canDestroyBlockInCreative(field_78776_a.field_71441_e, p_187103_1_, stack, field_78776_a.field_71439_g))
          {
-             World world = this.field_78776_a.field_71441_e;
+             return false;
+         }
 @@ -147,19 +153,13 @@
              else
              {
                  world.func_175718_b(2001, p_187103_1_, Block.func_176210_f(iblockstate));
 -                block.func_176208_a(world, p_187103_1_, iblockstate, this.field_78776_a.field_71439_g);
 -                boolean flag = world.func_180501_a(p_187103_1_, Blocks.field_150350_a.func_176223_P(), 11);
- 
+-
 -                if (flag)
 -                {
 -                    block.func_176206_d(world, p_187103_1_, iblockstate);
 -                }
--
+ 
                  this.field_178895_c = new BlockPos(this.field_178895_c.func_177958_n(), -1, this.field_178895_c.func_177952_p());
  
                  if (!this.field_78779_k.func_77145_d())

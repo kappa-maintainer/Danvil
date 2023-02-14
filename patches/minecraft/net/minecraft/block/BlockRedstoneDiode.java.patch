@@ -26,10 +26,12 @@
          p_176400_1_.func_190524_a(blockpos, this, p_176400_2_);
          p_176400_1_.func_175695_a(blockpos, this, enumfacing);
      }
-@@ -307,6 +311,25 @@
+@@ -305,6 +309,25 @@
+     public BlockRenderLayer func_180664_k()
+     {
          return BlockRenderLayer.CUTOUT;
-     }
- 
++    }
++
 +    /* ======================================== FORGE START =====================================*/
 +    @Override
 +    public boolean rotateBlock(World world, BlockPos pos, EnumFacing axis)
@@ -47,8 +49,6 @@
 +            return true;
 +        }
 +        return false;
-+    }
-+
+     }
+ 
      public BlockFaceShape func_193383_a(IBlockAccess p_193383_1_, IBlockState p_193383_2_, BlockPos p_193383_3_, EnumFacing p_193383_4_)
-     {
-         return p_193383_4_ == EnumFacing.DOWN ? BlockFaceShape.SOLID : BlockFaceShape.UNDEFINED;

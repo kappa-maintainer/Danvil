@@ -51,10 +51,11 @@
      }
  
      @Nullable
-@@ -427,6 +433,26 @@
+@@ -426,6 +432,26 @@
+     {
          return this.field_178593_n && this.field_188284_q;
      }
- 
++
 +    /* ======================================== FORGE START =====================================*/
 +    /**
 +     * Creates a new RegionRenderCache instance.<br>
@@ -74,7 +75,6 @@
 +        return new ChunkCache(world, from, to, subtract);
 +    }
 +    /* ========================================= FORGE END ======================================*/
-+
+ 
      public BlockPos func_181701_a(EnumFacing p_181701_1_)
      {
-         return this.field_181702_p[p_181701_1_.ordinal()];

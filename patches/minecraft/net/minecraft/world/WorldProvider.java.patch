@@ -65,10 +65,12 @@
      }
  
      @SideOnly(Side.CLIENT)
-@@ -241,6 +216,371 @@
+@@ -239,6 +214,371 @@
+     public WorldBorder func_177501_r()
+     {
          return new WorldBorder();
-     }
- 
++    }
++
 +    /*======================================= Forge Start =========================================*/
 +    private net.minecraftforge.client.IRenderHandler skyRenderer = null;
 +    private net.minecraftforge.client.IRenderHandler cloudRenderer = null;
@@ -432,8 +434,6 @@
 +    public boolean canDoRainSnowIce(net.minecraft.world.chunk.Chunk chunk)
 +    {
 +        return true;
-+    }
-+
-     public void func_186061_a(EntityPlayerMP p_186061_1_)
-     {
      }
+ 
+     public void func_186061_a(EntityPlayerMP p_186061_1_)

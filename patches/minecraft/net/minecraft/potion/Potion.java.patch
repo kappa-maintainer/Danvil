@@ -20,10 +20,11 @@
      public boolean func_76398_f()
      {
          return this.field_76418_K;
-@@ -293,7 +292,122 @@
+@@ -292,6 +291,121 @@
+     {
          return p_111183_2_.func_111164_d() * (double)(p_111183_1_ + 1);
      }
- 
++
 +    /* ======================================== FORGE START =====================================*/
 +
 +    /**
@@ -62,7 +63,7 @@
 +     * @param mc the Minecraft instance, for convenience
 +     * @deprecated use {@link #renderInventoryEffect(PotionEffect, net.minecraft.client.gui.Gui, int, int, float)}
 +     */
-     @SideOnly(Side.CLIENT)
++    @SideOnly(Side.CLIENT)
 +    @Deprecated // TODO: remove
 +    public void renderInventoryEffect(int x, int y, PotionEffect effect, net.minecraft.client.Minecraft mc) { }
 +
@@ -138,8 +139,6 @@
 +    }
 +
 +    /* ======================================== FORGE END =====================================*/
-+
-+    @SideOnly(Side.CLIENT)
+ 
+     @SideOnly(Side.CLIENT)
      public boolean func_188408_i()
-     {
-         return this.field_188415_h;

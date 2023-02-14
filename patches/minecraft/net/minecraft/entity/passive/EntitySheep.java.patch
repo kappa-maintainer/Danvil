@@ -18,10 +18,12 @@
          {
              if (!this.field_70170_p.field_72995_K)
              {
-@@ -364,6 +364,21 @@
+@@ -362,6 +362,21 @@
+         p_180482_2_ = super.func_180482_a(p_180482_1_, p_180482_2_);
+         this.func_175512_b(func_175510_a(this.field_70170_p.field_73012_v));
          return p_180482_2_;
-     }
- 
++    }
++
 +    @Override public boolean isShearable(ItemStack item, net.minecraft.world.IBlockAccess world, BlockPos pos){ return !this.func_70892_o() && !this.func_70631_g_(); }
 +    @Override
 +    public java.util.List<ItemStack> onSheared(ItemStack item, net.minecraft.world.IBlockAccess world, BlockPos pos, int fortune)
@@ -35,8 +37,6 @@
 +
 +        this.func_184185_a(SoundEvents.field_187763_eJ, 1.0F, 1.0F);
 +        return ret;
-+    }
-+
+     }
+ 
      private EnumDyeColor func_175511_a(EntityAnimal p_175511_1_, EntityAnimal p_175511_2_)
-     {
-         int i = ((EntitySheep)p_175511_1_).func_175509_cj().func_176767_b();

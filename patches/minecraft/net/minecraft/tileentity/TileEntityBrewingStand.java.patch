@@ -58,10 +58,12 @@
              }
          }
      }
-@@ -377,6 +377,27 @@
+@@ -375,6 +375,27 @@
+             case 1:
+                 this.field_184278_m = p_174885_2_;
          }
-     }
- 
++    }
++
 +    net.minecraftforge.items.IItemHandler handlerInput = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.UP);
 +    net.minecraftforge.items.IItemHandler handlerOutput = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.DOWN);
 +    net.minecraftforge.items.IItemHandler handlerSides = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.NORTH);
@@ -81,8 +83,6 @@
 +                return (T) handlerSides;
 +        }
 +        return super.getCapability(capability, facing);
-+    }
-+
+     }
+ 
      public int func_174890_g()
-     {
-         return 2;

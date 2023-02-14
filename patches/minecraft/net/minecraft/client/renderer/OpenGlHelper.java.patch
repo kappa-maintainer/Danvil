@@ -11,16 +11,16 @@
      public static void func_77474_a()
      {
          ContextCapabilities contextcapabilities = GLContext.getCapabilities();
-@@ -853,6 +857,12 @@
+@@ -852,6 +856,12 @@
+         else
          {
              GL13.glMultiTexCoord2f(p_77475_0_, p_77475_1_, p_77475_2_);
-         }
++        }
 +
 +        if (p_77475_0_ == field_77476_b)
 +        {
 +            lastBrightnessX = p_77475_1_;
 +            lastBrightnessY = p_77475_2_;
-+        }
+         }
      }
  
-     public static void func_148821_a(int p_148821_0_, int p_148821_1_, int p_148821_2_, int p_148821_3_)

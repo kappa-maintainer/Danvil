@@ -12,14 +12,14 @@
      @Nullable
      public Chunk func_186028_c(int p_186028_1_, int p_186028_2_)
      {
--        Chunk chunk = this.func_186026_b(p_186028_1_, p_186028_2_);
 +        return loadChunk(p_186028_1_, p_186028_2_, null);
 +    }
- 
++
 +    @Nullable
 +    public Chunk loadChunk(int p_186028_1_, int p_186028_2_, @Nullable Runnable runnable)
 +    {
-+        Chunk chunk = this.func_186026_b(p_186028_1_, p_186028_2_);
+         Chunk chunk = this.func_186026_b(p_186028_1_, p_186028_2_);
+-
          if (chunk == null)
          {
 -            chunk = this.func_73239_e(p_186028_1_, p_186028_2_);
@@ -40,7 +40,7 @@
 +                }
 +
 +                loadingChunks.remove(pos);
-             }
++            }
 +            else
 +            {
 +                net.minecraft.world.chunk.storage.AnvilChunkLoader loader = (net.minecraft.world.chunk.storage.AnvilChunkLoader) this.field_73247_e;
@@ -52,7 +52,7 @@
 +                    net.minecraftforge.common.chunkio.ChunkIOExecutor.queueChunkLoad(this.field_73251_h, loader, this, p_186028_1_, p_186028_2_, runnable);
 +                    return null;
 +                }
-+            }
+             }
          }
  
 +        // If we didn't load the chunk async and have a callback run it now
@@ -80,12 +80,12 @@
                          this.func_73242_b(chunk);
                          this.func_73243_a(chunk);
                          this.field_73244_f.remove(olong);
-@@ -242,6 +276,8 @@
+@@ -241,6 +275,8 @@
+                     }
                  }
              }
- 
-+            if (this.field_73244_f.isEmpty()) net.minecraftforge.common.DimensionManager.unloadWorld(this.field_73251_h.field_73011_w.getDimension());
 +
++            if (this.field_73244_f.isEmpty()) net.minecraftforge.common.DimensionManager.unloadWorld(this.field_73251_h.field_73011_w.getDimension());
+ 
              this.field_73247_e.func_75817_a();
          }
- 

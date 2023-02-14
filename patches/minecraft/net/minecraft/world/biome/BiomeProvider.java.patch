@@ -22,17 +22,17 @@
          this.field_76944_d = agenlayer[0];
          this.field_76945_e = agenlayer[1];
      }
-@@ -207,6 +209,13 @@
+@@ -205,6 +207,13 @@
+     public void func_76938_b()
+     {
          this.field_76942_f.func_76838_a();
-     }
- 
++    }
++
 +    public GenLayer[] getModdedBiomeGenerators(WorldType worldType, long seed, GenLayer[] original)
 +    {
 +        net.minecraftforge.event.terraingen.WorldTypeEvent.InitBiomeGens event = new net.minecraftforge.event.terraingen.WorldTypeEvent.InitBiomeGens(worldType, seed, original);
 +        net.minecraftforge.common.MinecraftForge.TERRAIN_GEN_BUS.post(event);
 +        return event.getNewBiomeGens();
-+    }
-+
+     }
+ 
      public boolean func_190944_c()
-     {
-         return this.field_190945_a != null && this.field_190945_a.field_177779_F >= 0;

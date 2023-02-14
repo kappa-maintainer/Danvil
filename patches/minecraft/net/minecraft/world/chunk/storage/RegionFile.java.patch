@@ -15,10 +15,11 @@
                  this.field_76716_d[j1] = k;
  
 -                if (k != 0 && (k >> 8) + (k & 255) <= this.field_76714_f.size())
+-                {
+-                    for (int l = 0; l < (k & 255); ++l)
 +                int length = k & 255;
 +                if (length == 255)
-                 {
--                    for (int l = 0; l < (k & 255); ++l)
++                {
 +                    if ((k >> 8) <= this.field_76714_f.size())
 +                    { // We're maxed out, so we need to read the proper length from the section
 +                        this.field_76719_c.seek((k >> 8) * 4096);

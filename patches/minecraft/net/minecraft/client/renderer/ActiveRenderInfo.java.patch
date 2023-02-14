@@ -21,10 +21,11 @@
      }
  
      public static float func_178808_b()
-@@ -108,4 +113,14 @@
+@@ -107,5 +112,15 @@
+     public static float func_178807_f()
      {
          return field_74596_h;
-     }
++    }
 +
 +    /* ======================================== FORGE START =====================================*/
 +
@@ -34,5 +35,5 @@
 +    public static Vec3d getCameraPosition()
 +    {
 +        return field_178811_e;
-+    }
+     }
  }

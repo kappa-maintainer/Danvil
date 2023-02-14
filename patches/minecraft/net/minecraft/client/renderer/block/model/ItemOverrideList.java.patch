@@ -8,10 +8,11 @@
      public ResourceLocation func_188021_a(ItemStack p_188021_1_, @Nullable World p_188021_2_, @Nullable EntityLivingBase p_188021_3_)
      {
          if (!this.field_188023_b.isEmpty())
-@@ -44,4 +45,22 @@
+@@ -43,5 +44,23 @@
+         }
  
          return null;
-     }
++    }
 +
 +    public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable EntityLivingBase entity)
 +    {
@@ -29,5 +30,5 @@
 +    public com.google.common.collect.ImmutableList<ItemOverride> getOverrides()
 +    {
 +        return com.google.common.collect.ImmutableList.copyOf(field_188023_b);
-+    }
+     }
  }

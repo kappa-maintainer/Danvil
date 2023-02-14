@@ -50,13 +50,13 @@
                      }
                  }
              }
-@@ -443,6 +451,9 @@
+@@ -442,6 +450,9 @@
+         IBlockState iblockstate = p_189553_1_.func_180495_p(blockpos);
          Block block = iblockstate.func_177230_c();
          Material material = iblockstate.func_185904_a();
- 
++
 +        PathNodeType type = block.getAiPathNodeType(iblockstate, p_189553_1_, blockpos, this.currentEntity);
 +        if (type != null) return type;
-+
+ 
          if (material == Material.field_151579_a)
          {
-             return PathNodeType.OPEN;

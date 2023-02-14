@@ -66,13 +66,13 @@
          {
              return false;
          }
-@@ -584,6 +592,9 @@
+@@ -583,6 +591,9 @@
+     {
          return this.field_71340_o.func_73669_a("network-compression-threshold", super.func_175577_aI());
      }
- 
++
 +    //Forge: Enable formated text for colors in console.
 +    @Override public void func_145747_a(net.minecraft.util.text.ITextComponent message) { field_155771_h.info(message.func_150254_d()); }
-+
+ 
      protected boolean func_152368_aE() throws IOException
      {
-         boolean flag = false;

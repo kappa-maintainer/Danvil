@@ -15,10 +15,11 @@
          }
      }
  
-@@ -76,4 +76,25 @@
+@@ -75,5 +75,26 @@
+     public static int func_92095_b(int p_92095_0_, Random p_92095_1_)
      {
          return p_92095_0_ > 10 ? p_92095_0_ - 10 : 1 + p_92095_1_.nextInt(4);
-     }
++    }
 +
 +    private void damageArmor(ItemStack stack, int amount, EntityLivingBase entity)
 +    {
@@ -39,5 +40,5 @@
 +        }
 +        net.minecraftforge.common.ISpecialArmor armor = (net.minecraftforge.common.ISpecialArmor)stack.func_77973_b();
 +        armor.damageArmor(entity, stack, DamageSource.func_92087_a(entity), amount, slot);
-+    }
+     }
  }

@@ -14,10 +14,11 @@
      }
  
      public List<ItemStack> func_186462_a(Random p_186462_1_, LootContext p_186462_2_)
-@@ -144,6 +144,58 @@
+@@ -143,6 +143,58 @@
+         Collections.shuffle(list, p_186459_2_);
          return list;
      }
- 
++
 +    //======================== FORGE START =============================================
 +    private boolean isFrozen = false;
 +    public void freeze()
@@ -69,7 +70,6 @@
 +        this.field_186466_c.add(pool);
 +    }
 +    //======================== FORGE END ===============================================
-+
+ 
      public static class Serializer implements JsonDeserializer<LootTable>, JsonSerializer<LootTable>
          {
-             public LootTable deserialize(JsonElement p_deserialize_1_, Type p_deserialize_2_, JsonDeserializationContext p_deserialize_3_) throws JsonParseException

@@ -49,10 +49,11 @@
          this.field_176158_z = p_176144_1_;
      }
  
-@@ -805,18 +809,49 @@
+@@ -805,16 +809,47 @@
              }
          });
      }
+-
 +    /**
 +     * Allow access to additional mod specific world based properties
 +     * Used by FML to store mod list associated with a world, and maybe an id map
@@ -67,7 +68,7 @@
 +            this.additionalProperties = additionalProperties;
 +        }
 +    }
- 
++
 +    public net.minecraft.nbt.NBTBase getAdditionalProperty(String additionalProperty)
 +    {
 +        return this.additionalProperties!=null? this.additionalProperties.get(additionalProperty) : null;
@@ -90,14 +91,12 @@
      {
 -        this.field_186348_N.put(p_186345_1_, p_186345_2_);
 +        this.setDimensionData(p_186345_1_.func_186068_a(), p_186345_2_);
-     }
- 
++    }
++
 +    //Dimension numerical ID version of setter, as two dimensions could in theory have the same DimensionType. ID should be grabbed from the world NOT the Type
 +    public void setDimensionData(int dimensionID, NBTTagCompound compound)
 +    {
 +        this.field_186348_N.put(dimensionID, compound);
-+    }
-+
+     }
+ 
      @SideOnly(Side.CLIENT)
-     public int func_186344_K()
-     {

@@ -36,15 +36,16 @@
                      {
                          this.func_175903_a(p_180709_1_, blockpos3, this.field_76520_b);
  
-@@ -130,4 +130,11 @@
+@@ -129,5 +129,12 @@
+         {
              this.func_175925_a(p_175930_1_, p_175930_2_.func_177981_b(j), p_175930_3_ + 1 - j);
          }
-     }
++    }
 +
 +    //Helper macro
 +    private boolean isAirLeaves(World world, BlockPos pos)
 +    {
 +        IBlockState state = world.func_180495_p(pos);
 +        return state.func_177230_c().isAir(state, world, pos) || state.func_177230_c().isLeaves(state, world, pos);
-+    }
+     }
  }

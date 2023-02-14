@@ -21,9 +21,12 @@
  
              this.field_71305_c[i].func_72954_a(new ServerWorldEventHandler(this, this.field_71305_c[i]));
          }
-+        }// Forge: End Dead Code
- 
+-
 -        this.func_184103_al().func_72364_a(this.field_71305_c);
+-
+-        if (this.field_71305_c[0].func_72912_H().func_176130_y() == null)
++        }// Forge: End Dead Code
++
 +        WorldServer overWorld = (func_71242_L() ? (WorldServer)(new WorldServerDemo(this, isavehandler, worldinfo, 0, this.field_71304_b)).func_175643_b() :
 +                                            (WorldServer)(new WorldServer(this, isavehandler, worldinfo, 0, this.field_71304_b)).func_175643_b());
 +        overWorld.func_72963_a(this.field_71350_m);
@@ -37,8 +40,7 @@
 +            }
 +            net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.WorldEvent.Load(world));
 +        }
- 
--        if (this.field_71305_c[0].func_72912_H().func_176130_y() == null)
++
 +        this.func_184103_al().func_72364_a(new WorldServer[]{ overWorld });
 +
 +        if (overWorld.func_72912_H().func_176130_y() == null)

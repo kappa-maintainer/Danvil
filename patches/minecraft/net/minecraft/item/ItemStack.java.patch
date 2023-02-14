@@ -249,10 +249,11 @@
          }
  
          return itextcomponent;
-@@ -1130,4 +1156,128 @@
+@@ -1129,5 +1155,129 @@
+     public void func_190918_g(int p_190918_1_)
      {
          this.func_190917_f(-p_190918_1_);
-     }
++    }
 +
 +    @Override
 +    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, @Nullable net.minecraft.util.EnumFacing facing)
@@ -376,5 +377,5 @@
 +    public boolean doesSneakBypassUse(net.minecraft.world.IBlockAccess world, BlockPos pos, EntityPlayer player)
 +    {
 +        return this.func_190926_b() || this.func_77973_b().doesSneakBypassUse(this, world, pos, player);
-+    }
+     }
  }

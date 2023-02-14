@@ -45,10 +45,11 @@
          return nbttagcompound;
      }
  
-@@ -261,4 +266,22 @@
+@@ -260,5 +265,23 @@
+     public TemplateManager func_186340_h()
      {
          return this.field_186342_h;
-     }
++    }
 +
 +    public NBTTagCompound getPlayerNBT(net.minecraft.entity.player.EntityPlayerMP player)
 +    {
@@ -66,5 +67,5 @@
 +            field_151478_a.warn("Failed to load player data for " + player.func_70005_c_());
 +        }
 +        return null;
-+    }
+     }
  }

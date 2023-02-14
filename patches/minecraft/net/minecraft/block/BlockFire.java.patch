@@ -25,7 +25,7 @@
          this.field_149849_a.put(p_180686_1_, Integer.valueOf(p_180686_2_));
          this.field_149848_b.put(p_180686_1_, Integer.valueOf(p_180686_3_));
      }
-@@ -126,19 +135,15 @@
+@@ -126,18 +135,14 @@
      {
          if (p_180650_1_.func_82736_K().func_82766_b("doFireTick"))
          {
@@ -37,16 +37,15 @@
  
              Block block = p_180650_1_.func_180495_p(p_180650_2_.func_177977_b()).func_177230_c();
 -            boolean flag = block == Blocks.field_150424_aL || block == Blocks.field_189877_df;
-+            boolean flag = block.isFireSource(p_180650_1_, p_180650_2_.func_177977_b(), EnumFacing.UP);
- 
+-
 -            if (p_180650_1_.field_73011_w instanceof WorldProviderEnd && block == Blocks.field_150357_h)
 -            {
 -                flag = true;
 -            }
--
++            boolean flag = block.isFireSource(p_180650_1_, p_180650_2_.func_177977_b(), EnumFacing.UP);
+ 
              int i = ((Integer)p_180650_3_.func_177229_b(field_176543_a)).intValue();
  
-             if (!flag && p_180650_1_.func_72896_J() && this.func_176537_d(p_180650_1_, p_180650_2_) && p_180650_4_.nextFloat() < 0.2F + (float)i * 0.03F)
 @@ -159,7 +164,7 @@
                  {
                      if (!this.func_176533_e(p_180650_1_, p_180650_2_))
@@ -84,7 +83,7 @@
  
                  for (int k = -1; k <= 1; ++k)
                  {
-@@ -246,22 +251,30 @@
+@@ -246,21 +251,29 @@
          return false;
      }
  
@@ -108,14 +107,13 @@
 -        int i = this.func_176532_c(p_176536_1_.func_180495_p(p_176536_2_).func_177230_c());
 +        this.tryCatchFire(p_176536_1_, p_176536_2_, p_176536_3_, p_176536_4_, p_176536_5_, EnumFacing.UP);
 +    }
- 
++
 +    private void tryCatchFire(World p_176536_1_, BlockPos p_176536_2_, int p_176536_3_, Random p_176536_4_, int p_176536_5_, EnumFacing face)
 +    {
 +        int i = p_176536_1_.func_180495_p(p_176536_2_).func_177230_c().getFlammability(p_176536_1_, p_176536_2_, face);
-+
+ 
          if (p_176536_4_.nextInt(p_176536_3_) < i)
          {
-             IBlockState iblockstate = p_176536_1_.func_180495_p(p_176536_2_);
 @@ -293,7 +306,7 @@
      {
          for (EnumFacing enumfacing : EnumFacing.values())
@@ -194,10 +192,11 @@
              {
                  for (int j1 = 0; j1 < 2; ++j1)
                  {
-@@ -462,6 +476,21 @@
+@@ -461,6 +475,21 @@
+     {
          return new BlockStateContainer(this, new IProperty[] {field_176543_a, field_176545_N, field_176546_O, field_176541_P, field_176539_Q, field_176542_R});
      }
- 
++
 +    /*================================= Forge Start ======================================*/
 +    /**
 +     * Side sensitive version that calls the block function.
@@ -212,7 +211,6 @@
 +        return world.func_180495_p(pos).func_177230_c().isFlammable(world, pos, face);
 +    }
 +    /*================================= Forge Start ======================================*/
-+
+ 
      public BlockFaceShape func_193383_a(IBlockAccess p_193383_1_, IBlockState p_193383_2_, BlockPos p_193383_3_, EnumFacing p_193383_4_)
      {
-         return BlockFaceShape.UNDEFINED;

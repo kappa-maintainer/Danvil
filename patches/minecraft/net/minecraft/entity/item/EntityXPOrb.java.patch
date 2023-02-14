@@ -38,14 +38,15 @@
                      itemstack.func_77964_b(itemstack.func_77952_i() - i);
                  }
  
-@@ -337,4 +342,10 @@
+@@ -336,5 +341,11 @@
+     public boolean func_70075_an()
      {
          return false;
-     }
++    }
 +
 +    private static int roundAverage(float value)
 +    {
 +        double floor = Math.floor(value);
 +        return (int) floor + (Math.random() < value - floor ? 1 : 0);
-+    }
+     }
  }

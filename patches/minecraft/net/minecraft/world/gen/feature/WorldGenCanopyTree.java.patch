@@ -61,12 +61,12 @@
          {
              this.func_175903_a(p_150526_1_, blockpos, field_181641_b);
          }
-     }
++    }
 +
 +    //Just a helper macro
 +    private void onPlantGrow(World world, BlockPos pos, BlockPos source)
 +    {
 +        IBlockState state = world.func_180495_p(pos);
 +        state.func_177230_c().onPlantGrow(state, world, pos, source);
-+    }
+     }
  }

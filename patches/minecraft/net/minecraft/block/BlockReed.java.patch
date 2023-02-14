@@ -38,10 +38,12 @@
  
          if (block == this)
          {
-@@ -165,6 +171,17 @@
+@@ -163,6 +169,17 @@
+     public int func_176201_c(IBlockState p_176201_1_)
+     {
          return ((Integer)p_176201_1_.func_177229_b(field_176355_a)).intValue();
-     }
- 
++    }
++
 +    @Override
 +    public net.minecraftforge.common.EnumPlantType getPlantType(IBlockAccess world, BlockPos pos)
 +    {
@@ -51,8 +53,6 @@
 +    public IBlockState getPlant(IBlockAccess world, BlockPos pos)
 +    {
 +        return this.func_176223_P();
-+    }
-+
+     }
+ 
      protected BlockStateContainer func_180661_e()
-     {
-         return new BlockStateContainer(this, new IProperty[] {field_176355_a});

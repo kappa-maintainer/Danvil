@@ -8,10 +8,11 @@
          this.field_77133_f = p_i1960_2_;
          this.field_77134_g = p_i1960_3_;
          this.field_77140_h = true;
-@@ -113,4 +114,145 @@
+@@ -112,5 +113,146 @@
+     {
          this.field_151361_l = true;
          return this;
-     }
++    }
 +
 +    public net.minecraft.world.biome.BiomeProvider getBiomeProvider(World world)
 +    {
@@ -152,5 +153,5 @@
 +        ret = net.minecraft.world.gen.layer.GenLayerZoom.func_75915_a(1000L, ret, 2);
 +        ret = new net.minecraft.world.gen.layer.GenLayerBiomeEdge(1000L, ret);
 +        return ret;
-+    }
+     }
  }

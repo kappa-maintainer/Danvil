@@ -18,10 +18,11 @@
          {
              return false;
          }
-@@ -370,6 +370,14 @@
+@@ -369,6 +369,14 @@
+     {
          return this.func_189101_db() ? SoundEvents.field_189110_fE : SoundEvents.field_187882_fq;
      }
- 
++
 +    /* ======================================== FORGE START =====================================*/
 +    /**
 +     * Called when the slime spawns particles on landing, see onUpdate.
@@ -29,7 +30,6 @@
 +     */
 +    protected boolean spawnCustomParticles() { return false; }
 +    /* ======================================== FORGE END   =====================================*/
-+
+ 
      static class AISlimeAttack extends EntityAIBase
          {
-             private final EntitySlime field_179466_a;

@@ -87,9 +87,7 @@
                  }
  
 -                if (block1 instanceof ITileEntityProvider)
-+                // If capturing blocks, only run block physics for TE's. Non-TE's are handled in ForgeHooks.onPlaceItemIntoWorld
-+                if (!this.field_76637_e.field_72995_K && block1 != block && (!this.field_76637_e.captureBlockSnapshots || block.hasTileEntity(p_177436_2_)))
-                 {
+-                {
 -                    TileEntity tileentity = this.func_177424_a(p_177436_1_, Chunk.EnumCreateEntityType.CHECK);
 -
 -                    if (tileentity != null)
@@ -99,7 +97,9 @@
 -                }
 -
 -                if (!this.field_76637_e.field_72995_K && block1 != block)
--                {
++                // If capturing blocks, only run block physics for TE's. Non-TE's are handled in ForgeHooks.onPlaceItemIntoWorld
++                if (!this.field_76637_e.field_72995_K && block1 != block && (!this.field_76637_e.captureBlockSnapshots || block.hasTileEntity(p_177436_2_)))
+                 {
                      block.func_176213_c(this.field_76637_e, p_177436_1_, p_177436_2_);
                  }
  
@@ -159,22 +159,21 @@
          if (tileentity == null)
          {
              if (p_177424_2_ == Chunk.EnumCreateEntityType.IMMEDIATE)
-@@ -795,14 +802,9 @@
+@@ -795,13 +802,8 @@
              }
              else if (p_177424_2_ == Chunk.EnumCreateEntityType.QUEUED)
              {
 -                this.field_177447_w.add(p_177424_1_);
 +                this.field_177447_w.add(p_177424_1_.func_185334_h());
              }
-         }
+-        }
 -        else if (tileentity.func_145837_r())
 -        {
 -            this.field_150816_i.remove(p_177424_1_);
 -            return null;
--        }
+         }
  
          return tileentity;
-     }
 @@ -819,10 +821,11 @@
  
      public void func_177426_a(BlockPos p_177426_1_, TileEntity p_177426_2_)
@@ -342,10 +341,11 @@
          }
      }
  
-@@ -1489,4 +1519,55 @@
+@@ -1488,5 +1518,56 @@
+         IMMEDIATE,
          QUEUED,
          CHECK;
-     }
++    }
 +
 +    /* ======================================== FORGE START =====================================*/
 +    /**
@@ -396,5 +396,5 @@
 +    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable EnumFacing facing)
 +    {
 +        return capabilities == null ? null : capabilities.getCapability(capability, facing);
-+    }
+     }
  }

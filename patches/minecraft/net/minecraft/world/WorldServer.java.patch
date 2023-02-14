@@ -25,7 +25,7 @@
          this.func_72966_v();
          this.func_72947_a();
          this.func_175723_af().func_177725_a(p_i45921_1_.func_175580_aG());
-+        net.minecraftforge.common.DimensionManager.setWorld(p_i45921_4_, this, field_73061_a);
++        net.minecraftforge.common.DimensionManager.setWorld(p_i45921_4_, this, p_i45921_1_);
      }
  
      public World func_175643_b()
@@ -290,15 +290,15 @@
          }
      }
  
-@@ -1323,6 +1356,11 @@
+@@ -1321,6 +1354,11 @@
+     public FunctionManager func_193037_A()
+     {
          return this.field_193036_D;
-     }
- 
++    }
++
 +    public java.io.File getChunkSaveLocation()
 +    {
 +        return ((net.minecraft.world.chunk.storage.AnvilChunkLoader)func_72863_F().field_73247_e).field_75825_d;
-+    }
-+
+     }
+ 
      static class ServerBlockEventList extends ArrayList<BlockEventData>
-         {
-             private ServerBlockEventList()

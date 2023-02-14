@@ -28,10 +28,11 @@
          this.field_178215_a = p_i46574_1_;
          this.field_178213_b = p_i46574_2_;
          this.field_178214_c = p_i46574_3_;
-@@ -45,4 +56,23 @@
+@@ -44,5 +55,24 @@
+     public EnumFacing func_178210_d()
      {
          return this.field_178214_c;
-     }
++    }
 +
 +    protected final net.minecraft.client.renderer.vertex.VertexFormat format;
 +    protected final boolean applyDiffuseLighting;
@@ -50,5 +51,5 @@
 +    public boolean shouldApplyDiffuseLighting()
 +    {
 +        return applyDiffuseLighting;
-+    }
+     }
  }

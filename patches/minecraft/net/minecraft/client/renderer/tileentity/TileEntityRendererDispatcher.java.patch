@@ -37,10 +37,11 @@
                  tileentityspecialrenderer.func_192841_a(p_192854_1_, p_192854_2_, p_192854_4_, p_192854_6_, p_192854_8_, p_192854_9_, p_192854_10_);
              }
              catch (Throwable throwable)
-@@ -172,4 +179,53 @@
+@@ -171,5 +178,54 @@
+     public FontRenderer func_147548_a()
      {
          return this.field_147557_n;
-     }
++    }
 +
 +    /* ======================================== FORGE START =====================================*/
 +    /**
@@ -89,5 +90,5 @@
 +
 +        net.minecraft.client.renderer.RenderHelper.func_74519_b();
 +        drawingBatch = false;
-+    }
+     }
  }

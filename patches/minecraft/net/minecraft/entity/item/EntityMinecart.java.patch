@@ -167,14 +167,13 @@
          {
              double d17 = Math.sqrt(this.field_70159_w * this.field_70159_w + this.field_70179_y * this.field_70179_y);
  
-@@ -555,20 +587,8 @@
+@@ -555,19 +587,7 @@
          this.field_70165_t = d18 + d1 * d10;
          this.field_70161_v = d19 + d2 * d10;
          this.func_70107_b(this.field_70165_t, this.field_70163_u, this.field_70161_v);
 -        double d22 = this.field_70159_w;
 -        double d23 = this.field_70179_y;
-+        this.moveMinecartOnRail(p_180460_1_);
- 
+-
 -        if (this.func_184207_aI())
 -        {
 -            d22 *= 0.75D;
@@ -185,26 +184,25 @@
 -        d22 = MathHelper.func_151237_a(d22, -d13, d13);
 -        d23 = MathHelper.func_151237_a(d23, -d13, d13);
 -        this.func_70091_d(MoverType.SELF, d22, 0.0D, d23);
--
++        this.moveMinecartOnRail(p_180460_1_);
+ 
          if (aint[0][1] != 0 && MathHelper.func_76128_c(this.field_70165_t) - p_180460_1_.func_177958_n() == aint[0][0] && MathHelper.func_76128_c(this.field_70161_v) - p_180460_1_.func_177952_p() == aint[0][2])
          {
-             this.func_70107_b(this.field_70165_t, this.field_70163_u + (double)aint[0][1], this.field_70161_v);
-@@ -605,8 +625,14 @@
+@@ -605,7 +625,13 @@
              this.field_70179_y = d5 * (double)(i - p_180460_1_.func_177952_p());
          }
  
 -        if (flag)
 +
 +        if(shouldDoRailFunctions())
-         {
++        {
 +            ((BlockRailBase)p_180460_2_.func_177230_c()).onMinecartPass(field_70170_p, this, p_180460_1_);
 +        }
 +
 +        if (flag && shouldDoRailFunctions())
-+        {
+         {
              double d15 = Math.sqrt(this.field_70159_w * this.field_70159_w + this.field_70179_y * this.field_70179_y);
  
-             if (d15 > 0.01D)
 @@ -683,7 +709,7 @@
  
          if (BlockRailBase.func_176563_d(iblockstate))
@@ -254,7 +252,7 @@
                              {
                                  p_70108_1_.field_70159_w *= 0.20000000298023224D;
                                  p_70108_1_.field_70179_y *= 0.20000000298023224D;
-@@ -1014,7 +1046,237 @@
+@@ -1014,6 +1046,236 @@
      {
          this.func_184212_Q().func_187227_b(field_184270_f, Boolean.valueOf(p_94096_1_));
      }
@@ -264,7 +262,7 @@
 +    {
 +        return net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.entity.minecart.MinecartInteractEvent(this, player, hand));
 +    }
- 
++
 +    /* =================================== FORGE START ===========================================*/
 +    private BlockPos getCurrentRailPosition()
 +    {
@@ -488,7 +486,6 @@
 +    }
 +
 +    /* =================================== FORGE END ===========================================*/
-+
+ 
      public static enum Type
      {
-         RIDEABLE(0, "MinecartRideable"),

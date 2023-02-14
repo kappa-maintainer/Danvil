@@ -37,10 +37,12 @@
          if (iblockstate.func_177230_c() instanceof IGrowable)
          {
              IGrowable igrowable = (IGrowable)iblockstate.func_177230_c();
-@@ -144,6 +154,16 @@
+@@ -142,6 +152,16 @@
+                 double d1 = field_77697_d.nextGaussian() * 0.02D;
+                 double d2 = field_77697_d.nextGaussian() * 0.02D;
                  p_180617_0_.func_175688_a(EnumParticleTypes.VILLAGER_HAPPY, (double)((float)p_180617_1_.func_177958_n() + field_77697_d.nextFloat()), (double)p_180617_1_.func_177956_o() + (double)field_77697_d.nextFloat() * iblockstate.func_185900_c(p_180617_0_, p_180617_1_).field_72337_e, (double)((float)p_180617_1_.func_177952_p() + field_77697_d.nextFloat()), d0, d1, d2);
-             }
-         }
++            }
++        }
 +        else
 +        {
 +            for (int i1 = 0; i1 < p_180617_2_; ++i1)
@@ -49,8 +51,6 @@
 +                double d1 = field_77697_d.nextGaussian() * 0.02D;
 +                double d2 = field_77697_d.nextGaussian() * 0.02D;
 +                p_180617_0_.func_175688_a(EnumParticleTypes.VILLAGER_HAPPY, (double)((float)p_180617_1_.func_177958_n() + field_77697_d.nextFloat()), (double)p_180617_1_.func_177956_o() + (double)field_77697_d.nextFloat() * 1.0f, (double)((float)p_180617_1_.func_177952_p() + field_77697_d.nextFloat()), d0, d1, d2, new int[0]);
-+            }
-+        }
+             }
+         }
      }
- 
-     public boolean func_111207_a(ItemStack p_111207_1_, EntityPlayer p_111207_2_, EntityLivingBase p_111207_3_, EnumHand p_111207_4_)

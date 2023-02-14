@@ -125,10 +125,10 @@
 +        registerMimicSound(EntityWolf.class,            SoundEvents.field_193820_fj);
 +        registerMimicSound(EntityZombie.class,          SoundEvents.field_193821_fk);
 +        registerMimicSound(EntityZombieVillager.class,  SoundEvents.field_193823_fm);
-     }
++    }
 +
 +    public static void registerMimicSound(Class<? extends Entity> cls, SoundEvent sound)
 +    {
 +        MIMIC_SOUNDS.put(cls, sound);
-+    }
+     }
  }

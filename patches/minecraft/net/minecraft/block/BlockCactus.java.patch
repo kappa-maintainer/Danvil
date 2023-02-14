@@ -46,10 +46,12 @@
      }
  
      public void func_180634_a(World p_180634_1_, BlockPos p_180634_2_, IBlockState p_180634_3_, Entity p_180634_4_)
-@@ -137,6 +142,18 @@
+@@ -135,6 +140,18 @@
+     public int func_176201_c(IBlockState p_176201_1_)
+     {
          return ((Integer)p_176201_1_.func_177229_b(field_176587_a)).intValue();
-     }
- 
++    }
++
 +    @Override
 +    public net.minecraftforge.common.EnumPlantType getPlantType(net.minecraft.world.IBlockAccess world, BlockPos pos)
 +    {
@@ -60,8 +62,6 @@
 +    public IBlockState getPlant(net.minecraft.world.IBlockAccess world, BlockPos pos)
 +    {
 +        return func_176223_P();
-+    }
-+
+     }
+ 
      protected BlockStateContainer func_180661_e()
-     {
-         return new BlockStateContainer(this, new IProperty[] {field_176587_a});

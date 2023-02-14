@@ -9,10 +9,11 @@
          {
              p_176221_1_ = p_176221_1_.func_177226_a(field_176467_M, Boolean.valueOf(true));
          }
-@@ -192,6 +192,23 @@
+@@ -191,6 +191,23 @@
+     {
          return new BlockStateContainer(this, new IProperty[] {field_185512_D, field_176466_a, field_176465_b, field_176467_M});
      }
- 
++
 +    /* ======================================== FORGE START ======================================== */
 +
 +    @Override
@@ -29,7 +30,6 @@
 +    }
 +
 +    /* ======================================== FORGE END ======================================== */
-+
+ 
      public BlockFaceShape func_193383_a(IBlockAccess p_193383_1_, IBlockState p_193383_2_, BlockPos p_193383_3_, EnumFacing p_193383_4_)
      {
-         if (p_193383_4_ != EnumFacing.UP && p_193383_4_ != EnumFacing.DOWN)

@@ -20,10 +20,11 @@
          {
              p_180614_2_.func_175656_a(p_180614_3_.func_177984_a(), this.field_150925_a.func_176223_P());
  
-@@ -44,4 +44,16 @@
+@@ -43,5 +43,17 @@
+         {
              return EnumActionResult.FAIL;
          }
-     }
++    }
 +
 +    @Override
 +    public net.minecraftforge.common.EnumPlantType getPlantType(net.minecraft.world.IBlockAccess world, BlockPos pos)
@@ -35,5 +36,5 @@
 +    public net.minecraft.block.state.IBlockState getPlant(net.minecraft.world.IBlockAccess world, BlockPos pos)
 +    {
 +        return this.field_150925_a.func_176223_P();
-+    }
+     }
  }

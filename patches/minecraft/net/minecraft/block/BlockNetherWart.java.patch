@@ -34,10 +34,12 @@
          {
              int i = 1;
  
-@@ -106,6 +109,23 @@
+@@ -104,6 +107,23 @@
+     public int func_176201_c(IBlockState p_176201_1_)
+     {
          return ((Integer)p_176201_1_.func_177229_b(field_176486_a)).intValue();
-     }
- 
++    }
++
 +    @Override
 +    public void getDrops(net.minecraft.util.NonNullList<ItemStack> drops, net.minecraft.world.IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
 +    {
@@ -53,8 +55,6 @@
 +        {
 +            drops.add(new ItemStack(Items.field_151075_bm));
 +        }
-+    }
-+
+     }
+ 
      protected BlockStateContainer func_180661_e()
-     {
-         return new BlockStateContainer(this, new IProperty[] {field_176486_a});

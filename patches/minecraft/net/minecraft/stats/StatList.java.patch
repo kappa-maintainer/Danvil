@@ -99,10 +99,11 @@
  
          if (p_151180_0_[i] != null && p_151180_0_[j] == null)
          {
-@@ -309,4 +316,36 @@
+@@ -308,5 +315,37 @@
+     public static StatBase func_151177_a(String p_151177_0_)
      {
          return field_188093_a.get(p_151177_0_);
-     }
++    }
 +
 +    @Deprecated //MODDER DO NOT CALL THIS ITS JUST A EVENT CALLBACK FOR FORGE
 +    public static void reinit()
@@ -134,5 +135,5 @@
 +        func_151179_e();
 +        func_75918_d();
 +        func_188054_f();
-+    }
+     }
  }

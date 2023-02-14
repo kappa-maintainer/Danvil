@@ -16,10 +16,11 @@
              this.field_145984_a = true;
              this.field_145991_k = this.func_174911_a(EnumFacing.WEST);
              this.field_145990_j = this.func_174911_a(EnumFacing.EAST);
-@@ -349,6 +351,29 @@
+@@ -348,6 +350,29 @@
+             }
          }
      }
- 
++
 +    public net.minecraftforge.items.VanillaDoubleChestItemHandler doubleChestHandler;
 +
 +    @SuppressWarnings("unchecked")
@@ -42,7 +43,6 @@
 +        return super.getCapability(net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
 +    }
 +
-+
+ 
      public void func_145843_s()
      {
-         super.func_145843_s();

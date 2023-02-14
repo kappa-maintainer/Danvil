@@ -54,10 +54,12 @@
              return true;
          }
      }
-@@ -290,6 +285,24 @@
+@@ -288,6 +283,24 @@
+     public Block.EnumOffsetType func_176218_Q()
+     {
          return Block.EnumOffsetType.XZ;
-     }
- 
++    }
++
 +    @Override
 +    public boolean isShearable(ItemStack item, IBlockAccess world, BlockPos pos)
 +    {
@@ -74,8 +76,6 @@
 +        if (type == EnumPlantType.FERN) ret.add(new ItemStack(Blocks.field_150329_H, 2, BlockTallGrass.EnumType.FERN.func_177044_a()));
 +        if (type == EnumPlantType.GRASS) ret.add(new ItemStack(Blocks.field_150329_H, 2, BlockTallGrass.EnumType.GRASS.func_177044_a()));
 +        return ret;
-+    }
-+
+     }
+ 
      public static enum EnumBlockHalf implements IStringSerializable
-     {
-         UPPER,

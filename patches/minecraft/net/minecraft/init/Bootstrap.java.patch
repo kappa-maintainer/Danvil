@@ -1,6 +1,6 @@
 --- ../src-base/minecraft/net/minecraft/init/Bootstrap.java
 +++ ../src-work/minecraft/net/minecraft/init/Bootstrap.java
-@@ -264,6 +264,9 @@
+@@ -264,9 +264,12 @@
          };
          BlockDispenser.field_149943_a.func_82595_a(Items.field_151129_at, ibehaviordispenseitem);
          BlockDispenser.field_149943_a.func_82595_a(Items.field_151131_as, ibehaviordispenseitem);
@@ -9,7 +9,20 @@
 +        if (false)
          BlockDispenser.field_149943_a.func_82595_a(Items.field_151133_ar, new BehaviorDefaultDispenseItem()
          {
-             private final BehaviorDefaultDispenseItem field_150840_b = new BehaviorDefaultDispenseItem();
+-            private final BehaviorDefaultDispenseItem field_150840_b = new BehaviorDefaultDispenseItem();
++            private final BehaviorDefaultDispenseItem dispenseBehavior = new BehaviorDefaultDispenseItem();
+             public ItemStack func_82487_b(IBlockSource p_82487_1_, ItemStack p_82487_2_)
+             {
+                 World world = p_82487_1_.func_82618_k();
+@@ -301,7 +304,7 @@
+                 {
+                     if (((TileEntityDispenser)p_82487_1_.func_150835_j()).func_146019_a(new ItemStack(item)) < 0)
+                     {
+-                        this.field_150840_b.func_82482_a(p_82487_1_, new ItemStack(item));
++                        this.dispenseBehavior.func_82482_a(p_82487_1_, new ItemStack(item));
+                     }
+ 
+                     return p_82487_2_;
 @@ -489,6 +492,7 @@
          if (!field_151355_a)
          {

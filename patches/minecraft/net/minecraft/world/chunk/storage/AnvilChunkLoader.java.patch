@@ -182,13 +182,14 @@
      }
  
      @Nullable
-@@ -563,4 +651,9 @@
+@@ -562,5 +650,10 @@
+ 
              return entity;
          }
-     }
++    }
 +
 +    public int getPendingSaveCount()
 +    {
 +        return this.field_75828_a.size();
-+    }
+     }
  }

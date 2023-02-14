@@ -64,10 +64,11 @@
              {
                  int k = i - p_77573_2_;
                  int l = j - p_77573_3_;
-@@ -379,4 +372,16 @@
+@@ -378,5 +371,17 @@
+             int j = p_192405_1_ ? JsonUtils.func_151208_a(p_192405_0_, "count", 1) : 1;
              return new ItemStack(item, j, i);
          }
-     }
++    }
 +
 +    //================================================ FORGE START ================================================
 +    @Override
@@ -79,5 +80,5 @@
 +    public int getRecipeHeight()
 +    {
 +        return this.func_192404_g();
-+    }
+     }
  }

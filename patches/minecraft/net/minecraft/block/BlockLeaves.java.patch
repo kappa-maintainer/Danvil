@@ -85,10 +85,11 @@
      }
  
      protected void func_176234_a(World p_176234_1_, BlockPos p_176234_2_, IBlockState p_176234_3_, int p_176234_4_)
-@@ -274,6 +242,51 @@
+@@ -273,6 +241,51 @@
+     }
  
      public abstract BlockPlanks.EnumType func_176233_b(int p_176233_1_);
- 
++
 +    @Override public boolean isShearable(ItemStack item, IBlockAccess world, BlockPos pos){ return true; }
 +    @Override public boolean isLeaves(IBlockState state, IBlockAccess world, BlockPos pos){ return true; }
 +
@@ -133,7 +134,6 @@
 +        drops.addAll(this.captureDrops(false));
 +    }
 +
-+
+ 
      @SideOnly(Side.CLIENT)
      public boolean func_176225_a(IBlockState p_176225_1_, IBlockAccess p_176225_2_, BlockPos p_176225_3_, EnumFacing p_176225_4_)
-     {

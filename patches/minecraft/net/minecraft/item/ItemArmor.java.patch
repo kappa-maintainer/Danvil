@@ -48,10 +48,11 @@
          public Item func_151685_b()
          {
              if (this == LEATHER)
-@@ -300,5 +318,21 @@
+@@ -299,6 +317,22 @@
+         public float func_189416_e()
          {
              return this.field_189417_k;
-         }
++        }
 +
 +        public ArmorMaterial setRepairItem(ItemStack stack)
 +        {
@@ -67,6 +68,6 @@
 +            Item ret = this.func_151685_b();
 +            if (ret != null) repairMaterial = new ItemStack(ret,1,net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE);
 +            return repairMaterial;
-+        }
+         }
      }
  }

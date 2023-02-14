@@ -38,7 +38,7 @@
                  return serverstatusresponse;
              }
  
-@@ -203,10 +208,50 @@
+@@ -203,9 +208,49 @@
                      jsonobject.addProperty("favicon", p_serialize_1_.func_151316_d());
                  }
  
@@ -46,7 +46,7 @@
                  return jsonobject;
              }
          }
- 
++
 +    private java.util.concurrent.Semaphore mutex = new java.util.concurrent.Semaphore(1);
 +    private String json = null;
 +    /**
@@ -85,7 +85,6 @@
 +    {
 +        this.json = null;
 +    }
-+
+ 
      public static class Version
          {
-             private final String field_151306_a;

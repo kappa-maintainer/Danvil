@@ -89,7 +89,7 @@
                  boolean flag = (c0 == 0 || j == -1 || this.field_78293_l) && p_78255_2_;
  
                  if (flag)
-@@ -445,7 +446,16 @@
+@@ -445,6 +446,15 @@
  
                      ++f;
                  }
@@ -97,15 +97,14 @@
 +            }
 +        }
 +    }
- 
++
 +    protected void doDraw(float f)
 +    {
 +        {
 +            {
-+
+ 
                  if (this.field_78299_w)
                  {
-                     Tessellator tessellator = Tessellator.func_178181_a();
 @@ -518,7 +528,7 @@
              this.field_78292_o = (float)(p_180455_4_ >> 8 & 255) / 255.0F;
              this.field_78306_p = (float)(p_180455_4_ & 255) / 255.0F;
@@ -123,10 +122,12 @@
          if (p_78263_1_ == 167)
          {
              return -1;
-@@ -849,6 +860,26 @@
+@@ -847,6 +858,26 @@
+     public boolean func_78260_a()
+     {
          return this.field_78294_m;
-     }
- 
++    }
++
 +    protected void setColor(float r, float g, float b, float a)
 +    {
 +        GlStateManager.func_179131_c(r,g,b,a);
@@ -145,8 +146,6 @@
 +    protected IResource getResource(ResourceLocation location) throws IOException
 +    {
 +        return Minecraft.func_71410_x().func_110442_L().func_110536_a(location);
-+    }
-+
+     }
+ 
      public int func_175064_b(char p_175064_1_)
-     {
-         int i = "0123456789abcdef".indexOf(p_175064_1_);

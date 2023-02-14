@@ -33,11 +33,11 @@
                  GlStateManager.func_179109_b(0.0F, 0.0F, -1.0F);
  
                  if (mapdata != null)
-@@ -124,6 +127,7 @@
+@@ -123,6 +126,7 @@
+                 this.field_177074_h.func_181564_a(itemstack, ItemCameraTransforms.TransformType.FIXED);
                  RenderHelper.func_74518_a();
                  GlStateManager.func_179099_b();
-             }
 +            }
+             }
  
              GlStateManager.func_179145_e();
-             GlStateManager.func_179121_F();

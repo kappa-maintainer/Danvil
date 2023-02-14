@@ -37,33 +37,50 @@
              boolean flag = false;
  
 -            if (!p_189540_2_.func_180495_p(p_189540_3_.func_177977_b()).func_185896_q())
-+            if (!p_189540_2_.func_180495_p(p_189540_3_.func_177977_b()).isSideSolid(p_189540_2_, p_189540_3_.func_177977_b(), EnumFacing.UP))
-             {
-                 flag = true;
-             }
- 
+-            {
+-                flag = true;
+-            }
+-
 -            if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_EAST && !p_189540_2_.func_180495_p(p_189540_3_.func_177974_f()).func_185896_q())
-+            if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_EAST && !p_189540_2_.func_180495_p(p_189540_3_.func_177974_f()).isSideSolid(p_189540_2_, p_189540_3_.func_177974_f(), EnumFacing.UP))
-             {
-                 flag = true;
-             }
+-            {
+-                flag = true;
+-            }
 -            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_WEST && !p_189540_2_.func_180495_p(p_189540_3_.func_177976_e()).func_185896_q())
-+            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_WEST && !p_189540_2_.func_180495_p(p_189540_3_.func_177976_e()).isSideSolid(p_189540_2_, p_189540_3_.func_177976_e(), EnumFacing.UP))
-             {
-                 flag = true;
-             }
+-            {
+-                flag = true;
+-            }
 -            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_NORTH && !p_189540_2_.func_180495_p(p_189540_3_.func_177978_c()).func_185896_q())
-+            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_NORTH && !p_189540_2_.func_180495_p(p_189540_3_.func_177978_c()).isSideSolid(p_189540_2_, p_189540_3_.func_177978_c(), EnumFacing.UP))
-             {
-                 flag = true;
-             }
+-            {
+-                flag = true;
+-            }
 -            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_SOUTH && !p_189540_2_.func_180495_p(p_189540_3_.func_177968_d()).func_185896_q())
-+            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_SOUTH && !p_189540_2_.func_180495_p(p_189540_3_.func_177968_d()).isSideSolid(p_189540_2_, p_189540_3_.func_177968_d(), EnumFacing.UP))
-             {
-                 flag = true;
-             }
- 
+-            {
+-                flag = true;
+-            }
+-
 -            if (flag && !p_189540_2_.func_175623_d(p_189540_3_))
++            if (!p_189540_2_.func_180495_p(p_189540_3_.func_177977_b()).isSideSolid(p_189540_2_, p_189540_3_.func_177977_b(), EnumFacing.UP))
++            {
++                flag = true;
++            }
++
++            if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_EAST && !p_189540_2_.func_180495_p(p_189540_3_.func_177974_f()).isSideSolid(p_189540_2_, p_189540_3_.func_177974_f(), EnumFacing.UP))
++            {
++                flag = true;
++            }
++            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_WEST && !p_189540_2_.func_180495_p(p_189540_3_.func_177976_e()).isSideSolid(p_189540_2_, p_189540_3_.func_177976_e(), EnumFacing.UP))
++            {
++                flag = true;
++            }
++            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_NORTH && !p_189540_2_.func_180495_p(p_189540_3_.func_177978_c()).isSideSolid(p_189540_2_, p_189540_3_.func_177978_c(), EnumFacing.UP))
++            {
++                flag = true;
++            }
++            else if (blockrailbase$enumraildirection == BlockRailBase.EnumRailDirection.ASCENDING_SOUTH && !p_189540_2_.func_180495_p(p_189540_3_.func_177968_d()).isSideSolid(p_189540_2_, p_189540_3_.func_177968_d(), EnumFacing.UP))
++            {
++                flag = true;
++            }
++
 +            if (flag && !currentState.func_177230_c().isAir(currentState, p_189540_2_, p_189540_3_))
              {
                  this.func_176226_b(p_189540_2_, p_189540_3_, p_189540_1_, 0);

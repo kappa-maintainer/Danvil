@@ -8,10 +8,11 @@
      }
  
      protected void func_110232_cE()
-@@ -1227,4 +1228,22 @@
+@@ -1226,5 +1227,23 @@
+         }
  
          return p_180482_2_;
-     }
++    }
 +
 +    // FORGE
 +    private net.minecraftforge.items.IItemHandler itemHandler = null; // Initialized by initHorseChest above.
@@ -29,5 +30,5 @@
 +    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, @Nullable net.minecraft.util.EnumFacing facing)
 +    {
 +        return capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY || super.hasCapability(capability, facing);
-+    }
+     }
  }

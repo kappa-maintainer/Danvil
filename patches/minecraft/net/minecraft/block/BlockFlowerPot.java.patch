@@ -31,10 +31,11 @@
          super.func_180663_b(p_180663_1_, p_180663_2_, p_180663_3_);
      }
  
-@@ -398,6 +393,30 @@
+@@ -397,6 +392,30 @@
+     {
          return BlockFaceShape.UNDEFINED;
      }
- 
++
 +
 +    /*============================FORGE START=====================================*/
 +    @Override
@@ -58,7 +59,6 @@
 +        world.func_175698_g(pos);
 +    }
 +    /*===========================FORGE END==========================================*/
-+
+ 
      public static enum EnumFlowerType implements IStringSerializable
      {
-         EMPTY("empty"),

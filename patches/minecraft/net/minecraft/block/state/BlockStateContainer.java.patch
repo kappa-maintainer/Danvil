@@ -53,6 +53,7 @@
              {
                  return this.field_177239_a.func_193383_a(p_193401_1_, this, p_193401_2_, p_193401_3_);
              }
+-        }
 +
 +            //Forge Start
 +            @Override
@@ -90,7 +91,7 @@
 +            {
 +                return this.field_177239_a.doesSideBlockRendering(this, world, pos, side);
 +            }
-         }
++        }
 +
 +    /**
 +     * Forge added class to make building things easier.

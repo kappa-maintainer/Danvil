@@ -75,10 +75,12 @@
                      }
                      catch (Throwable var3)
                      {
-@@ -297,6 +305,204 @@
-     {
-     }
+@@ -295,6 +303,204 @@
  
+     public void func_189668_a(Mirror p_189668_1_)
+     {
++    }
++
 +    // -- BEGIN FORGE PATCHES --
 +    /**
 +     * Called when you receive a TileEntityData packet for the location this
@@ -275,8 +277,6 @@
 +        NBTTagCompound ret = new NBTTagCompound();
 +        this.func_189515_b(ret);
 +        return ret;
-+    }
-+
+     }
+ 
      static
-     {
-         func_190560_a("furnace", TileEntityFurnace.class);

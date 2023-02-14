@@ -53,10 +53,13 @@
                                          }
                                      }
                                  }
-@@ -223,4 +201,68 @@
-             }
-         }
-     }
+@@ -220,6 +198,70 @@
+                 float f1 = (this.field_75038_b.nextFloat() - 0.5F) * 2.0F / 8.0F;
+                 float f2 = (this.field_75038_b.nextFloat() * 2.0F + this.field_75038_b.nextFloat()) * 2.0F;
+                 this.func_180707_a(this.field_75038_b.nextLong(), p_180701_4_, p_180701_5_, p_180701_6_, d0, d1, d2, f2, f, f1, 0, 0, 3.0D);
++            }
++        }
++    }
 +    protected boolean isOceanBlock(ChunkPrimer data, int x, int y, int z, int chunkX, int chunkZ)
 +    {
 +        net.minecraft.block.Block block = data.func_177856_a(x, y, z).func_177230_c();
@@ -118,7 +121,6 @@
 +                {
 +                    data.func_177855_a(x, y - 1, z, top.func_177230_c().func_176223_P());
 +                }
-+            }
-+        }
-+    }
- }
+             }
+         }
+     }

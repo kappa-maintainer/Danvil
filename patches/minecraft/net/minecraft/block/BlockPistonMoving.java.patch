@@ -17,10 +17,12 @@
      }
  
      @Nullable
-@@ -210,6 +211,17 @@
+@@ -208,6 +209,17 @@
+     protected BlockStateContainer func_180661_e()
+     {
          return new BlockStateContainer(this, new IProperty[] {field_176426_a, field_176425_b});
-     }
- 
++    }
++
 +    @Override
 +    public void getDrops(net.minecraft.util.NonNullList<net.minecraft.item.ItemStack> drops, IBlockAccess world, BlockPos pos, IBlockState state, int fortune)
 +    {
@@ -30,8 +32,6 @@
 +            IBlockState pushed = tileentitypiston.func_174927_b();
 +            drops.addAll(pushed.func_177230_c().getDrops(world, pos, pushed, fortune)); // use the old method until it gets removed, for backward compatibility
 +        }
-+    }
-+
+     }
+ 
      public BlockFaceShape func_193383_a(IBlockAccess p_193383_1_, IBlockState p_193383_2_, BlockPos p_193383_3_, EnumFacing p_193383_4_)
-     {
-         return BlockFaceShape.UNDEFINED;

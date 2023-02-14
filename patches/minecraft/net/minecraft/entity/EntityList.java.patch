@@ -12,7 +12,7 @@
  
      @Nullable
      public static ResourceLocation func_191301_a(Entity p_191301_0_)
-@@ -121,38 +119,54 @@
+@@ -121,35 +119,51 @@
      @Nullable
      public static ResourceLocation func_191306_a(Class <? extends Entity > p_191306_0_)
      {
@@ -55,25 +55,22 @@
 -        return (Class)field_191308_b.func_82594_a(new ResourceLocation(p_192839_0_));
 +        net.minecraftforge.fml.common.registry.EntityEntry entry = net.minecraftforge.fml.common.registry.ForgeRegistries.ENTITIES.getValue(new ResourceLocation(p_192839_0_));
 +        return entry == null ? null : entry.getEntityClass();
-     }
- 
++    }
++
 +    public static int getID(Class<? extends Entity> cls)
 +    {
 +        net.minecraftforge.fml.common.registry.EntityEntry entry = net.minecraftforge.fml.common.registry.EntityRegistry.getEntry(cls);
 +        return entry == null ? -1 : net.minecraftforge.registries.GameData.getEntityRegistry().getID(entry);
 +    }
 +
-     @Nullable
++    @Nullable
 +    public static Class<? extends Entity> getClass(ResourceLocation key)
 +    {
 +        net.minecraftforge.fml.common.registry.EntityEntry entry = net.minecraftforge.fml.common.registry.ForgeRegistries.ENTITIES.getValue(key);
 +        return entry == null ? null : entry.getEntityClass();
-+    }
-+
-+    @Nullable
-     public static Entity func_191304_a(@Nullable Class <? extends Entity > p_191304_0_, World p_191304_1_)
-     {
-         if (p_191304_0_ == null)
+     }
+ 
+     @Nullable
 @@ -163,6 +177,8 @@
          {
              try

@@ -53,7 +53,7 @@
              if (!this.func_179860_f(villagedoorinfo.func_179852_d()) || Math.abs(this.field_75581_g - villagedoorinfo.func_75473_b()) > 1200)
              {
                  this.field_75585_c = this.field_75585_c.func_177973_b(villagedoorinfo.func_179852_d());
-@@ -415,25 +418,51 @@
+@@ -415,23 +418,49 @@
          }
      }
  
@@ -97,16 +97,14 @@
      {
 -        return this.func_82684_a(p_82687_1_) <= -15;
 +        return this.isPlayerReputationTooLow(findUUID(p_82687_1_));
-     }
- 
++    }
++
 +    public boolean isPlayerReputationTooLow(UUID uuid)
 +    {
 +        return this.getPlayerReputation(uuid) <= -15;
-+    }
-+
+     }
+ 
      public void func_82690_a(NBTTagCompound p_82690_1_)
-     {
-         this.field_75588_h = p_82690_1_.func_74762_e("PopSize");
 @@ -459,21 +488,17 @@
          {
              NBTTagCompound nbttagcompound1 = nbttaglist1.func_150305_b(j);

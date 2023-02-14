@@ -89,14 +89,13 @@
          for (int k2 = 0; k2 < 16; ++k2)
          {
              for (int j3 = 0; j3 < 16; ++j3)
-@@ -456,7 +486,10 @@
+@@ -456,6 +486,9 @@
                  }
              }
          }
 +        }//Forge: End ICE
- 
-+        net.minecraftforge.event.ForgeEventFactory.onChunkPopulate(false, this, this.field_185995_n, this.field_185990_i, p_185931_1_, p_185931_2_, flag);
 +
++        net.minecraftforge.event.ForgeEventFactory.onChunkPopulate(false, this, this.field_185995_n, this.field_185990_i, p_185931_1_, p_185931_2_, flag);
+ 
          BlockFalling.field_149832_M = false;
      }
- 

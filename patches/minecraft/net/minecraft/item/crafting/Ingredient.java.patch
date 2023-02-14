@@ -21,12 +21,12 @@
 +    private final ItemStack[] matchingStacksExploded;
      private IntList field_194140_c;
 +    private final boolean isSimple;
- 
++
 +    protected Ingredient(int size)
 +    {
 +        this(new ItemStack[size]);
 +    }
-+
+ 
      protected Ingredient(ItemStack... p_i47503_1_)
      {
 +        boolean simple = true;
@@ -87,10 +87,11 @@
      public static Ingredient func_193367_a(Item p_193367_0_)
      {
          return func_193369_a(new ItemStack(p_193367_0_, 1, 32767));
-@@ -108,4 +142,22 @@
+@@ -107,5 +141,23 @@
+         }
  
          return field_193370_a;
-     }
++    }
 +
 +    // Merges several vanilla Ingredients together. As a qwerk of how the json is structured, we can't tell if its a single Ingredient type or multiple so we split per item and remerge here.
 +    //Only public for internal use, so we can access a private field in here.
@@ -108,5 +109,5 @@
 +    public boolean isSimple()
 +    {
 +        return isSimple || this == field_193370_a;
-+    }
+     }
  }

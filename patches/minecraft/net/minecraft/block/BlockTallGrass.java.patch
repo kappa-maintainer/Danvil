@@ -27,10 +27,11 @@
      }
  
      public int func_149679_a(int p_149679_1_, Random p_149679_2_)
-@@ -178,4 +178,19 @@
+@@ -177,5 +177,20 @@
+                 field_177048_d[blocktallgrass$enumtype.func_177044_a()] = blocktallgrass$enumtype;
              }
          }
-     }
++    }
 +
 +    @Override public boolean isShearable(ItemStack item, IBlockAccess world, BlockPos pos){ return true; }
 +    @Override
@@ -45,5 +46,5 @@
 +        ItemStack seed = net.minecraftforge.common.ForgeHooks.getGrassSeed(RANDOM, fortune);
 +        if (!seed.func_190926_b())
 +            drops.add(seed);
-+    }
+     }
  }

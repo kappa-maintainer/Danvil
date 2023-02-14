@@ -1,13 +1,15 @@
 --- ../src-base/minecraft/net/minecraft/client/audio/SoundHandler.java
 +++ ../src-work/minecraft/net/minecraft/client/audio/SoundHandler.java
-@@ -67,6 +67,7 @@
+@@ -67,7 +67,8 @@
      {
          this.field_147697_e.func_148763_c();
  
+-        for (String s : p_110549_1_.func_135055_a())
 +        java.util.List<net.minecraft.util.Tuple<ResourceLocation, SoundList>> resources = new java.util.LinkedList<>();
-         for (String s : p_110549_1_.func_135055_a())
++        for (String s : p_110549_1_.getNamespaces())
          {
              try
+             {
 @@ -79,7 +80,7 @@
  
                          for (Entry<String, SoundList> entry : map.entrySet())
@@ -38,15 +40,15 @@
          for (ResourceLocation resourcelocation : this.field_147697_e.func_148742_b())
          {
              SoundEventAccessor soundeventaccessor = (SoundEventAccessor)this.field_147697_e.func_82594_a(resourcelocation);
-@@ -253,6 +268,11 @@
+@@ -251,6 +266,11 @@
+     public void func_147691_a(EntityPlayer p_147691_1_, float p_147691_2_)
+     {
          this.field_147694_f.func_148615_a(p_147691_1_, p_147691_2_);
-     }
- 
++    }
++
 +    public void setListener(net.minecraft.entity.Entity entity, float partialTicks)
 +    {
 +        this.field_147694_f.setListener(entity, partialTicks);
-+    }
-+
+     }
+ 
      public void func_147689_b()
-     {
-         this.field_147694_f.func_148610_e();

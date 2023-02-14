@@ -21,7 +21,7 @@
          if (!this.field_70170_p.field_72995_K)
          {
              p_184230_1_.func_71007_a(this);
-@@ -270,17 +271,37 @@
+@@ -270,15 +271,35 @@
                  random = new Random(this.field_184291_d);
              }
  
@@ -36,8 +36,8 @@
  
              loottable.func_186460_a(this, random, lootcontext$builder.func_186471_a());
          }
-     }
- 
++    }
++
 +    public net.minecraftforge.items.IItemHandler itemHandler = new net.minecraftforge.items.wrapper.InvWrapper(this);
 +
 +    @SuppressWarnings("unchecked")
@@ -56,8 +56,6 @@
 +    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, @Nullable net.minecraft.util.EnumFacing facing)
 +    {
 +        return capability == net.minecraftforge.items.CapabilityItemHandler.ITEM_HANDLER_CAPABILITY || super.hasCapability(capability, facing);
-+    }
-+
+     }
+ 
      public void func_174888_l()
-     {
-         this.func_184288_f((EntityPlayer)null);

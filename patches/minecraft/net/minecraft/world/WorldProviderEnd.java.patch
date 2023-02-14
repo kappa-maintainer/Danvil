@@ -18,10 +18,11 @@
      }
  
      public void func_186059_r()
-@@ -129,4 +129,22 @@
+@@ -128,5 +128,23 @@
+     public DragonFightManager func_186063_s()
      {
          return this.field_186064_g;
-     }
++    }
 +
 +    @Override
 +    public void func_186061_a(net.minecraft.entity.player.EntityPlayerMP player)
@@ -39,5 +40,5 @@
 +        {
 +            this.field_186064_g.removePlayer(player);
 +        }
-+    }
+     }
  }

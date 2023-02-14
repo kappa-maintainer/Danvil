@@ -58,23 +58,22 @@
      }
  
      public void func_184392_a(ItemStack p_184392_1_, EntityLivingBase p_184392_2_, ItemCameraTransforms.TransformType p_184392_3_, boolean p_184392_4_)
-@@ -274,14 +269,9 @@
+@@ -274,13 +269,8 @@
              GlStateManager.func_179147_l();
              GlStateManager.func_187428_a(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
              GlStateManager.func_179094_E();
 -            ItemCameraTransforms itemcameratransforms = p_184394_2_.func_177552_f();
 -            ItemCameraTransforms.func_188034_a(itemcameratransforms.func_181688_b(p_184394_3_), p_184394_4_);
-+            // TODO: check if negative scale is a thing
-+            p_184394_2_ = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(p_184394_2_, p_184394_3_, p_184394_4_);
- 
+-
 -            if (this.func_183005_a(itemcameratransforms.func_181688_b(p_184394_3_)))
 -            {
 -                GlStateManager.func_187407_a(GlStateManager.CullFace.FRONT);
 -            }
--
++            // TODO: check if negative scale is a thing
++            p_184394_2_ = net.minecraftforge.client.ForgeHooksClient.handleCameraTransforms(p_184394_2_, p_184394_3_, p_184394_4_);
+ 
              this.func_180454_a(p_184394_1_, p_184394_2_);
              GlStateManager.func_187407_a(GlStateManager.CullFace.BACK);
-             GlStateManager.func_179121_F();
 @@ -314,7 +304,7 @@
          GlStateManager.func_187401_a(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
          GlStateManager.func_179131_c(1.0F, 1.0F, 1.0F, 1.0F);

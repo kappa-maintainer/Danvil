@@ -12,10 +12,11 @@
      }
  
      public Item func_180660_a(IBlockState p_180660_1_, Random p_180660_2_, int p_180660_3_)
-@@ -197,6 +200,24 @@
+@@ -196,6 +199,24 @@
+     {
          return new BlockStateContainer(this, new IProperty[] {field_176241_b, field_176242_M, field_176244_O, field_176243_N});
      }
- 
++
 +    /* ======================================== FORGE START ======================================== */
 +
 +    @Override
@@ -33,7 +34,6 @@
 +    }
 +
 +    /* ======================================== FORGE END ======================================== */
-+
+ 
      public BlockFaceShape func_193383_a(IBlockAccess p_193383_1_, IBlockState p_193383_2_, BlockPos p_193383_3_, EnumFacing p_193383_4_)
      {
-         return p_193383_4_ != EnumFacing.UP && p_193383_4_ != EnumFacing.DOWN ? BlockFaceShape.MIDDLE_POLE_THIN : BlockFaceShape.CENTER_SMALL;

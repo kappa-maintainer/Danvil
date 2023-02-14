@@ -43,7 +43,7 @@
                      {
                          this.func_175903_a(p_175925_1_, blockpos, this.field_76521_c);
                      }
-@@ -135,9 +136,9 @@
+@@ -135,14 +136,21 @@
                  if (j * j + k * k <= i)
                  {
                      BlockPos blockpos = p_175928_2_.func_177982_a(j, 0, k);
@@ -55,15 +55,15 @@
                      {
                          this.func_175903_a(p_175928_1_, blockpos, this.field_76521_c);
                      }
-@@ -145,4 +146,11 @@
+                 }
              }
          }
-     }
++    }
 +
 +    //Just a helper macro
 +    private void onPlantGrow(World world, BlockPos pos, BlockPos source)
 +    {
 +        IBlockState state = world.func_180495_p(pos);
 +        state.func_177230_c().onPlantGrow(state, world, pos, source);
-+    }
+     }
  }

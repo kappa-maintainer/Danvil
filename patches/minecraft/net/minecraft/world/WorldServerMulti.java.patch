@@ -45,22 +45,20 @@
          }
          else
          {
-@@ -73,9 +76,18 @@
+@@ -73,7 +76,16 @@
              this.field_72982_D.func_82566_a(this);
          }
  
 +        this.initCapabilities();
          return this;
-     }
- 
++    }
++
 +
 +    @Override
 +    public void func_73041_k()
 +    {
 +        super.func_73041_k();
 +        this.field_175743_a.func_175723_af().removeListener(this.borderListener); // Unlink ourselves, to prevent world leak.
-+    }
-+
+     }
+ 
      public void func_184166_c()
-     {
-         this.field_73011_w.func_186057_q();

@@ -72,10 +72,11 @@
                  {
                      this.func_146279_a(guiadvancementtab.func_191795_d(), p_191937_1_, p_191937_2_);
                  }
-@@ -273,4 +292,13 @@
+@@ -272,5 +291,14 @@
+         }
  
          return this.field_191947_i.get(p_191935_1_);
-     }
++    }
 +
 +    @Override
 +    protected void func_146284_a(net.minecraft.client.gui.GuiButton button) throws IOException
@@ -84,5 +85,5 @@
 +            tabPage = Math.max(tabPage - 1, 0);
 +        else if(button.field_146127_k == 102)
 +            tabPage = Math.min(tabPage + 1, maxPages);
-+    }
+     }
  }

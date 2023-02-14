@@ -40,10 +40,11 @@
          }
  
          this.func_181667_k();
-@@ -605,4 +607,27 @@
+@@ -604,5 +606,28 @@
+         {
              return this.field_179018_e;
          }
-     }
++    }
 +
 +
 +    //For some unknown reason Mojang changed the vanilla function to hardcode alpha as 255.... So lets re-add the parameter -.-
@@ -66,5 +67,5 @@
 +        this.field_179001_a.position(this.field_178997_d * this.field_179011_q.func_177338_f());
 +        this.field_179001_a.put(buffer);
 +        this.field_178997_d += buffer.limit() / this.field_179011_q.func_177338_f();
-+    }
+     }
  }

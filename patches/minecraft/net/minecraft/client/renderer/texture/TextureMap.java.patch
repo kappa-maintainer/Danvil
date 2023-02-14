@@ -29,23 +29,26 @@
          this.field_94258_i.clear();
          int j = Integer.MAX_VALUE;
          int k = 1 << this.field_147636_j;
-+        net.minecraftforge.fml.common.FMLLog.log.info("Max texture size: {}", i);
-+        net.minecraftforge.fml.common.ProgressManager.ProgressBar bar = net.minecraftforge.fml.common.ProgressManager.push("Texture stitching", this.field_110574_e.size());
-+        loadedSprites.clear();
- 
+-
 -        for (Entry<String, TextureAtlasSprite> entry : this.field_110574_e.entrySet())
-+        for (Entry<String, TextureAtlasSprite> entry : Maps.newHashMap(this.field_110574_e).entrySet())
-         {
+-        {
 -            TextureAtlasSprite textureatlassprite = entry.getValue();
 -            ResourceLocation resourcelocation = this.func_184396_a(textureatlassprite);
 -            IResource iresource = null;
+-
++        net.minecraftforge.fml.common.FMLLog.log.info("Max texture size: {}", i);
++        net.minecraftforge.fml.common.ProgressManager.ProgressBar bar = net.minecraftforge.fml.common.ProgressManager.push("Texture stitching", this.field_110574_e.size());
++        loadedSprites.clear();
++
++        for (Entry<String, TextureAtlasSprite> entry : Maps.newHashMap(this.field_110574_e).entrySet())
++        {
 +            final ResourceLocation location = new ResourceLocation(entry.getKey());
 +            bar.step(location.toString());
 +            j = loadTexture(stitcher, p_110571_1_, location, entry.getValue(), bar, j, k);
 +        }
 +        finishLoading(stitcher, bar, j, k);
 +    }
- 
++
 +    private int loadTexture(Stitcher stitcher, IResourceManager p_110571_1_, ResourceLocation location, TextureAtlasSprite textureatlassprite, net.minecraftforge.fml.common.ProgressManager.ProgressBar bar, int j, int k)
 +    {
 +        if (loadedSprites.contains(location)) {
@@ -76,7 +79,7 @@
 +                j = loadTexture(stitcher, p_110571_1_, dependency, depSprite, bar, j, k);
 +            }
              try
-             {
++            {
 +            if (textureatlassprite.hasCustomLoader(p_110571_1_, resourcelocation))
 +            {
 +                if (textureatlassprite.load(p_110571_1_, resourcelocation, l -> field_110574_e.get(l.toString())))
@@ -85,7 +88,7 @@
 +                }
 +            }
 +            else
-+            {
+             {
                  PngSizeInfo pngsizeinfo = PngSizeInfo.func_188532_a(p_110571_1_.func_110536_a(resourcelocation));
                  iresource = p_110571_1_.func_110536_a(resourcelocation);
                  boolean flag = iresource.func_110526_a("animation") != null;
@@ -120,8 +123,9 @@
  
 +            if (func_184397_a(p_110571_1_, textureatlassprite))
              stitcher.func_110934_a(textureatlassprite);
+-        }
 +            return j;
-         }
++        }
 +        finally
 +        {
 +            loadingSprites.removeLast();
@@ -196,10 +200,11 @@
  
              if (textureatlassprite == null)
              {
-@@ -318,4 +394,52 @@
+@@ -317,5 +393,53 @@
+     public TextureAtlasSprite func_174944_f()
      {
          return this.field_94249_f;
-     }
++    }
 +
 +    //===================================================================================================
 +    //                                           Forge Start
@@ -247,5 +252,5 @@
 +    public int getMipmapLevels()
 +    {
 +        return field_147636_j;
-+    }
+     }
  }

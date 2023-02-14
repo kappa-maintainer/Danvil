@@ -60,7 +60,7 @@
 +    private Block getBlockRaw()
 +    {
          return this.field_150939_a;
-     }
++    }
 +
 +    /**
 +     * Called to actually place the block, after the location is determined
@@ -85,5 +85,5 @@
 +        }
 +
 +        return true;
-+    }
+     }
  }

@@ -16,10 +16,11 @@
      }
  
      public int func_186068_a()
-@@ -75,6 +77,20 @@
+@@ -74,6 +76,20 @@
+ 
          throw new IllegalArgumentException("Invalid dimension id " + p_186069_0_);
      }
- 
++
 +    public boolean shouldLoadSpawn(){ return this.shouldLoadSpawn; }
 +    public DimensionType setLoadSpawn(boolean value) { this.shouldLoadSpawn = value; return this; }
 +
@@ -33,7 +34,6 @@
 +        return ret.setLoadSpawn(keepLoaded);
 +    }
 +    //TODO: Unregister? There is no way to really delete a enum value...
-+
+ 
      public static DimensionType func_193417_a(String p_193417_0_)
      {
-         for (DimensionType dimensiontype : values())

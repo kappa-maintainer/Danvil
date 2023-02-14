@@ -1619,10 +1619,12 @@
          func_176219_a(158, "dropper", (new BlockDropper()).func_149711_c(3.5F).func_149672_a(SoundType.field_185851_d).func_149663_c("dropper"));
          func_176219_a(159, "stained_hardened_clay", (new BlockStainedHardenedClay()).func_149711_c(1.25F).func_149752_b(7.0F).func_149672_a(SoundType.field_185851_d).func_149663_c("clayHardenedStained"));
          func_176219_a(160, "stained_glass_pane", (new BlockStainedGlassPane()).func_149711_c(0.3F).func_149672_a(SoundType.field_185853_f).func_149663_c("thinStainedGlass"));
-@@ -1230,31 +2630,6 @@
+@@ -1228,31 +2628,6 @@
+                 }
+ 
                  block15.field_149783_u = flag;
-             }
-         }
+-            }
+-        }
 -
 -        Set<Block> set = Sets.newHashSet(field_149771_c.func_82594_a(new ResourceLocation("tripwire")));
 -
@@ -1646,8 +1648,6 @@
 -                    int k = field_149771_c.func_148757_b(block16) << 4 | block16.func_176201_c(iblockstate);
 -                    field_176229_d.func_148746_a(iblockstate, k);
 -                }
--            }
--        }
+             }
+         }
      }
- 
-     private static void func_176215_a(int p_176215_0_, ResourceLocation p_176215_1_, Block p_176215_2_)

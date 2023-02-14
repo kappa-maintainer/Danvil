@@ -32,15 +32,15 @@
          Matcher matcher = field_82389_a.matcher(p_82377_0_);
  
          if (!matcher.matches())
-@@ -803,6 +814,11 @@
+@@ -802,6 +813,11 @@
+     }
  
      public static boolean func_82378_b(String p_82378_0_)
-     {
++    {
 +        return net.minecraftforge.common.command.SelectorHandlerManager.isSelector(p_82378_0_);
 +    }
 +
 +    public static boolean isSelectorDefault(String p_82378_0_)
-+    {
+     {
          return field_82389_a.matcher(p_82378_0_).matches();
      }
- 

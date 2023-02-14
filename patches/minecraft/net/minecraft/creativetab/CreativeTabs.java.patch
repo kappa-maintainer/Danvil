@@ -44,10 +44,11 @@
          return this.field_78033_n < 6;
      }
  
-@@ -260,4 +282,50 @@
+@@ -259,5 +281,51 @@
+         {
              item.func_150895_a(this, p_78018_1_);
          }
-     }
++    }
 +
 +    public int getTabPage()
 +    {
@@ -93,5 +94,5 @@
 +    public int getLabelColor()
 +    {
 +        return 4210752;
-+    }
+     }
  }

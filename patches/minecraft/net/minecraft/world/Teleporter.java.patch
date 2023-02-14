@@ -9,10 +9,11 @@
  {
      protected final WorldServer field_85192_a;
      protected final Random field_77187_a;
-@@ -428,4 +428,13 @@
+@@ -427,5 +427,14 @@
+             super(p_i45747_2_.func_177958_n(), p_i45747_2_.func_177956_o(), p_i45747_2_.func_177952_p());
              this.field_85087_d = p_i45747_3_;
          }
-     }
++    }
 +
 +    @Override
 +    public void placeEntity(World world, Entity entity, float yaw)
@@ -21,5 +22,5 @@
 +            func_180266_a(entity, yaw);
 +        else
 +            func_180620_b(entity, yaw);
-+    }
+     }
  }

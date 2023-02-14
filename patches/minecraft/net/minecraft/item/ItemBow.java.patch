@@ -50,13 +50,14 @@
          if (!p_77659_2_.field_71075_bZ.field_75098_d && !flag)
          {
              return flag ? new ActionResult(EnumActionResult.PASS, itemstack) : new ActionResult(EnumActionResult.FAIL, itemstack);
-@@ -205,4 +212,9 @@
+@@ -204,5 +211,10 @@
+     public int func_77619_b()
      {
          return 1;
-     }
++    }
 +
 +    public EntityArrow customizeArrow(EntityArrow arrow)
 +    {
 +        return arrow;
-+    }
+     }
  }

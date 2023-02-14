@@ -27,7 +27,7 @@
                          {
                              EnumFacing enumfacing3 = enumfacing1.func_176746_e();
                              EnumFacing enumfacing4 = enumfacing1.func_176735_f();
-@@ -459,7 +459,17 @@
+@@ -459,6 +459,16 @@
  
          return i;
      }
@@ -40,8 +40,7 @@
 +        return java.util.Arrays.asList(new ItemStack(this, 1));
 +    }
 +    /*************************FORGE END***********************************/
- 
 +
+ 
      public BlockFaceShape func_193383_a(IBlockAccess p_193383_1_, IBlockState p_193383_2_, BlockPos p_193383_3_, EnumFacing p_193383_4_)
      {
-         return BlockFaceShape.UNDEFINED;

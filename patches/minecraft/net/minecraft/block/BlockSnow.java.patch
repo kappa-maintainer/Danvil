@@ -44,12 +44,12 @@
              p_180650_1_.func_175698_g(p_180650_2_);
          }
      }
-@@ -167,6 +164,8 @@
+@@ -166,6 +163,8 @@
+     {
          return ((Integer)p_176201_1_.func_177229_b(field_176315_a)).intValue() - 1;
      }
- 
-+    @Override public int quantityDropped(IBlockState state, int fortune, Random random){ return ((Integer)state.func_177229_b(field_176315_a)) + 1; }
 +
++    @Override public int quantityDropped(IBlockState state, int fortune, Random random){ return ((Integer)state.func_177229_b(field_176315_a)) + 1; }
+ 
      protected BlockStateContainer func_180661_e()
      {
-         return new BlockStateContainer(this, new IProperty[] {field_176315_a});

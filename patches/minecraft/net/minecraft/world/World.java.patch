@@ -67,7 +67,7 @@
      }
  
      public boolean func_175667_e(BlockPos p_175667_1_)
-@@ -308,24 +328,51 @@
+@@ -308,23 +328,50 @@
          else
          {
              Chunk chunk = this.func_175726_f(p_180501_1_);
@@ -103,7 +103,7 @@
  
 -                if ((p_180501_3_ & 2) != 0 && (!this.field_72995_K || (p_180501_3_ & 4) == 0) && chunk.func_150802_k())
 +                if (blockSnapshot == null) // Don't notify clients or update physics while capturing blockstates
-                 {
++                {
 +                    this.markAndNotifyBlock(p_180501_1_, chunk, iblockstate, p_180501_2_, p_180501_3_);
 +                }
 +                return true;
@@ -118,10 +118,9 @@
 +        {
 +            {
 +                if ((p_180501_3_ & 2) != 0 && (!this.field_72995_K || (p_180501_3_ & 4) == 0) && (chunk == null || chunk.func_150802_k()))
-+                {
+                 {
                      this.func_184138_a(p_180501_1_, iblockstate, p_180501_2_, p_180501_3_);
                  }
- 
 @@ -342,8 +389,6 @@
                  {
                      this.func_190522_c(p_180501_1_, block);
@@ -365,7 +364,7 @@
          float f3 = (float)(l >> 16 & 255) / 255.0F;
          float f4 = (float)(l >> 8 & 255) / 255.0F;
          float f5 = (float)(l & 255) / 255.0F;
-@@ -1444,20 +1537,25 @@
+@@ -1444,18 +1537,23 @@
  
      public float func_72826_c(float p_72826_1_)
      {
@@ -384,16 +383,14 @@
      {
 -        return WorldProvider.field_111203_a[this.field_73011_w.func_76559_b(this.field_72986_A.func_76073_f())];
 +        return field_73011_w.getCurrentMoonPhaseFactor();
-     }
- 
++    }
++
 +    public float getCurrentMoonPhaseFactorBody()
 +    {
 +        return WorldProvider.field_111203_a[this.field_73011_w.func_76559_b(this.func_72820_D())];
-+    }
-+
+     }
+ 
      public float func_72929_e(float p_72929_1_)
-     {
-         float f = this.func_72826_c(p_72929_1_);
 @@ -1467,6 +1565,12 @@
      @SideOnly(Side.CLIENT)
      public Vec3d func_72824_f(float p_72824_1_)
@@ -583,8 +580,9 @@
              int j2 = MathHelper.func_76128_c(p_72866_1_.field_70165_t);
              int k2 = MathHelper.func_76128_c(p_72866_1_.field_70161_v);
 -            int l2 = 32;
- 
+-
 -            if (p_72866_2_ && !this.func_175663_a(j2 - 32, 0, k2 - 32, j2 + 32, 0, k2 + 32, true))
++
 +            boolean isForced = !this.field_72995_K && getPersistentChunks().containsKey(new net.minecraft.util.math.ChunkPos(j2 >> 4, k2 >> 4));
 +            int range = isForced ? 0 : 32;
 +            boolean canUpdate = !p_72866_2_ || this.func_175663_a(j2 - range, 0, k2 - range, j2 + range, 0, k2 + range, true);
@@ -1064,13 +1062,13 @@
                  IBlockState iblockstate1 = this.func_180495_p(blockpos1);
  
 -                if (Blocks.field_150441_bU.func_185547_C(iblockstate1))
-+                iblockstate1.func_177230_c().onNeighborChange(this, blockpos1, p_175666_1_);
-+                if (iblockstate1.func_177230_c().isNormalCube(iblockstate1, this, blockpos1))
-                 {
+-                {
 -                    iblockstate1.func_189546_a(this, blockpos1, p_175666_2_, p_175666_1_);
 -                }
 -                else if (iblockstate1.func_185915_l())
--                {
++                iblockstate1.func_177230_c().onNeighborChange(this, blockpos1, p_175666_1_);
++                if (iblockstate1.func_177230_c().isNormalCube(iblockstate1, this, blockpos1))
+                 {
                      blockpos1 = blockpos1.func_177972_a(enumfacing);
                      iblockstate1 = this.func_180495_p(blockpos1);
  
@@ -1082,10 +1080,12 @@
                      }
                  }
              }
-@@ -3658,6 +3888,124 @@
+@@ -3656,6 +3886,124 @@
+         int k2 = p_72916_2_ * 16 + 8 - blockpos1.func_177952_p();
+         int l2 = 128;
          return j2 >= -128 && j2 <= 128 && k2 >= -128 && k2 <= 128;
-     }
- 
++    }
++
 +    /* ======================================== FORGE START =====================================*/
 +    /**
 +     * Determine if the given block is considered solid on the
@@ -1202,8 +1202,6 @@
 +    public MapStorage getPerWorldStorage()
 +    {
 +        return perWorldStorage;
-+    }
-+
+     }
+ 
      public void func_184135_a(Packet<?> p_184135_1_)
-     {
-         throw new UnsupportedOperationException("Can't send packets to server unless you're on the client.");

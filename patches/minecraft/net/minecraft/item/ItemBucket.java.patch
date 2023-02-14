@@ -9,10 +9,12 @@
  
          if (raytraceresult == null)
          {
-@@ -188,4 +190,16 @@
+@@ -186,6 +188,18 @@
+ 
+                 return true;
              }
-         }
-     }
++        }
++    }
 +
 +    @Override
 +    public net.minecraftforge.common.capabilities.ICapabilityProvider initCapabilities(ItemStack stack, @Nullable net.minecraft.nbt.NBTTagCompound nbt) {
@@ -23,6 +25,6 @@
 +        else
 +        {
 +            return super.initCapabilities(stack, nbt);
-+        }
-+    }
+         }
+     }
  }

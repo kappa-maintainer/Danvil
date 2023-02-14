@@ -51,10 +51,11 @@
              return this.field_72817_c[i][j].func_177413_a(p_175628_1_, p_175628_2_);
          }
          else
-@@ -188,4 +193,21 @@
+@@ -187,5 +192,22 @@
+     public WorldType func_175624_G()
      {
          return this.field_72815_e.func_175624_G();
-     }
++    }
 +
 +    @Override
 +    public boolean isSideSolid(BlockPos pos, EnumFacing side, boolean _default)
@@ -71,5 +72,5 @@
 +    private boolean withinBounds(int x, int z)
 +    {
 +        return x >= 0 && x < field_72817_c.length && z >= 0 && z < field_72817_c[x].length && field_72817_c[x][z] != null;
-+    }
+     }
  }

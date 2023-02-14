@@ -492,10 +492,11 @@
      public boolean func_190631_cK()
      {
          return true;
-@@ -2861,4 +2975,30 @@
+@@ -2860,5 +2974,31 @@
+     @SideOnly(Side.CLIENT)
      public void func_191987_a(BlockPos p_191987_1_, boolean p_191987_2_)
      {
-     }
++    }
 +    
 +    @Override
 +    public void func_191958_b(float strafe, float up, float forward, float friction)
@@ -521,5 +522,5 @@
 +            this.field_70181_x += (double)up;
 +            this.field_70179_y += (double)(forward * f2 + strafe * f1);
 +        }
-+    }
+     }
  }

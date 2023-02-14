@@ -40,9 +40,10 @@
                  this.field_71305_c[i].func_72912_H().func_76060_a(this.func_71265_f());
              }
          }
-+        } //Forge: End dead code
- 
+-
 -        this.field_71318_t.func_72364_a(this.field_71305_c);
++        } //Forge: End dead code
++
 +        WorldServer overWorld = (WorldServer)(func_71242_L() ? new WorldServerDemo(this, isavehandler, worldinfo, 0, field_71304_b).func_175643_b() : new WorldServer(this, isavehandler, worldinfo, 0, field_71304_b).func_175643_b());
 +        overWorld.func_72963_a(worldsettings);
 +        for (int dim : net.minecraftforge.common.DimensionManager.getStaticDimensionIDs())
@@ -251,17 +252,19 @@
      public WorldServer func_71218_a(int p_71218_1_)
      {
 -        if (p_71218_1_ == -1)
-+        WorldServer ret = net.minecraftforge.common.DimensionManager.getWorld(p_71218_1_, true);
-+        if (ret == null)
-         {
+-        {
 -            return this.field_71305_c[1];
-+            net.minecraftforge.common.DimensionManager.initDimension(p_71218_1_);
-+            ret = net.minecraftforge.common.DimensionManager.getWorld(p_71218_1_);
-         }
+-        }
 -        else
 -        {
 -            return p_71218_1_ == 1 ? this.field_71305_c[2] : this.field_71305_c[0];
 -        }
++        WorldServer ret = net.minecraftforge.common.DimensionManager.getWorld(p_71218_1_, true);
++        if (ret == null)
++        {
++            net.minecraftforge.common.DimensionManager.initDimension(p_71218_1_);
++            ret = net.minecraftforge.common.DimensionManager.getWorld(p_71218_1_);
++        }
 +        return ret;
      }
  
@@ -292,13 +295,14 @@
          Bootstrap.func_151354_b();
  
          try
-@@ -1598,4 +1654,9 @@
+@@ -1597,5 +1653,10 @@
+     public Thread func_175583_aK()
      {
          return this.field_175590_aa;
-     }
++    }
 +
 +    public DataFixer getDataFixer()
 +    {
 +        return this.field_184112_s;
-+    }
+     }
  }

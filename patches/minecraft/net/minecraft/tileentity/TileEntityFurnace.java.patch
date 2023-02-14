@@ -71,10 +71,11 @@
              Item item = p_145952_0_.func_77973_b();
  
              if (item == Item.func_150898_a(Blocks.field_150376_bx))
-@@ -530,4 +532,23 @@
+@@ -529,5 +531,24 @@
+     public void func_174888_l()
      {
          this.field_145957_n.clear();
-     }
++    }
 +
 +    net.minecraftforge.items.IItemHandler handlerTop = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.UP);
 +    net.minecraftforge.items.IItemHandler handlerBottom = new net.minecraftforge.items.wrapper.SidedInvWrapper(this, net.minecraft.util.EnumFacing.DOWN);
@@ -93,5 +94,5 @@
 +            else
 +                return (T) handlerSide;
 +        return super.getCapability(capability, facing);
-+    }
+     }
  }

@@ -878,10 +878,11 @@
          public Item func_150995_f()
          {
              if (this == WOOD)
-@@ -1057,5 +1840,21 @@
+@@ -1056,6 +1839,22 @@
+             {
                  return this == DIAMOND ? Items.field_151045_i : null;
              }
-         }
++        }
 +
 +        public ToolMaterial setRepairItem(ItemStack stack)
 +        {
@@ -897,6 +898,6 @@
 +            Item ret = this.func_150995_f();
 +            if (ret != null) repairMaterial = new ItemStack(ret, 1, net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE);
 +            return repairMaterial;
-+        }
+         }
      }
  }
