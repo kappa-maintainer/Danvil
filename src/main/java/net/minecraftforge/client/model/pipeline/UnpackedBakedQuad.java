@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -105,6 +105,7 @@ public class UnpackedBakedQuad extends BakedQuad
             unpackedData = new float[4][format.getElementCount()][4];
         }
 
+        @Override
         public VertexFormat getVertexFormat()
         {
             return format;
@@ -114,27 +115,32 @@ public class UnpackedBakedQuad extends BakedQuad
         {
             this.contractUVs = value;
         }
+        @Override
         public void setQuadTint(int tint)
         {
             this.tint = tint;
         }
 
+        @Override
         public void setQuadOrientation(EnumFacing orientation)
         {
             this.orientation = orientation;
         }
 
         // FIXME: move (or at least add) into constructor
+        @Override
         public void setTexture(TextureAtlasSprite texture)
         {
             this.texture = texture;
         }
 
+        @Override
         public void setApplyDiffuseLighting(boolean diffuse)
         {
             this.applyDiffuseLighting = diffuse;
         }
 
+        @Override
         public void put(int element, float... data)
         {
             for(int i = 0; i < 4; i++)
@@ -174,8 +180,8 @@ public class UnpackedBakedQuad extends BakedQuad
             }
             if(contractUVs)
             {
-                float tX = texture.getOriginX() / texture.getMinU();
-                float tY = texture.getOriginY() / texture.getMinV();
+                float tX = texture.getIconWidth() / (texture.getMaxU() - texture.getMinU());
+                float tY = texture.getIconHeight() / (texture.getMaxV() - texture.getMinV());
                 float tS = tX > tY ? tX : tY;
                 float ep = 1f / (tS * 0x100);
                 int uve = 0;

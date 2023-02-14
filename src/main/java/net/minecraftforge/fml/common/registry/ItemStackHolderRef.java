@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,12 +25,6 @@ import java.lang.reflect.Modifier;
 
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.fml.common.FMLLog;
-
-import org.apache.logging.log4j.Level;
-
-import com.google.common.base.Throwables;
-
-
 
 /**
  * Internal class used in tracking {@link GameRegistry.ItemStackHolder} references
@@ -72,9 +66,10 @@ class ItemStackHolderRef {
                 modifiersField.setAccessible(true);
             }
             modifiersField.setInt(f, f.getModifiers() & ~Modifier.FINAL);
-        } catch (Exception e)
+        }
+        catch (ReflectiveOperationException e)
         {
-            throw Throwables.propagate(e);
+            throw new RuntimeException(e);
         }
     }
 

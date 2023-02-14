@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,11 +22,13 @@ package net.minecraftforge.client.model.animation;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import javax.annotation.Nullable;
@@ -34,8 +36,6 @@ import javax.vecmath.AxisAngle4f;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Quat4f;
 import javax.vecmath.Vector3f;
-
-import org.apache.logging.log4j.Level;
 
 import net.minecraft.client.renderer.block.model.BlockPart;
 import net.minecraft.client.resources.IResource;
@@ -55,7 +55,6 @@ import net.minecraftforge.common.model.animation.JointClips;
 import net.minecraftforge.common.util.JsonUtils;
 import net.minecraftforge.fml.common.FMLLog;
 
-import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableCollection;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -80,7 +79,7 @@ public class ModelBlockAnimation
         this.clips = clips;
     }
 
-    public ImmutableMap<String, MBClip> getClips()
+    public ImmutableMap<String, ? extends IClip> getClips()
     {
         return clips;
     }
@@ -199,6 +198,7 @@ public class ModelBlockAnimation
             initialize();
             return new Iterable<Event>()
             {
+                @Override
                 public Iterator<Event> iterator()
                 {
                     return new UnmodifiableIterator<Event>()
@@ -257,6 +257,7 @@ public class ModelBlockAnimation
                             }
                         }
 
+                        @Override
                         public boolean hasNext()
                         {
                             return curKey != null;
@@ -321,6 +322,7 @@ public class ModelBlockAnimation
                 }
             }
 
+            @Override
             public TRSRTransformation apply(float time)
             {
                 time -= Math.floor(time);
@@ -416,47 +418,22 @@ public class ModelBlockAnimation
     protected static class MBJoint implements IJoint
     {
         private final String name;
-        private final TRSRTransformation invBindPose;
 
-        public MBJoint(String name, BlockPart part)
+        public MBJoint(String name)
         {
             this.name = name;
-            if(part.partRotation != null)
-            {
-                float x = 0, y = 0, z = 0;
-                switch(part.partRotation.axis)
-                {
-                    case X:
-                        x = 1;
-                    case Y:
-                        y = 1;
-                    case Z:
-                        z = 1;
-                }
-                Quat4f rotation = new Quat4f();
-                rotation.set(new AxisAngle4f(x, y, z, 0));
-                Matrix4f m = new TRSRTransformation(
-                    TRSRTransformation.toVecmath(part.partRotation.origin),
-                    rotation,
-                    null,
-                    null).getMatrix();
-                m.invert();
-                invBindPose = new TRSRTransformation(m);
-            }
-            else
-            {
-                invBindPose = TRSRTransformation.identity();
-            }
         }
 
+        @Override
         public TRSRTransformation getInvBindPose()
         {
-            return invBindPose;
+            return TRSRTransformation.identity();
         }
 
+        @Override
         public Optional<? extends IJoint> getParent()
         {
-            return Optional.absent();
+            return Optional.empty();
         }
 
         public String getName()
@@ -548,9 +525,9 @@ public class ModelBlockAnimation
             {
                 if(info.getWeights().containsKey(i))
                 {
-                    ModelBlockAnimation.MBJoint joint = new ModelBlockAnimation.MBJoint(info.getName(), part);
+                    ModelBlockAnimation.MBJoint joint = new ModelBlockAnimation.MBJoint(info.getName());
                     Optional<TRSRTransformation> trOp = state.apply(Optional.of(joint));
-                    if(trOp.isPresent() && trOp.get() != TRSRTransformation.identity())
+                    if(trOp.isPresent() && !trOp.get().isIdentity())
                     {
                         float w = info.getWeights().get(i)[0];
                         tmp = trOp.get().getMatrix();
@@ -576,26 +553,19 @@ public class ModelBlockAnimation
     {
         try
         {
-            IResource resource = null;
-            try
+            try (IResource resource = manager.getResource(armatureLocation))
             {
-                resource = manager.getResource(armatureLocation);
+                ModelBlockAnimation mba = mbaGson.fromJson(new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8), ModelBlockAnimation.class);
+                //String json = mbaGson.toJson(mba);
+                return mba;
             }
             catch(FileNotFoundException e)
             {
                 // this is normal. FIXME: error reporting?
                 return defaultModelBlockAnimation;
             }
-            ModelBlockAnimation mba = mbaGson.fromJson(new InputStreamReader(resource.getInputStream(), "UTF-8"), ModelBlockAnimation.class);
-            //String json = mbaGson.toJson(mba);
-            return mba;
         }
-        catch(IOException e)
-        {
-            FMLLog.log.error("Exception loading vanilla model animation {}, skipping", armatureLocation, e);
-            return defaultModelBlockAnimation;
-        }
-        catch(JsonParseException e)
+        catch(IOException | JsonParseException e)
         {
             FMLLog.log.error("Exception loading vanilla model animation {}, skipping", armatureLocation, e);
             return defaultModelBlockAnimation;

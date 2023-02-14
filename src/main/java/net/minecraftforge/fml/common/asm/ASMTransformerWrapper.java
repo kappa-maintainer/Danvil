@@ -1,8 +1,6 @@
-
-
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -59,6 +57,7 @@ public class ASMTransformerWrapper
         .weakValues()
         .build(new CacheLoader<String, byte[]>()
         {
+            @Override
             public byte[] load(String file) throws Exception
             {
                 return makeWrapper(file);
@@ -82,6 +81,7 @@ public class ASMTransformerWrapper
 
     private static class ASMGenHandler extends URLStreamHandler
     {
+        @Override
         @Nullable
         protected URLConnection openConnection(URL url) throws IOException
         {
@@ -90,6 +90,7 @@ public class ASMTransformerWrapper
             {
                 return new URLConnection(url)
                 {
+                    @Override
                     public void connect() throws IOException
                     {
                         throw new UnsupportedOperationException();
@@ -116,6 +117,7 @@ public class ASMTransformerWrapper
             this.file = file;
         }
 
+        @Override
         public void connect() throws IOException
         {
             throw new UnsupportedOperationException();
@@ -246,6 +248,7 @@ public class ASMTransformerWrapper
             }
         }
 
+        @Override
         public byte[] transform(String name, String transformedName, byte[] basicClass)
         {
             try

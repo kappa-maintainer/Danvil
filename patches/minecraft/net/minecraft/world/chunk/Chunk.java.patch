@@ -1,6 +1,23 @@
 --- ../src-base/minecraft/net/minecraft/world/chunk/Chunk.java
 +++ ../src-work/minecraft/net/minecraft/world/chunk/Chunk.java
-@@ -178,7 +178,7 @@
+@@ -41,7 +41,7 @@
+ import org.apache.logging.log4j.LogManager;
+ import org.apache.logging.log4j.Logger;
+ 
+-public class Chunk
++public class Chunk implements net.minecraftforge.common.capabilities.ICapabilityProvider
+ {
+     private static final Logger field_150817_t = LogManager.getLogger();
+     public static final ExtendedBlockStorage field_186036_a = null;
+@@ -91,6 +91,7 @@
+ 
+         Arrays.fill(this.field_76638_b, -999);
+         Arrays.fill(this.field_76651_r, (byte) - 1);
++        capabilities = net.minecraftforge.event.ForgeEventFactory.gatherCapabilities(this);
+     }
+ 
+     public Chunk(World p_i45645_1_, ChunkPrimer p_i45645_2_, int p_i45645_3_, int p_i45645_4_)
+@@ -179,7 +180,7 @@
                  {
                      IBlockState iblockstate = this.func_186032_a(j, l - 1, k);
  
@@ -9,7 +26,7 @@
                      {
                          this.field_76634_f[k << 4 | j] = l;
  
-@@ -451,12 +451,13 @@
+@@ -452,12 +453,13 @@
  
      public int func_177437_b(BlockPos p_177437_1_)
      {
@@ -21,11 +38,11 @@
      {
 -        return this.func_186032_a(p_150808_1_, p_150808_2_, p_150808_3_).func_185891_c();
 +        IBlockState state = this.func_186032_a(p_150808_1_, p_150808_2_, p_150808_3_); //Forge: Can sometimes be called before we are added to the global world list. So use the less accurate one during that. It'll be recalculated later
-+        return !field_76636_d ? state.func_185891_c() : state.getLightOpacity(field_76637_e, new BlockPos(field_76635_g << 4 | p_150808_1_ & 15, p_150808_2_, field_76647_h << 4 | p_150808_3_ & 15));
++        return !field_76636_d ? state.func_185891_c() : state.getLightOpacity(field_76637_e, new BlockPos(this.field_76635_g << 4 | p_150808_1_ & 15, p_150808_2_, this.field_76647_h << 4 | p_150808_3_ & 15));
      }
  
      public IBlockState func_177435_g(BlockPos p_177435_1_)
-@@ -538,6 +539,7 @@
+@@ -539,6 +541,7 @@
          {
              Block block = p_177436_2_.func_177230_c();
              Block block1 = iblockstate.func_177230_c();
@@ -33,7 +50,7 @@
              ExtendedBlockStorage extendedblockstorage = this.field_76652_q[j >> 4];
              boolean flag = false;
  
-@@ -555,14 +557,19 @@
+@@ -556,14 +559,19 @@
  
              extendedblockstorage.func_177484_a(i, j & 15, k, p_177436_2_);
  
@@ -55,7 +72,7 @@
                      this.field_76637_e.func_175713_t(p_177436_1_);
                  }
              }
-@@ -579,8 +586,7 @@
+@@ -580,8 +588,7 @@
                  }
                  else
                  {
@@ -65,7 +82,7 @@
  
                      if (j1 > 0)
                      {
-@@ -600,28 +606,19 @@
+@@ -601,28 +608,19 @@
                      }
                  }
  
@@ -98,7 +115,7 @@
                          this.field_76637_e.func_175690_a(p_177436_1_, tileentity1);
                      }
  
-@@ -725,6 +722,7 @@
+@@ -738,11 +736,13 @@
              k = this.field_76645_j.length - 1;
          }
  
@@ -106,7 +123,21 @@
          p_76612_1_.field_70175_ag = true;
          p_76612_1_.field_70176_ah = this.field_76635_g;
          p_76612_1_.field_70162_ai = k;
-@@ -765,7 +763,7 @@
+         p_76612_1_.field_70164_aj = this.field_76647_h;
+         this.field_76645_j[k].add(p_76612_1_);
++        this.func_76630_e(); // Forge - ensure chunks are marked to save after an entity add
+     }
+ 
+     public void func_76622_b(Entity p_76622_1_)
+@@ -763,6 +763,7 @@
+         }
+ 
+         this.field_76645_j[p_76608_2_].remove(p_76608_1_);
++        this.func_76630_e(); // Forge - ensure chunks are marked to save after entity removals
+     }
+ 
+     public boolean func_177444_d(BlockPos p_177444_1_)
+@@ -778,7 +779,7 @@
      {
          IBlockState iblockstate = this.func_177435_g(p_177422_1_);
          Block block = iblockstate.func_177230_c();
@@ -115,9 +146,9 @@
      }
  
      @Nullable
-@@ -773,6 +771,12 @@
+@@ -786,6 +787,12 @@
      {
-         TileEntity tileentity = (TileEntity)this.field_150816_i.get(p_177424_1_);
+         TileEntity tileentity = this.field_150816_i.get(p_177424_1_);
  
 +        if (tileentity != null && tileentity.func_145837_r())
 +        {
@@ -128,7 +159,7 @@
          if (tileentity == null)
          {
              if (p_177424_2_ == Chunk.EnumCreateEntityType.IMMEDIATE)
-@@ -782,14 +786,9 @@
+@@ -795,14 +802,9 @@
              }
              else if (p_177424_2_ == Chunk.EnumCreateEntityType.QUEUED)
              {
@@ -144,7 +175,7 @@
  
          return tileentity;
      }
-@@ -806,10 +805,11 @@
+@@ -819,10 +821,11 @@
  
      public void func_177426_a(BlockPos p_177426_1_, TileEntity p_177426_2_)
      {
@@ -157,7 +188,7 @@
          {
              if (this.field_150816_i.containsKey(p_177426_1_))
              {
-@@ -841,8 +841,9 @@
+@@ -854,12 +857,14 @@
  
          for (ClassInheritanceMultiMap<Entity> classinheritancemultimap : this.field_76645_j)
          {
@@ -168,7 +199,12 @@
      }
  
      public void func_76623_d()
-@@ -858,6 +859,7 @@
+     {
++        java.util.Arrays.stream(field_76645_j).forEach(multimap -> com.google.common.collect.Lists.newArrayList(multimap.func_180215_b(net.minecraft.entity.player.EntityPlayer.class)).forEach(player -> field_76637_e.func_72866_a(player, false))); // FORGE - Fix for MC-92916
+         this.field_76636_d = false;
+ 
+         for (TileEntity tileentity : this.field_150816_i.values())
+@@ -871,6 +876,7 @@
          {
              this.field_76637_e.func_175681_c(classinheritancemultimap);
          }
@@ -176,7 +212,7 @@
      }
  
      public void func_76630_e()
-@@ -867,8 +869,8 @@
+@@ -880,8 +886,8 @@
  
      public void func_177414_a(@Nullable Entity p_177414_1_, AxisAlignedBB p_177414_2_, List<Entity> p_177414_3_, Predicate <? super Entity > p_177414_4_)
      {
@@ -187,7 +223,7 @@
          i = MathHelper.func_76125_a(i, 0, this.field_76645_j.length - 1);
          j = MathHelper.func_76125_a(j, 0, this.field_76645_j.length - 1);
  
-@@ -905,8 +907,8 @@
+@@ -918,8 +924,8 @@
  
      public <T extends Entity> void func_177430_a(Class <? extends T > p_177430_1_, AxisAlignedBB p_177430_2_, List<T> p_177430_3_, Predicate <? super T > p_177430_4_)
      {
@@ -198,36 +234,37 @@
          i = MathHelper.func_76125_a(i, 0, this.field_76645_j.length - 1);
          j = MathHelper.func_76125_a(j, 0, this.field_76645_j.length - 1);
  
-@@ -984,6 +986,8 @@
+@@ -997,6 +1003,9 @@
  
      protected void func_186034_a(IChunkGenerator p_186034_1_)
      {
-+        if (populating && net.minecraftforge.common.ForgeModContainer.logCascadingWorldGeneration) logCascadingWorldGeneration();
-+        populating = true;
++        if (populating != null && net.minecraftforge.common.ForgeModContainer.logCascadingWorldGeneration) logCascadingWorldGeneration();
++        ChunkPos prev = populating;
++        populating = this.func_76632_l();
          if (this.func_177419_t())
          {
              if (p_186034_1_.func_185933_a(this, this.field_76635_g, this.field_76647_h))
-@@ -995,8 +999,10 @@
+@@ -1008,8 +1017,10 @@
          {
              this.func_150809_p();
              p_186034_1_.func_185931_b(this.field_76635_g, this.field_76647_h);
 +            net.minecraftforge.fml.common.registry.GameRegistry.generateWorld(this.field_76635_g, this.field_76647_h, this.field_76637_e, p_186034_1_, this.field_76637_e.func_72863_F());
              this.func_76630_e();
          }
-+        populating = false;
++        populating = prev;
      }
  
      public BlockPos func_177440_h(BlockPos p_177440_1_)
-@@ -1051,7 +1057,7 @@
+@@ -1064,7 +1075,7 @@
          {
-             BlockPos blockpos = (BlockPos)this.field_177447_w.poll();
+             BlockPos blockpos = this.field_177447_w.poll();
  
 -            if (this.func_177424_a(blockpos, Chunk.EnumCreateEntityType.CHECK) == null && this.func_177435_g(blockpos).func_177230_c().func_149716_u())
 +            if (this.func_177424_a(blockpos, Chunk.EnumCreateEntityType.CHECK) == null && this.func_177435_g(blockpos).func_177230_c().hasTileEntity(this.func_177435_g(blockpos)))
              {
                  TileEntity tileentity = this.func_177422_i(blockpos);
                  this.field_76637_e.func_175690_a(blockpos, tileentity);
-@@ -1115,6 +1121,13 @@
+@@ -1128,6 +1139,13 @@
      @SideOnly(Side.CLIENT)
      public void func_186033_a(PacketBuffer p_186033_1_, int p_186033_2_, boolean p_186033_3_)
      {
@@ -241,7 +278,7 @@
          boolean flag = this.field_76637_e.field_73011_w.func_191066_m();
  
          for (int i = 0; i < this.field_76652_q.length; ++i)
-@@ -1163,10 +1176,16 @@
+@@ -1176,10 +1194,16 @@
          this.field_76646_k = true;
          this.func_76590_a();
  
@@ -258,7 +295,21 @@
      }
  
      public Biome func_177411_a(BlockPos p_177411_1_, BiomeProvider p_177411_2_)
-@@ -1231,13 +1250,13 @@
+@@ -1190,7 +1214,12 @@
+ 
+         if (k == 255)
+         {
+-            Biome biome = p_177411_2_.func_180300_a(p_177411_1_, Biomes.field_76772_c);
++            // Forge: checking for client ensures that biomes are only generated on integrated server
++            // in singleplayer. Generating biomes on the client may corrupt the biome ID arrays on
++            // the server while they are being generated because IntCache can't be thread safe,
++            // so client and server may end up filling the same array.
++            // This is not necessary in 1.13 and newer versions.
++            Biome biome = field_76637_e.field_72995_K ? Biomes.field_76772_c : p_177411_2_.func_180300_a(p_177411_1_, Biomes.field_76772_c);
+             k = Biome.func_185362_a(biome);
+             this.field_76651_r[j << 4 | i] = (byte)(k & 255);
+         }
+@@ -1244,13 +1273,13 @@
                      BlockPos blockpos1 = blockpos.func_177982_a(k, (j << 4) + i1, l);
                      boolean flag = i1 == 0 || i1 == 15 || k == 0 || k == 15 || l == 0 || l == 15;
  
@@ -274,7 +325,7 @@
                              {
                                  this.field_76637_e.func_175664_x(blockpos2);
                              }
-@@ -1368,7 +1387,7 @@
+@@ -1381,7 +1410,7 @@
          {
              blockpos$mutableblockpos.func_181079_c(blockpos$mutableblockpos.func_177958_n(), l, blockpos$mutableblockpos.func_177952_p());
  
@@ -283,15 +334,15 @@
              {
                  this.field_76637_e.func_175664_x(blockpos$mutableblockpos);
              }
-@@ -1407,6 +1426,7 @@
+@@ -1420,6 +1449,7 @@
          else
          {
              System.arraycopy(p_177420_1_, 0, this.field_76634_f, 0, this.field_76634_f.length);
-+            this.field_82912_p = com.google.common.primitives.Ints.min(this.field_76634_f); // Forge: update min height value (MC-117412)
++            this.field_82912_p = com.google.common.primitives.Ints.min(this.field_76634_f); // Forge: fix MC-117412
          }
      }
  
-@@ -1476,4 +1496,34 @@
+@@ -1489,4 +1519,55 @@
          QUEUED,
          CHECK;
      }
@@ -313,16 +364,37 @@
 +        }
 +    }
 +
-+    private static boolean populating = false; // keep track of cascading chunk generation during chunk population
++    private static ChunkPos populating = null; // keep track of cascading chunk generation during chunk population
 +
 +    private void logCascadingWorldGeneration()
 +    {
 +        net.minecraftforge.fml.common.ModContainer activeModContainer = net.minecraftforge.fml.common.Loader.instance().activeModContainer();
-+        String format = "{} loaded a new chunk ({}, {}  Dimension: {}) during chunk population, causing cascading worldgen lag. Please report this to the mod's issue tracker. This log can be disabled in the Forge config.";
++        String format = "{} loaded a new chunk {} in dimension {} ({}) while populating chunk {}, causing cascading worldgen lag.";
 +
-+        if (activeModContainer == null) // vanilla minecraft has problems too (MC-114332), log it at a quieter level.
-+            net.minecraftforge.fml.common.FMLLog.log.debug(format, "Minecraft", this.field_76635_g, this.field_76647_h, this.field_76637_e.field_73011_w.getDimension());
-+        else
-+            net.minecraftforge.fml.common.FMLLog.log.warn(format, activeModContainer.getName(), this.field_76635_g, this.field_76647_h, this.field_76637_e.field_73011_w.getDimension());
++        if (activeModContainer == null) { // vanilla minecraft has problems too (MC-114332), log it at a quieter level.
++            net.minecraftforge.fml.common.FMLLog.log.debug(format, "Minecraft", this.func_76632_l(), this.field_76637_e.field_73011_w.getDimension(), this.field_76637_e.field_73011_w.func_186058_p().func_186065_b(), populating);
++            net.minecraftforge.fml.common.FMLLog.log.debug("Consider setting 'fixVanillaCascading' to 'true' in the Forge config to fix many cases where this occurs in the base game.");
++        } else {
++            net.minecraftforge.fml.common.FMLLog.log.warn(format, activeModContainer.getName(), this.func_76632_l(), this.field_76637_e.field_73011_w.getDimension(), this.field_76637_e.field_73011_w.func_186058_p().func_186065_b(), populating);
++            net.minecraftforge.fml.common.FMLLog.log.warn("Please report this to the mod's issue tracker. This log can be disabled in the Forge config.");
++        }
++    }
++
++    private final net.minecraftforge.common.capabilities.CapabilityDispatcher capabilities;
++    @Nullable
++    public net.minecraftforge.common.capabilities.CapabilityDispatcher getCapabilities()
++    {
++        return capabilities;
++    }
++    @Override
++    public boolean hasCapability(net.minecraftforge.common.capabilities.Capability<?> capability, @Nullable EnumFacing facing)
++    {
++        return capabilities == null ? false : capabilities.hasCapability(capability, facing);
++    }
++    @Override
++    @Nullable
++    public <T> T getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable EnumFacing facing)
++    {
++        return capabilities == null ? null : capabilities.getCapability(capability, facing);
 +    }
  }

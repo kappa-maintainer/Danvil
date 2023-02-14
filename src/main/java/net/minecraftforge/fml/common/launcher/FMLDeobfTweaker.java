@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,6 +47,9 @@ public class FMLDeobfTweaker implements ITweaker {
         }
         classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ModAccessTransformer");
         classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ItemStackTransformer");
+        classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ItemBlockTransformer");
+        classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.ItemBlockSpecialTransformer");
+        classLoader.registerTransformer("net.minecraftforge.fml.common.asm.transformers.PotionEffectTransformer");
         try
         {
             FMLLog.log.debug("Validating minecraft");
@@ -60,7 +63,7 @@ public class FMLDeobfTweaker implements ITweaker {
         catch (Exception e)
         {
             // Load in the Loader, make sure he's ready to roll - this will initialize most of the rest of minecraft here
-            System.out.println("A CRITICAL PROBLEM OCCURRED INITIALIZING MINECRAFT - LIKELY YOU HAVE AN INCORRECT VERSION FOR THIS FML");
+            FMLLog.log.fatal("A CRITICAL PROBLEM OCCURRED INITIALIZING MINECRAFT - LIKELY YOU HAVE AN INCORRECT VERSION FOR THIS FML");
             throw new RuntimeException(e);
         }
     }

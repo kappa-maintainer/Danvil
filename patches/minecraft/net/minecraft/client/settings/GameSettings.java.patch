@@ -1,31 +1,57 @@
 --- ../src-base/minecraft/net/minecraft/client/settings/GameSettings.java
 +++ ../src-work/minecraft/net/minecraft/client/settings/GameSettings.java
-@@ -156,6 +156,7 @@
+@@ -165,6 +165,7 @@
  
      public GameSettings(Minecraft p_i46326_1_, File p_i46326_2_)
      {
 +        setForgeKeybindProperties();
-         this.field_74324_K = (KeyBinding[])ArrayUtils.addAll(new KeyBinding[] {this.field_74312_F, this.field_74313_G, this.field_74351_w, this.field_74370_x, this.field_74368_y, this.field_74366_z, this.field_74314_A, this.field_74311_E, this.field_151444_V, this.field_74316_C, this.field_151445_Q, this.field_74310_D, this.field_74321_H, this.field_74322_I, this.field_74323_J, this.field_151447_Z, this.field_151457_aa, this.field_151458_ab, this.field_152395_am, this.field_178883_an, this.field_186718_X}, this.field_151456_ac);
+         this.field_74324_K = (KeyBinding[])ArrayUtils.addAll(new KeyBinding[] {this.field_74312_F, this.field_74313_G, this.field_74351_w, this.field_74370_x, this.field_74368_y, this.field_74366_z, this.field_74314_A, this.field_74311_E, this.field_151444_V, this.field_74316_C, this.field_151445_Q, this.field_74310_D, this.field_74321_H, this.field_74322_I, this.field_74323_J, this.field_151447_Z, this.field_151457_aa, this.field_151458_ab, this.field_152395_am, this.field_178883_an, this.field_186718_X, this.field_193629_ap, this.field_193630_aq, this.field_194146_ao}, this.field_151456_ac);
          this.field_74318_M = EnumDifficulty.NORMAL;
          this.field_74332_R = "";
-@@ -179,6 +180,7 @@
+@@ -188,6 +189,7 @@
  
      public GameSettings()
      {
 +        setForgeKeybindProperties();
-         this.field_74324_K = (KeyBinding[])ArrayUtils.addAll(new KeyBinding[] {this.field_74312_F, this.field_74313_G, this.field_74351_w, this.field_74370_x, this.field_74368_y, this.field_74366_z, this.field_74314_A, this.field_74311_E, this.field_151444_V, this.field_74316_C, this.field_151445_Q, this.field_74310_D, this.field_74321_H, this.field_74322_I, this.field_74323_J, this.field_151447_Z, this.field_151457_aa, this.field_151458_ab, this.field_152395_am, this.field_178883_an, this.field_186718_X}, this.field_151456_ac);
+         this.field_74324_K = (KeyBinding[])ArrayUtils.addAll(new KeyBinding[] {this.field_74312_F, this.field_74313_G, this.field_74351_w, this.field_74370_x, this.field_74368_y, this.field_74366_z, this.field_74314_A, this.field_74311_E, this.field_151444_V, this.field_74316_C, this.field_151445_Q, this.field_74310_D, this.field_74321_H, this.field_74322_I, this.field_74323_J, this.field_151447_Z, this.field_151457_aa, this.field_151458_ab, this.field_152395_am, this.field_178883_an, this.field_186718_X, this.field_193629_ap, this.field_193630_aq, this.field_194146_ao}, this.field_151456_ac);
          this.field_74318_M = EnumDifficulty.NORMAL;
          this.field_74332_R = "";
-@@ -265,7 +267,7 @@
+@@ -299,7 +301,7 @@
                  this.field_74317_L.func_147117_R().func_147633_a(this.field_151442_I);
                  this.field_74317_L.func_110434_K().func_110577_a(TextureMap.field_110575_b);
                  this.field_74317_L.func_147117_R().func_174937_a(false, this.field_151442_I > 0);
 -                this.field_74317_L.func_175603_A();
-+                this.needsResourceRefresh = true; // FORGE: fix for MC-64581 very laggy mipmap slider
++                this.needsBlockModelRefresh = true; // FORGE: fix for MC-64581 very laggy mipmap slider
              }
          }
  
-@@ -887,7 +889,12 @@
+@@ -361,7 +363,7 @@
+         if (p_74306_1_ == GameSettings.Options.ANAGLYPH)
+         {
+             this.field_74337_g = !this.field_74337_g;
+-            this.field_74317_L.func_110436_a();
++            net.minecraftforge.fml.client.FMLClientHandler.instance().refreshResources(net.minecraftforge.client.resource.VanillaResourceType.TEXTURES);
+         }
+ 
+         if (p_74306_1_ == GameSettings.Options.GRAPHICS)
+@@ -724,6 +726,7 @@
+ 
+     public void func_74300_a()
+     {
++        FileInputStream fileInputStream = null; // Forge: fix MC-151173
+         try
+         {
+             if (!this.field_74354_ai.exists())
+@@ -732,7 +735,7 @@
+             }
+ 
+             this.field_186714_aM.clear();
+-            List<String> list = IOUtils.readLines(new FileInputStream(this.field_74354_ai));
++            List<String> list = IOUtils.readLines(fileInputStream = new FileInputStream(this.field_74354_ai), StandardCharsets.UTF_8); // Forge: fix MC-117449, MC-151173
+             NBTTagCompound nbttagcompound = new NBTTagCompound();
+ 
+             for (String s : list)
+@@ -1068,7 +1071,12 @@
                      {
                          if (s1.equals("key_" + keybinding.func_151464_g()))
                          {
@@ -39,7 +65,15 @@
                          }
                      }
  
-@@ -944,6 +951,7 @@
+@@ -1100,6 +1108,7 @@
+         {
+             field_151454_ax.error("Failed to load options", (Throwable)exception);
+         }
++        finally { IOUtils.closeQuietly(fileInputStream); } // Forge: fix MC-151173
+     }
+ 
+     private NBTTagCompound func_189988_a(NBTTagCompound p_189988_1_)
+@@ -1132,6 +1141,7 @@
  
      public void func_74303_b()
      {
@@ -47,7 +81,7 @@
          PrintWriter printwriter = null;
  
          try
-@@ -1017,7 +1025,8 @@
+@@ -1206,7 +1216,8 @@
  
              for (KeyBinding keybinding : this.field_74324_K)
              {
@@ -57,7 +91,7 @@
              }
  
              for (SoundCategory soundcategory : SoundCategory.values())
-@@ -1250,4 +1259,35 @@
+@@ -1440,4 +1451,35 @@
              return p_148264_1_;
          }
      }
@@ -82,13 +116,13 @@
 +    }
 +
 +    // FORGE: fix for MC-64581 very laggy mipmap slider
-+    private boolean needsResourceRefresh = false;
++    private boolean needsBlockModelRefresh = false;
 +    public void onGuiClosed()
 +    {
-+        if (needsResourceRefresh)
++        if (needsBlockModelRefresh)
 +        {
-+            this.field_74317_L.func_175603_A();
-+            this.needsResourceRefresh = false;
++            net.minecraftforge.fml.client.FMLClientHandler.instance().scheduleResourcesRefresh(net.minecraftforge.client.resource.VanillaResourceType.MODELS);
++            this.needsBlockModelRefresh = false;
 +        }
 +    }
 +    /******* Forge End ***********/

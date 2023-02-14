@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -36,6 +36,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -51,10 +52,10 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InnerClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Splitter;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Iterables;
@@ -124,7 +125,7 @@ public class AccessTransformer implements IClassTransformer
         {
             rulesResource = Resources.getResource(rulesFile);
         }
-        processATFile(Resources.asCharSource(rulesResource, Charsets.UTF_8));
+        processATFile(Resources.asCharSource(rulesResource, StandardCharsets.UTF_8));
         FMLLog.log.debug("Loaded {} rules from AccessTransformer config file {}", modifiers.size(), rulesFile);
     }
     protected void processATFile(CharSource rulesResource) throws IOException
@@ -204,6 +205,15 @@ public class AccessTransformer implements IClassTransformer
                 {
                     FMLLog.log.debug("Class: {} {} -> {}", name, toBinary(m.oldAccess), toBinary(m.newAccess));
                 }
+                // if this is an inner class, also modify the access flags on the corresponding InnerClasses attribute
+                for (InnerClassNode innerClass : classNode.innerClasses)
+                {
+                    if (innerClass.name.equals(classNode.name))
+                    {
+                        innerClass.access = getFixedAccess(innerClass.access, m);
+                        break;
+                    }
+                }
                 continue;
             }
             if (m.desc.isEmpty())
@@ -261,7 +271,10 @@ public class AccessTransformer implements IClassTransformer
                     }
                 }
 
-                replaceInvokeSpecial(classNode, nowOverrideable);
+                if (!nowOverrideable.isEmpty())
+                {
+                    replaceInvokeSpecial(classNode, nowOverrideable);
+                }
             }
         }
 

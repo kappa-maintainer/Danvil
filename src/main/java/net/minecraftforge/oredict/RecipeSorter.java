@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -51,7 +51,7 @@ import net.minecraft.item.crafting.RecipesBanners.RecipeDuplicatePattern;
 import javax.annotation.Nullable;
 
 import static net.minecraftforge.oredict.RecipeSorter.Category.*;
-
+@Deprecated //DO NOT USE IN 1.12 UNTIL THIS DEPRECATION MARKER IS REMOVED THIS WILL MOST LIKELY BE DELETED YOU HAVE BEEN WARNED
 public class RecipeSorter implements Comparator<IRecipe>
 {
     public enum Category
@@ -171,8 +171,8 @@ public class RecipeSorter implements Comparator<IRecipe>
         }
         else
         {
-            if (r2.getRecipeSize() < r1.getRecipeSize()) return -1;
-            if (r2.getRecipeSize() > r1.getRecipeSize()) return  1;
+            if (r2.getIngredients().size() < r1.getIngredients().size()) return -1;
+            if (r2.getIngredients().size() > r1.getIngredients().size()) return  1;
             return getPriority(r2) - getPriority(r1); // high priority value first!
         }
     }
@@ -183,7 +183,7 @@ public class RecipeSorter implements Comparator<IRecipe>
         bake();
         FMLLog.log.debug("Sorting recipes");
         warned.clear();
-        Collections.sort(CraftingManager.getInstance().getRecipeList(), INSTANCE);
+        //Collections.sort(CraftingManager.getInstance().getRecipeList(), INSTANCE);
     }
 
     public static void register(String name, Class<?> recipe, Category category, String dependencies)

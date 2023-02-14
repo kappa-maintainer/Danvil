@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
 package net.minecraftforge.common.util;
 
 import java.util.List;
@@ -108,13 +109,7 @@ public class CompoundDataFixer extends DataFixer
 
     private List<IDataWalker> getWalkers(IFixType type)
     {
-        List<IDataWalker> ret = walkers.get(type);
-        if (ret == null)
-        {
-            ret = Lists.newArrayList();
-            walkers.put(type, ret);
-        }
-        return ret;
+        return walkers.computeIfAbsent(type, k -> Lists.newArrayList());
     }
 
     @Override

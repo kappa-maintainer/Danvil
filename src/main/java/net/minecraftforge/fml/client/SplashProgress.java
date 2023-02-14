@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,14 +24,17 @@ import static org.lwjgl.opengl.GL12.*;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
-import java.io.PrintWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Reader;
+import java.io.Writer;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.nio.IntBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
@@ -67,7 +70,6 @@ import net.minecraftforge.fml.common.asm.FMLSanityChecker;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.Level;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
@@ -151,26 +153,19 @@ public class SplashProgress
         if (!parent.exists())
             parent.mkdirs();
 
-        FileReader r = null;
         config = new Properties();
-        try
+        try (Reader r = new InputStreamReader(new FileInputStream(configFile), StandardCharsets.UTF_8))
         {
-            r = new FileReader(configFile);
             config.load(r);
         }
         catch(IOException e)
         {
             FMLLog.log.info("Could not load splash.properties, will create a default one");
         }
-        finally
-        {
-            IOUtils.closeQuietly(r);
-        }
 
-        //Some system do not support this and have weird effects so we need to detect and disable by default.
+        //Some systems do not support this and have weird effects, so we need to detect and disable them by default.
         //The user can always force enable it if they want to take the responsibility for bugs.
-        //For now macs derp so disable them.
-        boolean defaultEnabled = !System.getProperty("os.name").toLowerCase().contains("mac");
+        boolean defaultEnabled = true;
 
         // Enable if we have the flag, and there's either no optifine, or optifine has added a key to the blackboard ("optifine.ForgeSplashCompatible")
         // Optifine authors - add this key to the blackboard if you feel your modifications are now compatible with this code.
@@ -194,19 +189,13 @@ public class SplashProgress
 
         File miscPackFile = new File(Minecraft.getMinecraft().mcDataDir, getString("resourcePackPath", "resources"));
 
-        FileWriter w = null;
-        try
+        try (Writer w = new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))
         {
-            w = new FileWriter(configFile);
             config.store(w, "Splash screen properties");
         }
         catch(IOException e)
         {
             FMLLog.log.error("Could not save the splash.properties file", e);
-        }
-        finally
-        {
-            IOUtils.closeQuietly(w);
         }
 
         miscPack = createResourcePack(miscPackFile);
@@ -215,6 +204,7 @@ public class SplashProgress
         // getting debug info out of the way, while we still can
         FMLCommonHandler.instance().registerCrashCallable(new ICrashCallable()
         {
+            @Override
             public String call() throws Exception
             {
                 return "' Vendor: '" + glGetString(GL_VENDOR) +
@@ -223,6 +213,7 @@ public class SplashProgress
                        "'";
             }
 
+            @Override
             public String getLabel()
             {
                 return "GL info";
@@ -241,7 +232,7 @@ public class SplashProgress
         }
         catch (LWJGLException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error starting SplashProgress:", e);
             disableSplash(e);
         }
 
@@ -257,6 +248,7 @@ public class SplashProgress
             private final int barOffset = 55;
             private long updateTiming;
             private long framecount;
+            @Override
             public void run()
             {
                 setGL();
@@ -537,7 +529,7 @@ public class SplashProgress
                 }
                 catch (LWJGLException e)
                 {
-                    e.printStackTrace();
+                    FMLLog.log.error("Error setting GL context:", e);
                     throw new RuntimeException(e);
                 }
                 glClearColor((float)((backgroundColor >> 16) & 0xFF) / 0xFF, (float)((backgroundColor >> 8) & 0xFF) / 0xFF, (float)(backgroundColor & 0xFF) / 0xFF, 1);
@@ -564,7 +556,7 @@ public class SplashProgress
                 }
                 catch (LWJGLException e)
                 {
-                    e.printStackTrace();
+                    FMLLog.log.error("Error releasing GL context:", e);
                     throw new RuntimeException(e);
                 }
                 finally
@@ -575,6 +567,7 @@ public class SplashProgress
         });
         thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler()
         {
+            @Override
             public void uncaughtException(Thread t, Throwable e)
             {
                 FMLLog.log.error("Splash thread Exception", e);
@@ -628,7 +621,7 @@ public class SplashProgress
         }
         catch (LWJGLException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error setting GL context:", e);
             throw new RuntimeException(e);
         }
     }
@@ -649,7 +642,7 @@ public class SplashProgress
         }
         catch (LWJGLException e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error releasing GL context:", e);
             throw new RuntimeException(e);
         }
         lock.unlock();
@@ -663,6 +656,7 @@ public class SplashProgress
             checkThreadState();
             done = true;
             thread.join();
+            glFlush();        // process any remaining GL calls before releaseContext (prevents missing textures on mac)
             d.releaseContext();
             Display.getDrawable().makeCurrent();
             fontTexture.delete();
@@ -671,7 +665,7 @@ public class SplashProgress
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error finishing SplashProgress:", e);
             disableSplash(e);
         }
     }
@@ -718,20 +712,14 @@ public class SplashProgress
         enabled = false;
         config.setProperty("enabled", "false");
 
-        FileWriter w = null;
-        try
+        try (Writer w = new OutputStreamWriter(new FileOutputStream(configFile), StandardCharsets.UTF_8))
         {
-            w = new FileWriter(configFile);
             config.store(w, "Splash screen properties");
         }
         catch(IOException e)
         {
             FMLLog.log.error("Could not save the splash.properties file", e);
             return false;
-        }
-        finally
-        {
-            IOUtils.closeQuietly(w);
         }
         return true;
     }
@@ -836,7 +824,7 @@ public class SplashProgress
             }
             catch(IOException e)
             {
-                e.printStackTrace();
+                FMLLog.log.error("Error reading texture from file: {}", location, e);
                 throw new RuntimeException(e);
             }
             finally

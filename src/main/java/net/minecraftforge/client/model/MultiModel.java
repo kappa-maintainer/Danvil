@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,13 +20,13 @@
 package net.minecraftforge.client.model;
 
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.vecmath.Matrix4f;
 
@@ -35,7 +35,6 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms;
 import net.minecraft.client.renderer.block.model.ItemCameraTransforms.TransformType;
-import net.minecraft.client.renderer.block.model.ItemOverride;
 import net.minecraft.client.renderer.block.model.ItemOverrideList;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -49,10 +48,8 @@ import net.minecraftforge.common.model.TRSRTransformation;
 import net.minecraftforge.fml.common.FMLLog;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.Level;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
+import java.util.function.Function;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
@@ -62,20 +59,19 @@ import com.google.common.collect.Sets;
 @Deprecated
 public final class MultiModel implements IModel
 {
-    private static final class Baked implements IPerspectiveAwareModel
+    private static final class Baked implements IBakedModel
     {
         private final ResourceLocation location;
+        @Nullable
         private final IBakedModel base;
         private final ImmutableMap<String, IBakedModel> parts;
 
         private final IBakedModel internalBase;
-        private ImmutableMap<Optional<EnumFacing>, ImmutableList<BakedQuad>> quads;
         private final ImmutableMap<TransformType, Pair<Baked, TRSRTransformation>> transforms;
-        private final ItemOverrideList overrides = new ItemOverrideList(Lists.<ItemOverride>newArrayList())
+        private final ItemOverrideList overrides = new ItemOverrideList(Lists.newArrayList())
         {
             @Override
-            @Nonnull
-            public IBakedModel handleItemState(@Nonnull IBakedModel originalModel, @Nonnull ItemStack stack, @Nullable World world, @Nullable EntityLivingBase entity)
+            public IBakedModel handleItemState(IBakedModel originalModel, ItemStack stack, @Nullable World world, @Nullable EntityLivingBase entity)
             {
                 if(originalModel != Baked.this)
                 {
@@ -105,13 +101,13 @@ public final class MultiModel implements IModel
                 if(dirty)
                 {
                     // TODO: caching?
-                    return new Baked(location, newBase instanceof IPerspectiveAwareModel, newBase, builder.build());
+                    return new Baked(location, true, newBase, builder.build());
                 }
                 return Baked.this;
             }
         };
 
-        public Baked(ResourceLocation location, boolean perspective, IBakedModel base, ImmutableMap<String, IBakedModel> parts)
+        public Baked(ResourceLocation location, boolean perspective, @Nullable IBakedModel base, ImmutableMap<String, IBakedModel> parts)
         {
             this.location = location;
             this.base = base;
@@ -129,17 +125,20 @@ public final class MultiModel implements IModel
             }
 
             // Only changes the base model based on perspective, may recurse for parts in the future.
-            if(perspective && base instanceof IPerspectiveAwareModel)
+            if(base != null && perspective)
             {
-                IPerspectiveAwareModel perBase = (IPerspectiveAwareModel)base;
-                ImmutableMap.Builder<TransformType, Pair<Baked, TRSRTransformation>> builder = ImmutableMap.builder();
+                EnumMap<TransformType, Pair<Baked, TRSRTransformation>> map = new EnumMap<>(TransformType.class);
                 for(TransformType type : TransformType.values())
                 {
-                    Pair<? extends IBakedModel, Matrix4f> p = perBase.handlePerspective(type);
+                    Pair<? extends IBakedModel, Matrix4f> p = base.handlePerspective(type);
                     IBakedModel newBase = p.getLeft();
-                    builder.put(type, Pair.of(new Baked(location, false, newBase, parts), new TRSRTransformation(p.getRight())));
+                    Matrix4f matrix = p.getRight();
+                    if (newBase != base || matrix != null)
+                    {
+                        map.put(type, Pair.of(new Baked(location, false, newBase, parts), new TRSRTransformation(matrix)));
+                    }
                 }
-                transforms = builder.build();
+                transforms = ImmutableMap.copyOf(map);
             }
             else
             {
@@ -151,6 +150,12 @@ public final class MultiModel implements IModel
         public boolean isAmbientOcclusion()
         {
             return internalBase.isAmbientOcclusion();
+        }
+
+        @Override
+        public boolean isAmbientOcclusion(IBlockState state)
+        {
+            return internalBase.isAmbientOcclusion(state);
         }
 
         @Override
@@ -178,45 +183,25 @@ public final class MultiModel implements IModel
         }
 
         @Override
-        public List<BakedQuad> getQuads(IBlockState state, EnumFacing side, long rand)
+        public List<BakedQuad> getQuads(@Nullable IBlockState state, @Nullable EnumFacing side, long rand)
         {
-            if(quads == null)
+            ImmutableList.Builder<BakedQuad> quads = ImmutableList.builder();
+            if (base != null)
             {
-                ImmutableMap.Builder<Optional<EnumFacing>, ImmutableList<BakedQuad>> builder = ImmutableMap.builder();
-
-                for (EnumFacing face : EnumFacing.values())
-                {
-                    ImmutableList.Builder<BakedQuad> quads = ImmutableList.builder();
-                    if (base != null)
-                    {
-                        quads.addAll(base.getQuads(state, face, 0));
-                    }
-                    for (IBakedModel bakedPart : parts.values())
-                    {
-                        quads.addAll(bakedPart.getQuads(state, face, 0));
-                    }
-                    builder.put(Optional.of(face), quads.build());
-                }
-                ImmutableList.Builder<BakedQuad> quads = ImmutableList.builder();
-                if (base != null)
-                {
-                    quads.addAll(base.getQuads(state, null, 0));
-                }
-                for (IBakedModel bakedPart : parts.values())
-                {
-                    quads.addAll(bakedPart.getQuads(state, null, 0));
-                }
-                builder.put(Optional.<EnumFacing>absent(), quads.build());
-                this.quads = builder.build();
+                quads.addAll(base.getQuads(state, side, rand));
             }
-            return quads.get(Optional.fromNullable(side));
+            for (IBakedModel bakedPart : parts.values())
+            {
+                quads.addAll(bakedPart.getQuads(state, side, rand));
+            }
+            return quads.build();
         }
 
         @Override
         public Pair<? extends IBakedModel, Matrix4f> handlePerspective(TransformType cameraTransformType)
         {
-            if(transforms.isEmpty()) return Pair.of(this, null);
             Pair<Baked, TRSRTransformation> p = transforms.get(cameraTransformType);
+            if (p == null) return Pair.of(this, null);
             return Pair.of(p.getLeft(), p.getRight().getMatrix());
         }
 
@@ -228,21 +213,34 @@ public final class MultiModel implements IModel
     }
 
     private final ResourceLocation location;
+    @Nullable
     private final IModel base;
-    private final IModelState baseState;
     private final Map<String, Pair<IModel, IModelState>> parts;
 
-    public MultiModel(ResourceLocation location, IModel base, IModelState baseState, ImmutableMap<String, Pair<IModel, IModelState>> parts)
+    // TODO 1.13 remove, kept for binary compatibility
+    @Deprecated
+    public MultiModel(ResourceLocation location, @Nullable IModel base, IModelState baseState, ImmutableMap<String, Pair<IModel, IModelState>> parts)
+    {
+        this(location, base, parts);
+    }
+
+    public MultiModel(ResourceLocation location, @Nullable IModel base, ImmutableMap<String, Pair<IModel, IModelState>> parts)
     {
         this.location = location;
         this.base = base;
-        this.baseState = baseState;
         this.parts = parts;
     }
 
+    // TODO 1.13 remove, kept for binary compatibility
+    @Deprecated
     public MultiModel(ResourceLocation location, IModel base, IModelState baseState, Map<String, Pair<IModel, IModelState>> parts)
     {
-        this(location, base, baseState, ImmutableMap.copyOf(parts));
+        this(location, base, parts);
+    }
+
+    public MultiModel(ResourceLocation location, IModel base, Map<String, Pair<IModel, IModelState>> parts)
+    {
+        this(location, base, ImmutableMap.copyOf(parts));
     }
 
     @Override
@@ -296,11 +294,5 @@ public final class MultiModel implements IModel
             return missing.bake(missing.getDefaultState(), format, bakedTextureGetter);
         }
         return new Baked(location, true, bakedBase, mapBuilder.build());
-    }
-
-    @Override
-    public IModelState getDefaultState()
-    {
-        return baseState;
     }
 }

@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016-2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.test;
 
 import net.minecraft.block.material.Material;
@@ -9,6 +28,7 @@ import net.minecraft.init.Biomes;
 import net.minecraft.init.Bootstrap;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.util.EnumHelper;
+import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraftforge.fml.common.registry.ForgeTestRunner;
 import org.junit.BeforeClass;
@@ -26,6 +46,7 @@ public class BiomeSpawnableListTest
     @BeforeClass
     public static void setUp() throws Exception
     {
+        Loader.instance();
         Bootstrap.register();
         creatureTypeHorse = EnumHelper.addCreatureType("biomespawnablelisttest:horse", AbstractHorse.class, 20, Material.AIR, true, true);
     }

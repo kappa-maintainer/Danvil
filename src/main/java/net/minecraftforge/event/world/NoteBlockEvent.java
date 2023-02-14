@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -143,14 +143,19 @@ public class NoteBlockEvent extends BlockEvent
         BASSDRUM,
         SNARE,
         CLICKS,
-        BASSGUITAR;
+        BASSGUITAR,
+        FLUTE,
+        BELL,
+        GUITAR,
+        CHIME,
+        XYLOPHONE;
 
         // cache to avoid creating a new array every time
         private static final Instrument[] values = values();
 
         static Instrument fromId(int id)
         {
-            return id < 0 || id > 4 ? PIANO : values[id];
+            return id < 0 || id >= values.length ? PIANO : values[id];
         }
     }
 

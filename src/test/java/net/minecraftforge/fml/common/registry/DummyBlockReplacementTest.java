@@ -1,3 +1,22 @@
+/*
+ * Minecraft Forge
+ * Copyright (c) 2016-2020.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1
+ * of the License.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
 package net.minecraftforge.fml.common.registry;
 
 import net.minecraft.block.Block;
@@ -8,10 +27,18 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.DummyModContainer;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModMetadata;
+import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.registries.GameData;
+import net.minecraftforge.registries.ObjectHolderRegistry;
+import net.minecraftforge.registries.RegistryManager;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
+import com.google.common.collect.Maps;
+
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -44,48 +71,50 @@ public class DummyBlockReplacementTest
     @Test
     public void testDummyBlockReplacement()
     {
-        final PersistentRegistryManager.GameDataSnapshot snapshot = PersistentRegistryManager.takeSnapshot();
-        PersistentRegistryManager.freezeData();
+        final Map<ResourceLocation, ForgeRegistry.Snapshot> snapshot = Maps.newHashMap();
+        GameData.freezeData();
         ObjectHolderRegistry.INSTANCE.applyObjectHolders();
 
-        final FMLControlledNamespacedRegistry<Block> blockRegistry = (FMLControlledNamespacedRegistry<Block>) PersistentRegistryManager.findRegistryByType(Block.class);
+        final ForgeRegistry<Block> blockRegistry = (ForgeRegistry<Block>)RegistryManager.ACTIVE.getRegistry(Block.class);
         Block fnd = blockRegistry.getValue(myDirt);
 
         assertNotEquals("Didn't find my block", fnd, testDirtBlock);
         assertEquals("Found a default air block", fnd, Blocks.AIR);
 
         // Insert a dummy reference to my dirt
-        snapshot.entries.get(PersistentRegistryManager.BLOCKS).ids.put(myDirt, 218);
-        PersistentRegistryManager.injectSnapshot(snapshot, true, true);
+        snapshot.put(GameData.BLOCKS, new ForgeRegistry.Snapshot());
+        snapshot.get(GameData.BLOCKS).ids.put(myDirt, 218);
+        GameData.injectSnapshot(snapshot, true, true);
         ObjectHolderRegistry.INSTANCE.applyObjectHolders();
 
         fnd = blockRegistry.getValue(myDirt);
         assertNotEquals("Did not find my block", fnd, testDirtBlock);
-        assertTrue("Found a dummy air block", fnd.getClass().getName().endsWith("BlockDummyAir"));
-        final Set<ResourceLocation> dummied = PersistentRegistryManager.takeSnapshot().entries.get(PersistentRegistryManager.BLOCKS).dummied;
-        assertTrue("Found my block in the dummy list", dummied.contains(myDirt));
+        assertTrue("Did not find a dummy air block", fnd.getClass().getName().endsWith("BlockDummyAir"));
+        final Set<ResourceLocation> dummied = RegistryManager.ACTIVE.takeSnapshot(false).get(GameData.BLOCKS).dummied;
+        assertTrue("Did not find my block in the dummy list", dummied.contains(myDirt));
 
-        PersistentRegistryManager.revertToFrozen();
+        GameData.revertToFrozen();
         ObjectHolderRegistry.INSTANCE.applyObjectHolders();
         fnd = blockRegistry.getValue(myDirt);
         assertNotEquals("Did not find my block", fnd, testDirtBlock);
         assertEquals("Found a default air block", fnd, Blocks.AIR);
 
-        GameRegistry.register(testDirtBlock, myDirt);
+        ((ForgeRegistry<Block>)RegistryManager.ACTIVE.getRegistry(Block.class)).unfreeze();
+        RegistryManager.ACTIVE.getRegistry(Block.class).register(testDirtBlock.setRegistryName(myDirt));
         fnd = blockRegistry.getValue(myDirt);
         assertEquals("Found my block", fnd, testDirtBlock);
 
         // Add dummied entry in
-        snapshot.entries.get(PersistentRegistryManager.BLOCKS).dummied.add(myDirt);
+        snapshot.get(GameData.BLOCKS).dummied.add(myDirt);
         // Loading locally - we should resuscitate our block
-        PersistentRegistryManager.injectSnapshot(snapshot, true, true);
+        GameData.injectSnapshot(snapshot, true, true);
         ObjectHolderRegistry.INSTANCE.applyObjectHolders();
         fnd = blockRegistry.getValue(myDirt);
         assertEquals("Found my block", fnd, testDirtBlock);
-        PersistentRegistryManager.revertToFrozen();
+        GameData.revertToFrozen();
 
         // Sent remotely, we should NOT resuscitate our block
-        PersistentRegistryManager.injectSnapshot(snapshot, false, false);
+        GameData.injectSnapshot(snapshot, false, false);
         ObjectHolderRegistry.INSTANCE.applyObjectHolders();
         fnd = blockRegistry.getValue(myDirt);
         assertNotEquals("Did not find my block", fnd, testDirtBlock);

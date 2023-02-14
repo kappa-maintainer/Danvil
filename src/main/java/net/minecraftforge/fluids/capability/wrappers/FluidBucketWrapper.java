@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,12 +33,11 @@ import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.fluids.Fluid;
 import net.minecraftforge.fluids.FluidRegistry;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
 import net.minecraftforge.fluids.capability.FluidTankProperties;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fluids.capability.IFluidTankProperties;
-import net.minecraftforge.fluids.UniversalBucket;
 import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 
 /**
  * Wrapper for vanilla and forge buckets.
@@ -61,13 +60,14 @@ public class FluidBucketWrapper implements IFluidHandlerItem, ICapabilityProvide
         return container;
     }
 
-    public boolean canFillFluidType(FluidStack fluid)
+    public boolean canFillFluidType(FluidStack fluidStack)
     {
-        if (fluid.getFluid() == FluidRegistry.WATER || fluid.getFluid() == FluidRegistry.LAVA || fluid.getFluid().getName().equals("milk"))
+        Fluid fluid = fluidStack.getFluid();
+        if (fluid == FluidRegistry.WATER || fluid == FluidRegistry.LAVA || fluid.getName().equals("milk"))
         {
             return true;
         }
-        return FluidRegistry.isUniversalBucketEnabled() && FluidRegistry.getBucketFluids().contains(fluid.getFluid());
+        return FluidRegistry.isUniversalBucketEnabled() && FluidRegistry.hasBucket(fluid);
     }
 
     @Nullable
@@ -96,27 +96,20 @@ public class FluidBucketWrapper implements IFluidHandlerItem, ICapabilityProvide
         }
     }
 
+    /**
+     * @deprecated use the NBT-sensitive version {@link #setFluid(FluidStack)}
+     */
+    @Deprecated
     protected void setFluid(@Nullable Fluid fluid) {
-        if (fluid == null)
-        {
+        setFluid(new FluidStack(fluid, Fluid.BUCKET_VOLUME));
+    }
+
+    protected void setFluid(@Nullable FluidStack fluidStack)
+    {
+        if (fluidStack == null)
             container = new ItemStack(Items.BUCKET);
-        }
-        else if (fluid == FluidRegistry.WATER)
-        {
-            container = new ItemStack(Items.WATER_BUCKET);
-        }
-        else if (fluid == FluidRegistry.LAVA)
-        {
-            container = new ItemStack(Items.LAVA_BUCKET);
-        }
-        else if (fluid.getName().equals("milk"))
-        {
-            container = new ItemStack(Items.MILK_BUCKET);
-        }
-        else if (FluidRegistry.isUniversalBucketEnabled() && FluidRegistry.getBucketFluids().contains(fluid))
-        {
-            container = UniversalBucket.getFilledBucket(ForgeModContainer.getInstance().universalBucket, fluid);
-        }
+        else
+            container = FluidUtil.getFilledBucket(fluidStack);
     }
 
     @Override
@@ -135,7 +128,7 @@ public class FluidBucketWrapper implements IFluidHandlerItem, ICapabilityProvide
 
         if (doFill)
         {
-            setFluid(resource.getFluid());
+            setFluid(resource);
         }
 
         return Fluid.BUCKET_VOLUME;
@@ -155,7 +148,7 @@ public class FluidBucketWrapper implements IFluidHandlerItem, ICapabilityProvide
         {
             if (doDrain)
             {
-                setFluid(null);
+                setFluid((FluidStack) null);
             }
             return fluidStack;
         }
@@ -177,7 +170,7 @@ public class FluidBucketWrapper implements IFluidHandlerItem, ICapabilityProvide
         {
             if (doDrain)
             {
-                setFluid(null);
+                setFluid((FluidStack) null);
             }
             return fluidStack;
         }

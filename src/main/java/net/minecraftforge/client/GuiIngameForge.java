@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -52,6 +52,7 @@ import net.minecraft.util.FoodStats;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent.ElementType;
@@ -71,6 +72,7 @@ public class GuiIngameForge extends GuiIngame
     //Flags to toggle the rendering of certain aspects of the HUD, valid conditions
     //must be met for them to render normally. If those conditions are met, but this flag
     //is false, they will not be rendered.
+    public static boolean renderVignette = true;
     public static boolean renderHelmet = true;
     public static boolean renderPortal = true;
     public static boolean renderHotbar = true;
@@ -116,13 +118,13 @@ public class GuiIngameForge extends GuiIngame
 
         if (pre(ALL)) return;
 
-        fontrenderer = mc.fontRendererObj;
+        fontrenderer = mc.fontRenderer;
         mc.entityRenderer.setupOverlayRendering();
         GlStateManager.enableBlend();
 
-        if (Minecraft.isFancyGraphicsEnabled())
+        if (renderVignette && Minecraft.isFancyGraphicsEnabled())
         {
-            renderVignette(mc.player.getBrightness(partialTicks), res);
+            renderVignette(mc.player.getBrightness(), res);
         }
         else
         {
@@ -181,7 +183,7 @@ public class GuiIngameForge extends GuiIngame
         ScorePlayerTeam scoreplayerteam = scoreboard.getPlayersTeam(mc.player.getName());
         if (scoreplayerteam != null)
         {
-            int slot = scoreplayerteam.getChatFormat().getColorIndex();
+            int slot = scoreplayerteam.getColor().getColorIndex();
             if (slot >= 0) objective = scoreboard.getObjectiveInDisplaySlot(3 + slot);
         }
         ScoreObjective scoreobjective1 = objective != null ? objective : scoreboard.getObjectiveInDisplaySlot(1);
@@ -245,6 +247,20 @@ public class GuiIngameForge extends GuiIngame
         GlStateManager.disableBlend();
         mc.mcProfiler.endSection();
         post(BOSSHEALTH);
+    }
+
+    @Override
+    protected void renderVignette(float lightLevel, ScaledResolution scaledRes)
+    {
+        if (pre(VIGNETTE))
+        {
+            // Need to put this here, since Vanilla assumes this state after the vignette was rendered.
+            GlStateManager.enableDepth();
+            GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+            return;
+        }
+        super.renderVignette(lightLevel, scaledRes);
+        post(VIGNETTE);
     }
 
     private void renderHelmet(ScaledResolution res, float partialTicks)
@@ -331,6 +347,12 @@ public class GuiIngameForge extends GuiIngame
         }
 
         post(HOTBAR);
+    }
+
+    @Override
+    public void setOverlayMessage(ITextComponent component, boolean animateColor)
+    {
+        this.setOverlayMessage(component.getFormattedText(), animateColor);
     }
 
     protected void renderAir(int width, int height)
@@ -621,7 +643,7 @@ public class GuiIngameForge extends GuiIngame
         {
             mc.mcProfiler.startSection("toolHighlight");
 
-            if (this.remainingHighlightTicks > 0 && this.highlightingItemStack != null)
+            if (this.remainingHighlightTicks > 0 && !this.highlightingItemStack.isEmpty())
             {
                 String name = this.highlightingItemStack.getDisplayName();
                 if (this.highlightingItemStack.hasDisplayName())

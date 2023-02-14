@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -20,35 +20,40 @@
 package net.minecraftforge.event.entity.player;
 
 import java.util.List;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public class ItemTooltipEvent extends PlayerEvent
 {
-    private final boolean showAdvancedItemTooltips;
+    private final ITooltipFlag flags;
     @Nonnull
     private final ItemStack itemStack;
     private final List<String> toolTip;
 
     /**
-     * This event is fired in {@link ItemStack#getTooltip(EntityPlayer, boolean)}, which in turn is called from it's respective GUIContainer.
+     * This event is fired in {@link ItemStack#getTooltip(EntityPlayer, ITooltipFlag)}, which in turn is called from it's respective GUIContainer.
+     * Tooltips are also gathered with a null entityPlayer during startup by {@link Minecraft#populateSearchTreeManager()}.
      */
-    public ItemTooltipEvent(@Nonnull ItemStack itemStack, EntityPlayer entityPlayer, List<String> toolTip, boolean showAdvancedItemTooltips)
+    public ItemTooltipEvent(@Nonnull ItemStack itemStack, @Nullable EntityPlayer entityPlayer, List<String> toolTip, ITooltipFlag flags)
     {
         super(entityPlayer);
         this.itemStack = itemStack;
         this.toolTip = toolTip;
-        this.showAdvancedItemTooltips = showAdvancedItemTooltips;
+        this.flags = flags;
     }
 
     /**
-     * Whether the advanced information on item tooltips is being shown, toggled by F3+H.
+     * Use to determine if the advanced information on item tooltips is being shown, toggled by F3+H.
      */
-    public boolean isShowAdvancedItemTooltips()
+    public ITooltipFlag getFlags()
     {
-        return showAdvancedItemTooltips;
+        return flags;
     }
 
     /**
@@ -66,5 +71,15 @@ public class ItemTooltipEvent extends PlayerEvent
     public List<String> getToolTip()
     {
         return toolTip;
+    }
+
+    /**
+     * This event is fired with a null player during startup when populating search trees for tooltips.
+     */
+    @Override
+    @Nullable
+    public EntityPlayer getEntityPlayer()
+    {
+        return super.getEntityPlayer();
     }
 }

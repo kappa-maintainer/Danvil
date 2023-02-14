@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -33,8 +33,6 @@ import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.ModContainer;
 
-import org.apache.logging.log4j.Level;
-
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.collect.MapMaker;
@@ -49,6 +47,7 @@ public class EventBus implements IEventExceptionHandler
     private Map<Object,ModContainer> listenerOwners = new MapMaker().weakKeys().weakValues().makeMap();
     private final int busID = maxID++;
     private IEventExceptionHandler exceptionHandler;
+    private boolean shutdown;
 
     public EventBus()
     {
@@ -116,7 +115,7 @@ public class EventBus implements IEventExceptionHandler
                 }
                 catch (NoSuchMethodException e)
                 {
-                    ;
+                    ; // Eat the error, this is not unexpected
                 }
             }
         }
@@ -141,6 +140,7 @@ public class EventBus implements IEventExceptionHandler
                     {
                         ModContainer old = Loader.instance().activeModContainer();
                         Loader.instance().setActiveModContainer(owner);
+                        ((IContextSetter)event).setModContainer(owner);
                         asm.invoke(event);
                         Loader.instance().setActiveModContainer(old);
                     }
@@ -149,17 +149,12 @@ public class EventBus implements IEventExceptionHandler
 
             event.getListenerList().register(busID, asm.getPriority(), listener);
 
-            ArrayList<IEventListener> others = listeners.get(target);
-            if (others == null)
-            {
-                others = new ArrayList<IEventListener>();
-                listeners.put(target, others);
-            }
+            ArrayList<IEventListener> others = listeners.computeIfAbsent(target, k -> new ArrayList<>());
             others.add(listener);
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error registering event handler: {} {} {}", owner, eventType, method, e);
         }
     }
 
@@ -176,6 +171,8 @@ public class EventBus implements IEventExceptionHandler
 
     public boolean post(Event event)
     {
+        if (shutdown) return false;
+
         IEventListener[] listeners = event.getListenerList().getListeners(busID);
         int index = 0;
         try
@@ -188,9 +185,16 @@ public class EventBus implements IEventExceptionHandler
         catch (Throwable throwable)
         {
             exceptionHandler.handleException(this, event, listeners, index, throwable);
-            Throwables.propagate(throwable);
+            Throwables.throwIfUnchecked(throwable);
+            throw new RuntimeException(throwable);
         }
-        return (event.isCancelable() ? event.isCanceled() : false);
+        return event.isCancelable() && event.isCanceled();
+    }
+
+    public void shutdown()
+    {
+        FMLLog.log.warn("EventBus {} shutting down - future events will not be posted.", busID);
+        shutdown = true;
     }
 
     @Override

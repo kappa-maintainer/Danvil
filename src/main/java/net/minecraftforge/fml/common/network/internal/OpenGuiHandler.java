@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,8 +18,6 @@
  */
 
 package net.minecraftforge.fml.common.network.internal;
-
-import org.apache.logging.log4j.Level;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.IThreadListener;
@@ -42,13 +40,7 @@ public class OpenGuiHandler extends SimpleChannelInboundHandler<FMLMessage.OpenG
         }
         else
         {
-            thread.addScheduledTask(new Runnable()
-            {
-                public void run()
-                {
-                    OpenGuiHandler.this.process(msg);
-                }
-            });
+            thread.addScheduledTask(() -> OpenGuiHandler.this.process(msg));
         }
     }
 

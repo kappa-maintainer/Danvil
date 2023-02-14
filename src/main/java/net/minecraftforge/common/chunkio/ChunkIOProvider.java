@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -62,24 +62,29 @@ class ChunkIOProvider implements Runnable
     {
         synchronized(this)
         {
-            Object[] data = null;
             try
             {
-                data = this.loader.loadChunk__Async(chunkInfo.world, chunkInfo.x, chunkInfo.z);
+                Object[] data = null;
+                try
+                {
+                    data = this.loader.loadChunk__Async(chunkInfo.world, chunkInfo.x, chunkInfo.z);
+                }
+                catch (IOException e)
+                {
+                    throw new RuntimeException(e); // Allow exception to bubble up to afterExecute
+                }
+    
+                if (data != null)
+                {
+                    this.nbt   = (NBTTagCompound)data[1];
+                    this.chunk = (Chunk)data[0];
+                }
             }
-            catch (IOException e)
+            finally 
             {
-                e.printStackTrace();
+                this.ran = true;
+                this.notifyAll();
             }
-
-            if (data != null)
-            {
-                this.nbt   = (NBTTagCompound)data[1];
-                this.chunk = (Chunk)data[0];
-            }
-
-            this.ran = true;
-            this.notifyAll();
         }
     }
 
@@ -101,8 +106,8 @@ class ChunkIOProvider implements Runnable
         this.provider.chunkGenerator.recreateStructures(this.chunk, this.chunkInfo.x, this.chunkInfo.z);
 
         provider.id2ChunkMap.put(ChunkPos.asLong(this.chunkInfo.x, this.chunkInfo.z), this.chunk);
-        this.chunk.onChunkLoad();
-        this.chunk.populateChunk(provider, provider.chunkGenerator);
+        this.chunk.onLoad();
+        this.chunk.populate(provider, provider.chunkGenerator);
 
         this.runCallbacks();
     }
@@ -130,5 +135,10 @@ class ChunkIOProvider implements Runnable
         }
 
         this.callbacks.clear();
+    }
+
+    public QueuedChunk getChunkInfo() 
+    {
+    	return chunkInfo;
     }
 }

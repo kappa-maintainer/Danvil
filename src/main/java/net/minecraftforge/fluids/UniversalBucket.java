@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,14 +37,12 @@ import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
 import net.minecraftforge.event.entity.player.FillBucketEvent;
-import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import net.minecraftforge.fluids.capability.wrappers.FluidBucketWrapper;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nonnull;
@@ -102,10 +100,11 @@ public class UniversalBucket extends Item
         return super.getContainerItem(itemStack);
     }
 
-    @SideOnly(Side.CLIENT)
     @Override
-    public void getSubItems(@Nonnull Item itemIn, @Nullable CreativeTabs tab, @Nonnull NonNullList<ItemStack> subItems)
+    public void getSubItems(@Nullable CreativeTabs tab, @Nonnull NonNullList<ItemStack> subItems)
     {
+        if (!this.isInCreativeTab(tab))
+            return;
         for (Fluid fluid : FluidRegistry.getRegisteredFluids().values())
         {
             if (fluid != FluidRegistry.WATER && fluid != FluidRegistry.LAVA && !fluid.getName().equals("milk"))
@@ -161,6 +160,9 @@ public class UniversalBucket extends Item
 
         // clicked on a block?
         RayTraceResult mop = this.rayTrace(world, player, false);
+
+        ActionResult<ItemStack> ret = ForgeEventFactory.onBucketUse(player, world, itemstack, mop);
+        if (ret != null) return ret;
 
         if(mop == null || mop.typeOfHit != RayTraceResult.Type.BLOCK)
         {
@@ -252,29 +254,14 @@ public class UniversalBucket extends Item
         }
     }
 
+    /**
+     * @deprecated use the NBT-sensitive version {@link FluidUtil#getFilledBucket(FluidStack)}
+     */
+    @Deprecated
     @Nonnull
     public static ItemStack getFilledBucket(@Nonnull UniversalBucket item, Fluid fluid)
     {
-        ItemStack bucket = new ItemStack(item);
-
-        if (FluidRegistry.getBucketFluids().contains(fluid))
-        {
-            // fill the container
-            NBTTagCompound tag = new NBTTagCompound();
-            FluidStack fluidStack = new FluidStack(fluid, item.getCapacity());
-            fluidStack.writeToNBT(tag);
-            bucket.setTagCompound(tag);
-        }
-        else if (fluid == FluidRegistry.WATER)
-        {
-            return new ItemStack(Items.WATER_BUCKET);
-        }
-        else if (fluid == FluidRegistry.LAVA)
-        {
-            return new ItemStack(Items.LAVA_BUCKET);
-        }
-
-        return bucket;
+        return FluidUtil.getFilledBucket(new FluidStack(fluid, Fluid.BUCKET_VOLUME));
     }
 
     @Nullable
@@ -297,6 +284,15 @@ public class UniversalBucket extends Item
     public boolean isNbtSensitive()
     {
         return nbtSensitive;
+    }
+
+    @Nullable
+    @Override
+    public String getCreatorModId(@Nonnull ItemStack itemStack)
+    {
+        FluidStack fluidStack = getFluid(itemStack);
+        String modId = FluidRegistry.getModId(fluidStack);
+        return modId != null ? modId : super.getCreatorModId(itemStack);
     }
 
     @Override

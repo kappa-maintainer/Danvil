@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -24,6 +24,8 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
+
+import java.util.Objects;
 
 import javax.annotation.Nonnull;
 
@@ -63,7 +65,7 @@ public class SidedInvWrapper implements IItemHandlerModifiable
     public int hashCode()
     {
         int result = inv.hashCode();
-        result = 31 * result + side.hashCode();
+        result = 31 * result + Objects.hashCode(side);
         return result;
     }
 
@@ -98,10 +100,13 @@ public class SidedInvWrapper implements IItemHandlerModifiable
         int m;
         if (!stackInSlot.isEmpty())
         {
+            if (stackInSlot.getCount() >= Math.min(stackInSlot.getMaxStackSize(), getSlotLimit(slot)))
+                return stack;
+
             if (!ItemHandlerHelper.canItemStacksStack(stack, stackInSlot))
                 return stack;
 
-            if (!inv.isItemValidForSlot(slot1, stack) || !inv.canInsertItem(slot1, stack, side))
+            if (!inv.canInsertItem(slot1, stack, side) || !inv.isItemValidForSlot(slot1, stack))
                 return stack;
 
             m = Math.min(stack.getMaxStackSize(), getSlotLimit(slot)) - stackInSlot.getCount();
@@ -137,7 +142,7 @@ public class SidedInvWrapper implements IItemHandlerModifiable
         }
         else
         {
-            if (!inv.isItemValidForSlot(slot1, stack) || !inv.canInsertItem(slot1, stack, side))
+            if (!inv.canInsertItem(slot1, stack, side) || !inv.isItemValidForSlot(slot1, stack))
                 return stack;
 
             m = Math.min(stack.getMaxStackSize(), getSlotLimit(slot));
@@ -226,5 +231,12 @@ public class SidedInvWrapper implements IItemHandlerModifiable
     public int getSlotLimit(int slot)
     {
         return inv.getInventoryStackLimit();
+    }
+
+    @Override
+    public boolean isItemValid(int slot, @Nonnull ItemStack stack)
+    {
+        int slot1 = getSlot(inv, slot, side);
+        return slot1 == -1 ? false : inv.isItemValidForSlot(slot1, stack);
     }
 }

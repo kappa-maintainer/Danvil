@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
+
 package net.minecraftforge.fml.client.config;
 
 import static net.minecraftforge.fml.client.config.GuiUtils.RESET_CHAR;
@@ -98,9 +99,9 @@ public class GuiConfigEntries extends GuiListExtended
 
                     // protects against language keys that are not defined in the .lang file
                     if (!I18n.format(configElement.getLanguageKey()).equals(configElement.getLanguageKey()))
-                        length = mc.fontRendererObj.getStringWidth(I18n.format(configElement.getLanguageKey()));
+                        length = mc.fontRenderer.getStringWidth(I18n.format(configElement.getLanguageKey()));
                     else
-                        length = mc.fontRendererObj.getStringWidth(configElement.getName());
+                        length = mc.fontRenderer.getStringWidth(configElement.getName());
 
                     if (length > this.maxLabelTextWidth)
                         this.maxLabelTextWidth = length;
@@ -128,8 +129,7 @@ public class GuiConfigEntries extends GuiListExtended
                     }
                     catch (Throwable e)
                     {
-                        FMLLog.log.fatal("There was a critical error instantiating the custom IConfigEntry for config element {}.", configElement.getName());
-                        e.printStackTrace();
+                        FMLLog.log.error("There was a critical error instantiating the custom IConfigEntry for config element {}.", configElement.getName(), e);
                     }
                 else if (configElement.isProperty())
                 {
@@ -138,9 +138,19 @@ public class GuiConfigEntries extends GuiListExtended
                     else if (configElement.getType() == ConfigGuiType.BOOLEAN)
                         this.listEntries.add(new GuiConfigEntries.BooleanEntry(this.owningScreen, this, configElement));
                     else if (configElement.getType() == ConfigGuiType.INTEGER)
-                        this.listEntries.add(new GuiConfigEntries.IntegerEntry(this.owningScreen, this, configElement));
+                    {
+                        if(configElement.hasSlidingControl())
+                            listEntries.add(new GuiConfigEntries.NumberSliderEntry(owningScreen,this,configElement));
+                        else
+                            this.listEntries.add(new GuiConfigEntries.IntegerEntry(this.owningScreen, this, configElement));
+                    }
                     else if (configElement.getType() == ConfigGuiType.DOUBLE)
-                        this.listEntries.add(new GuiConfigEntries.DoubleEntry(this.owningScreen, this, configElement));
+                    {
+                        if(configElement.hasSlidingControl())
+                            listEntries.add(new NumberSliderEntry(owningScreen,this,configElement));
+                        else
+                            this.listEntries.add(new GuiConfigEntries.DoubleEntry(this.owningScreen, this, configElement));
+                    }
                     else if (configElement.getType() == ConfigGuiType.COLOR)
                     {
                         if (configElement.getValidValues() != null && configElement.getValidValues().length > 0)
@@ -476,7 +486,13 @@ public class GuiConfigEntries extends GuiListExtended
         @Override
         public void updateValueButtonText()
         {
-            this.btnValue.displayString = I18n.format(configElement.getValidValues()[currentIndex]);
+            this.btnValue.displayString = I18n.format(getValidValueDisplay());
+        }
+
+        protected String getValidValueDisplay()
+        {
+            String[] validValuesDisplay = configElement.getValidValuesDisplay();
+            return validValuesDisplay != null && validValuesDisplay.length > 0 ? validValuesDisplay[currentIndex] : configElement.getValidValues()[currentIndex];
         }
 
         @Override
@@ -562,16 +578,16 @@ public class GuiConfigEntries extends GuiListExtended
         }
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
-            this.btnValue.packedFGColour = GuiUtils.getColorCode(this.configElement.getValidValues()[currentIndex].charAt(0), true);
-            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected);
+            this.btnValue.packedFGColour = GuiUtils.getColorCode(getValidValueDisplay().charAt(0), true);
+            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partial);
         }
 
         @Override
         public void updateValueButtonText()
         {
-            this.btnValue.displayString = I18n.format(configElement.getValidValues()[currentIndex]) + " - " + I18n.format("fml.configgui.sampletext");
+            this.btnValue.displayString = I18n.format(getValidValueDisplay()) + " - " + I18n.format("fml.configgui.sampletext");
         }
     }
 
@@ -910,14 +926,14 @@ public class GuiConfigEntries extends GuiListExtended
         public abstract void valueButtonPressed(int slotIndex);
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
-            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected);
+            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partial);
             this.btnValue.width = this.owningEntryList.controlWidth;
-            this.btnValue.xPosition = this.owningScreen.entryList.controlX;
-            this.btnValue.yPosition = y;
+            this.btnValue.x = this.owningScreen.entryList.controlX;
+            this.btnValue.y = y;
             this.btnValue.enabled = enabled();
-            this.btnValue.drawButton(this.mc, mouseX, mouseY);
+            this.btnValue.drawButton(this.mc, mouseX, mouseY, partial);
         }
 
         /**
@@ -1184,17 +1200,17 @@ public class GuiConfigEntries extends GuiListExtended
         {
             super(owningScreen, owningEntryList, configElement);
             beforeValue = configElement.get().toString();
-            this.textFieldValue = new GuiTextField(10, this.mc.fontRendererObj, this.owningEntryList.controlX + 1, 0, this.owningEntryList.controlWidth - 3, 16);
+            this.textFieldValue = new GuiTextField(10, this.mc.fontRenderer, this.owningEntryList.controlX + 1, 0, this.owningEntryList.controlWidth - 3, 16);
             this.textFieldValue.setMaxStringLength(10000);
             this.textFieldValue.setText(configElement.get().toString());
         }
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
-            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected);
-            this.textFieldValue.xPosition = this.owningEntryList.controlX + 2;
-            this.textFieldValue.yPosition = y + 1;
+            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partial);
+            this.textFieldValue.x = this.owningEntryList.controlX + 2;
+            this.textFieldValue.y = y + 1;
             this.textFieldValue.width = this.owningEntryList.controlWidth - 4;
             this.textFieldValue.setEnabled(enabled());
             this.textFieldValue.drawTextBox();
@@ -1326,14 +1342,14 @@ public class GuiConfigEntries extends GuiListExtended
         }
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
-            this.btnSelectCategory.xPosition = listWidth / 2 - 150;
-            this.btnSelectCategory.yPosition = y;
+            this.btnSelectCategory.x = listWidth / 2 - 150;
+            this.btnSelectCategory.y = y;
             this.btnSelectCategory.enabled = enabled();
-            this.btnSelectCategory.drawButton(this.mc, mouseX, mouseY);
+            this.btnSelectCategory.drawButton(this.mc, mouseX, mouseY, partial);
 
-            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected);
+            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partial);
         }
 
         @Override
@@ -1526,7 +1542,7 @@ public class GuiConfigEntries extends GuiListExtended
         }
 
         @Override
-        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected)
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partial)
         {
             boolean isChanged = isChanged();
 
@@ -1535,22 +1551,22 @@ public class GuiConfigEntries extends GuiListExtended
                 String label = (!isValidValue ? TextFormatting.RED.toString() :
                         (isChanged ? TextFormatting.WHITE.toString() : TextFormatting.GRAY.toString()))
                         + (isChanged ? TextFormatting.ITALIC.toString() : "") + this.name;
-                this.mc.fontRendererObj.drawString(
+                this.mc.fontRenderer.drawString(
                         label,
                         this.owningScreen.entryList.labelX,
-                        y + slotHeight / 2 - this.mc.fontRendererObj.FONT_HEIGHT / 2,
+                        y + slotHeight / 2 - this.mc.fontRenderer.FONT_HEIGHT / 2,
                         16777215);
             }
 
-            this.btnUndoChanges.xPosition = this.owningEntryList.scrollBarX - 44;
-            this.btnUndoChanges.yPosition = y;
+            this.btnUndoChanges.x = this.owningEntryList.scrollBarX - 44;
+            this.btnUndoChanges.y = y;
             this.btnUndoChanges.enabled = enabled() && isChanged;
-            this.btnUndoChanges.drawButton(this.mc, mouseX, mouseY);
+            this.btnUndoChanges.drawButton(this.mc, mouseX, mouseY, partial);
 
-            this.btnDefault.xPosition = this.owningEntryList.scrollBarX - 22;
-            this.btnDefault.yPosition = y;
+            this.btnDefault.x = this.owningEntryList.scrollBarX - 22;
+            this.btnDefault.y = y;
             this.btnDefault.enabled = enabled() && !isDefault();
-            this.btnDefault.drawButton(this.mc, mouseX, mouseY);
+            this.btnDefault.drawButton(this.mc, mouseX, mouseY, partial);
 
             if (this.tooltipHoverChecker == null)
                 this.tooltipHoverChecker = new HoverChecker(y, y + slotHeight, x, this.owningScreen.entryList.controlX - 8, 800);
@@ -1624,7 +1640,7 @@ public class GuiConfigEntries extends GuiListExtended
         public abstract boolean saveConfigElement();
 
         @Override
-        public void setSelected(int p_178011_1_, int p_178011_2_, int p_178011_3_){}
+        public void updatePosition(int p_178011_1_, int p_178011_2_, int p_178011_3_, float partial){}
 
         @Override
         public boolean enabled()
@@ -1635,7 +1651,7 @@ public class GuiConfigEntries extends GuiListExtended
         @Override
         public int getLabelWidth()
         {
-            return this.mc.fontRendererObj.getStringWidth(this.name);
+            return this.mc.fontRenderer.getStringWidth(this.name);
         }
 
         @Override
@@ -1674,7 +1690,7 @@ public class GuiConfigEntries extends GuiListExtended
             int tagStartPosition = tagStartPosition = target.indexOf(tagStart);
             int tagEndPosition = tagEndPosition = target.indexOf(tagEnd, tagStartPosition + tagStart.length());
 
-            if (-1 == tagStartPosition || -1 == tagEndPosition) 
+            if (-1 == tagStartPosition || -1 == tagEndPosition)
                 return target;
 
             String taglessResult = target.substring(0, tagStartPosition);
@@ -1693,45 +1709,45 @@ public class GuiConfigEntries extends GuiListExtended
          * Gets the IConfigElement object owned by this entry.
          * @return
          */
-        public IConfigElement getConfigElement();
+        IConfigElement getConfigElement();
 
         /**
          * Gets the name of the ConfigElement owned by this entry.
          */
-        public String getName();
+        String getName();
 
         /**
          * Gets the current value of this entry.
          */
-        public Object getCurrentValue();
+        Object getCurrentValue();
 
         /**
          * Gets the current values of this list entry.
          */
-        public Object[] getCurrentValues();
+        Object[] getCurrentValues();
 
         /**
          * Is this list entry enabled?
          *
          * @return true if this entry's controls should be enabled, false otherwise.
          */
-        public boolean enabled();
+        boolean enabled();
 
         /**
          * Handles user keystrokes for any GuiTextField objects in this entry. Call {@link GuiTextField#textboxKeyTyped(char, int)} for any GuiTextField
          * objects that should receive the input provided.
          */
-        public void keyTyped(char eventChar, int eventKey);
+        void keyTyped(char eventChar, int eventKey);
 
         /**
          * Call {@link GuiTextField#updateCursorCounter()} for any GuiTextField objects in this entry.
          */
-        public void updateCursorCounter();
+        void updateCursorCounter();
 
         /**
          * Call {@link GuiTextField#mouseClicked(int, int, int)} for and GuiTextField objects in this entry.
          */
-        public void mouseClicked(int x, int y, int mouseEvent);
+        void mouseClicked(int x, int y, int mouseEvent);
 
         /**
          * Is this entry's value equal to the default value? Generally true should be returned if this entry is not a property or category
@@ -1739,50 +1755,50 @@ public class GuiConfigEntries extends GuiListExtended
          *
          * @return true if this entry's value is equal to this entry's default value.
          */
-        public boolean isDefault();
+        boolean isDefault();
 
         /**
          * Sets this entry's value to the default value.
          */
-        public void setToDefault();
+        void setToDefault();
 
         /**
          * Handles reverting any changes that have occurred to this entry.
          */
-        public void undoChanges();
+        void undoChanges();
 
         /**
          * Has the value of this entry changed?
          *
          * @return true if changes have been made to this entry's value, false otherwise.
          */
-        public boolean isChanged();
+        boolean isChanged();
 
         /**
          * Handles saving any changes that have been made to this entry back to the underlying object. It is a good practice to check
          * isChanged() before performing the save action. This method should return true if the element has changed AND REQUIRES A RESTART.
          */
-        public boolean saveConfigElement();
+        boolean saveConfigElement();
 
         /**
          * Handles drawing any tooltips that apply to this entry. This method is called after all other GUI elements have been drawn to the
          * screen, so it could also be used to draw any GUI element that needs to be drawn after all entries have had drawEntry() called.
          */
-        public void drawToolTip(int mouseX, int mouseY);
+        void drawToolTip(int mouseX, int mouseY);
 
         /**
          * Gets this entry's label width.
          */
-        public int getLabelWidth();
+        int getLabelWidth();
 
         /**
          * Gets this entry's right-hand x boundary. This value is used to control where the scroll bar is placed.
          */
-        public int getEntryRightBound();
+        int getEntryRightBound();
 
         /**
          * This method is called when the parent GUI is closed. Most handlers won't need this; it is provided for special cases.
          */
-        public void onGuiClosed();
+        void onGuiClosed();
     }
 }

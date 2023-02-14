@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,17 +22,23 @@ package net.minecraftforge.common;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.BitSet;
 import java.util.Hashtable;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentMap;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
-import org.apache.logging.log4j.Level;
+import it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntRBTreeSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
+import it.unimi.dsi.fastutil.ints.IntSortedSet;
 
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Lists;
@@ -50,7 +56,6 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.WorldServerMulti;
 import net.minecraft.world.storage.ISaveHandler;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.FMLLog;
 
 import javax.annotation.Nullable;
@@ -68,13 +73,16 @@ public class DimensionManager
         }
     }
 
-    private static Hashtable<Integer, WorldServer> worlds = new Hashtable<Integer, WorldServer>();
     private static boolean hasInit = false;
-    private static Hashtable<Integer, Dimension> dimensions = new Hashtable<Integer, Dimension>();
-    private static IntArrayList unloadQueue = new IntArrayList();
-    private static BitSet dimensionMap = new BitSet(Long.SIZE << 4);
-    private static ConcurrentMap<World, World> weakWorldMap = new MapMaker().weakKeys().weakValues().<World,World>makeMap();
-    private static Multiset<Integer> leakedWorlds = HashMultiset.create();
+    private static int lastUsedId = 0;
+
+    private static final Int2ObjectMap<WorldServer> worlds = Int2ObjectMaps.synchronize(new Int2ObjectLinkedOpenHashMap<>());
+    private static final Int2ObjectMap<Dimension> dimensions = Int2ObjectMaps.synchronize(new Int2ObjectLinkedOpenHashMap<>());
+    private static final IntSet keepLoaded = IntSets.synchronize(new IntOpenHashSet());
+    private static final IntSet unloadQueue = IntSets.synchronize(new IntLinkedOpenHashSet());
+    private static final IntSet usedIds = new IntOpenHashSet();
+    private static final ConcurrentMap<World, World> weakWorldMap = new MapMaker().weakKeys().weakValues().makeMap();
+    private static final Multiset<Integer> leakedWorlds = HashMultiset.create();
 
     /**
      * Returns a list of dimensions associated with this DimensionType.
@@ -83,15 +91,25 @@ public class DimensionManager
     {
         int[] ret = new int[dimensions.size()];
         int x = 0;
-        for (Map.Entry<Integer, Dimension> ent : dimensions.entrySet())
+        for (Int2ObjectMap.Entry<Dimension> ent : dimensions.int2ObjectEntrySet())
         {
             if (ent.getValue().type == type)
             {
-                ret[x++] = ent.getKey();
+                ret[x++] = ent.getIntKey();
             }
         }
 
         return Arrays.copyOf(ret, x);
+    }
+
+    public static Map<DimensionType, IntSortedSet> getRegisteredDimensions()
+    {
+        Map<DimensionType, IntSortedSet> map = new IdentityHashMap<>();
+        for (Int2ObjectMap.Entry<Dimension> entry : dimensions.int2ObjectEntrySet())
+        {
+            map.computeIfAbsent(entry.getValue().type, k -> new IntRBTreeSet()).add(entry.getIntKey());
+        }
+        return map;
     }
 
     public static void init()
@@ -118,7 +136,7 @@ public class DimensionManager
         dimensions.put(id, new Dimension(type));
         if (id >= 0)
         {
-            dimensionMap.set(id);
+            usedIds.add(id);
         }
     }
 
@@ -179,9 +197,10 @@ public class DimensionManager
         }
         return getIDs();
     }
+
     public static Integer[] getIDs()
     {
-        return worlds.keySet().toArray(new Integer[worlds.size()]); //Only loaded dims, since usually used to cycle through loaded worlds
+        return worlds.keySet().toArray(new Integer[0]); // Only loaded dims, since usually used to cycle through loaded worlds
     }
 
     public static void setWorld(int id, @Nullable WorldServer world, MinecraftServer server)
@@ -208,9 +227,9 @@ public class DimensionManager
         if (worlds.get( 1) != null)
             tmp.add(worlds.get( 1));
 
-        for (Entry<Integer, WorldServer> entry : worlds.entrySet())
+        for (Int2ObjectMap.Entry<WorldServer> entry : worlds.int2ObjectEntrySet())
         {
-            int dim = entry.getKey();
+            int dim = entry.getIntKey();
             if (dim >= -1 && dim <= 1)
             {
                 continue;
@@ -218,7 +237,7 @@ public class DimensionManager
             tmp.add(entry.getValue());
         }
 
-        server.worlds = tmp.toArray(new WorldServer[tmp.size()]);
+        server.worlds = tmp.toArray(new WorldServer[0]);
     }
 
     public static void initDimension(int dim)
@@ -234,14 +253,14 @@ public class DimensionManager
         }
         catch (Exception e)
         {
-            System.err.println("Cannot Hotload Dim: " + e.getMessage());
+            FMLLog.log.error("Cannot Hotload Dim: {}", dim, e);
             return; // If a provider hasn't been registered then we can't hotload the dim
         }
         MinecraftServer mcServer = overworld.getMinecraftServer();
         ISaveHandler savehandler = overworld.getSaveHandler();
         //WorldSettings worldSettings = new WorldSettings(overworld.getWorldInfo());
 
-        WorldServer world = (dim == 0 ? overworld : (WorldServer)(new WorldServerMulti(mcServer, savehandler, dim, overworld, mcServer.theProfiler).init()));
+        WorldServer world = (dim == 0 ? overworld : (WorldServer)(new WorldServerMulti(mcServer, savehandler, dim, overworld, mcServer.profiler).init()));
         world.addEventListener(new ServerWorldEventHandler(mcServer, world));
         MinecraftForge.EVENT_BUS.post(new WorldEvent.Load(world));
         if (!mcServer.isSinglePlayer())
@@ -254,12 +273,21 @@ public class DimensionManager
 
     public static WorldServer getWorld(int id)
     {
+        return getWorld(id, false);
+    }
+
+    public static WorldServer getWorld(int id, boolean resetUnloadDelay)
+    {
+        if (resetUnloadDelay && unloadQueue.contains(id))
+        {
+            dimensions.get(id).ticksWaited = 0;
+        }
         return worlds.get(id);
     }
 
     public static WorldServer[] getWorlds()
     {
-        return worlds.values().toArray(new WorldServer[worlds.size()]);
+        return worlds.values().toArray(new WorldServer[0]);
     }
 
     static
@@ -273,8 +301,9 @@ public class DimensionManager
      */
     public static Integer[] getStaticDimensionIDs()
     {
-        return dimensions.keySet().toArray(new Integer[dimensions.keySet().size()]);
+        return dimensions.keySet().toArray(new Integer[0]);
     }
+
     public static WorldProvider createProviderFor(int dim)
     {
         try
@@ -299,20 +328,36 @@ public class DimensionManager
     }
 
     /**
-     * Queues a dimension to unload.
-     * If the dimension is already queued, it will reset the delay to unload
+     * Sets if a dimension should stay loaded.
+     * @param dim  the dimension ID
+     * @param keep whether or not the dimension should be kept loaded
+     * @return true iff the dimension's status changed
+     */
+    public static boolean keepDimensionLoaded(int dim, boolean keep)
+    {
+        return keep ? keepLoaded.add(dim) : keepLoaded.remove(dim);
+    }
+
+    private static boolean canUnloadWorld(WorldServer world)
+    {
+        return ForgeChunkManager.getPersistentChunksFor(world).isEmpty()
+                && world.playerEntities.isEmpty()
+                && !world.provider.getDimensionType().shouldLoadSpawn()
+                && !keepLoaded.contains(world.provider.getDimension());
+    }
+
+    /**
+     * Queues a dimension to unload, if it can be unloaded.
      * @param id The id of the dimension
      */
     public static void unloadWorld(int id)
     {
-        if(!unloadQueue.contains(id))
+        WorldServer world = worlds.get(id);
+        if (world == null || !canUnloadWorld(world)) return;
+
+        if (unloadQueue.add(id))
         {
             FMLLog.log.debug("Queueing dimension {} to unload", id);
-            unloadQueue.add(id);
-        }
-        else
-        {
-            dimensions.get(id).ticksWaited = 0;
         }
     }
 
@@ -322,12 +367,14 @@ public class DimensionManager
     }
 
     /*
-    * To be called by the server at the appropriate time, do not call from mod code.
-    */
-    public static void unloadWorlds(Hashtable<Integer, long[]> worldTickTimes) {
-        IntListIterator queueIterator = unloadQueue.iterator();
-        while (queueIterator.hasNext()) {
-            int id = queueIterator.next();
+     * To be called by the server at the appropriate time, do not call from mod code.
+     */
+    public static void unloadWorlds(Hashtable<Integer, long[]> worldTickTimes)
+    {
+        IntIterator queueIterator = unloadQueue.iterator();
+        while (queueIterator.hasNext())
+        {
+            int id = queueIterator.nextInt();
             Dimension dimension = dimensions.get(id);
             if (dimension.ticksWaited < ForgeModContainer.dimensionUnloadQueueDelay)
             {
@@ -337,7 +384,8 @@ public class DimensionManager
             WorldServer w = worlds.get(id);
             queueIterator.remove();
             dimension.ticksWaited = 0;
-            if (w == null || !ForgeChunkManager.getPersistentChunksFor(w).isEmpty() || !w.playerEntities.isEmpty() || dimension.type.shouldLoadSpawn()) //Don't unload the world if the status changed
+            // Don't unload the world if the status changed
+            if (w == null || !canUnloadWorld(w))
             {
                 FMLLog.log.debug("Aborting unload for dimension {} as status changed", id);
                 continue;
@@ -348,7 +396,7 @@ public class DimensionManager
             }
             catch (MinecraftException e)
             {
-                e.printStackTrace();
+                FMLLog.log.error("Caught an exception while saving all chunks:", e);
             }
             finally
             {
@@ -364,60 +412,66 @@ public class DimensionManager
      * block of free ids. Always call for each individual ID you wish to get.
      * @return the next free dimension ID
      */
-    public static int getNextFreeDimId() {
-        int next = 0;
-        while (true)
+    public static int getNextFreeDimId()
+    {
+        int next = lastUsedId;
+        while (usedIds.contains(next) || !checkAvailable(next))
         {
-            next = dimensionMap.nextClearBit(next);
-            if (dimensions.containsKey(next))
-            {
-                dimensionMap.set(next);
-            }
-            else
-            {
-                return next;
-            }
+            next++;
         }
+        return lastUsedId = next;
+    }
+
+    private static boolean checkAvailable(int id)
+    {
+        if (dimensions.containsKey(id))
+        {
+            usedIds.add(id);
+            return false;
+        }
+        return true;
     }
 
     public static NBTTagCompound saveDimensionDataMap()
     {
-        int[] data = new int[(dimensionMap.length() + Integer.SIZE - 1 )/ Integer.SIZE];
         NBTTagCompound dimMap = new NBTTagCompound();
-        for (int i = 0; i < data.length; i++)
-        {
-            int val = 0;
-            for (int j = 0; j < Integer.SIZE; j++)
-            {
-                val |= dimensionMap.get(i * Integer.SIZE + j) ? (1 << j) : 0;
-            }
-            data[i] = val;
-        }
-        dimMap.setIntArray("DimensionArray", data);
+        dimMap.setIntArray("UsedIDs", usedIds.toIntArray());
         return dimMap;
     }
 
     public static void loadDimensionDataMap(@Nullable NBTTagCompound compoundTag)
     {
-        dimensionMap.clear();
+        usedIds.clear();
+        lastUsedId = 0;
+
         if (compoundTag == null)
         {
-            for (Integer id : dimensions.keySet())
+            IntIterator iterator = dimensions.keySet().iterator();
+            while (iterator.hasNext())
             {
+                int id = iterator.nextInt();
                 if (id >= 0)
                 {
-                    dimensionMap.set(id);
+                    usedIds.add(id);
                 }
             }
         }
         else
         {
+            for (int id : compoundTag.getIntArray("UsedIDs"))
+            {
+                usedIds.add(id);
+            }
+
+            // legacy data (load but don't save)
             int[] intArray = compoundTag.getIntArray("DimensionArray");
             for (int i = 0; i < intArray.length; i++)
             {
+                int data = intArray[i];
+                if (data == 0) continue;
                 for (int j = 0; j < Integer.SIZE; j++)
                 {
-                    dimensionMap.set(i * Integer.SIZE + j, (intArray[i] & (1 << j)) != 0);
+                    if ((data & (1 << j)) != 0) usedIds.add(i * Integer.SIZE + j);
                 }
             }
         }

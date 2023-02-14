@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -48,7 +48,7 @@ public class PlayerDropsEvent extends LivingDropsEvent
      */
     public PlayerDropsEvent(EntityPlayer entity, DamageSource source, List<EntityItem> drops, boolean recentlyHit)
     {
-        super(entity, source, drops, ForgeHooks.getLootingLevel(entity, source.getEntity(), source), recentlyHit);
+        super(entity, source, drops, ForgeHooks.getLootingLevel(entity, source.getTrueSource(), source), recentlyHit);
 
         this.entityPlayer = entity;
     }

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,19 +40,15 @@ public class CapabilityAnimation
     {
         CapabilityManager.INSTANCE.register(IAnimationStateMachine.class, new Capability.IStorage<IAnimationStateMachine>()
         {
+            @Override
             public NBTBase writeNBT(Capability<IAnimationStateMachine> capability, IAnimationStateMachine instance, EnumFacing side)
             {
                 return null;
             }
 
+            @Override
             public void readNBT(Capability<IAnimationStateMachine> capability, IAnimationStateMachine instance, EnumFacing side, NBTBase nbt) {}
-        }, new Callable<IAnimationStateMachine>()
-        {
-            public IAnimationStateMachine call() throws Exception
-            {
-                return AnimationStateMachine.getMissing();
-            }
-        });
+        }, AnimationStateMachine::getMissing);
     }
 
     public static class DefaultItemAnimationCapabilityProvider implements ICapabilityProvider

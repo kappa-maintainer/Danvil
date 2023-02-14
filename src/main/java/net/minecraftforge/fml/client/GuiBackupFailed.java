@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -53,9 +53,9 @@ public class GuiBackupFailed extends GuiScreen
     {
         this.drawDefaultBackground();
         int offset = Math.max(85 - 2 * 10, 10);
-        this.drawCenteredString(this.fontRendererObj, String.format("There was an error saving the archive %s", zipName.getName()), this.width / 2, offset, 0xFFFFFF);
+        this.drawCenteredString(this.fontRenderer, String.format("There was an error saving the archive %s", zipName.getName()), this.width / 2, offset, 0xFFFFFF);
         offset += 10;
-        this.drawCenteredString(this.fontRendererObj, String.format("Please fix the problem and try again"), this.width / 2, offset, 0xFFFFFF);
+        this.drawCenteredString(this.fontRenderer, String.format("Please fix the problem and try again"), this.width / 2, offset, 0xFFFFFF);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 }

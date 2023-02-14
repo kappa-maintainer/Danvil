@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,13 +26,13 @@ import net.minecraftforge.fml.common.discovery.asm.ASMModParser.AnnotationType;
 
 import org.objectweb.asm.Type;
 
-import com.google.common.base.Objects;
+import com.google.common.base.MoreObjects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public class ModAnnotation
 {
-    public class EnumHolder
+    public static class EnumHolder
     {
         private final String desc;
         private final String value;
@@ -74,7 +74,7 @@ public class ModAnnotation
     @Override
     public String toString()
     {
-        return Objects.toStringHelper("Annotation")
+        return MoreObjects.toStringHelper("Annotation")
                 .add("type",type)
                 .add("name",asmType.getClassName())
                 .add("member",member)

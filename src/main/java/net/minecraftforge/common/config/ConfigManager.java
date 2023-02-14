@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -26,11 +26,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.logging.log4j.Level;
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -42,9 +39,12 @@ import net.minecraftforge.common.config.Config.Name;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.LoaderException;
+import net.minecraftforge.fml.common.LoaderState;
 import net.minecraftforge.fml.common.discovery.ASMDataTable;
 import net.minecraftforge.fml.common.discovery.ASMDataTable.ASMData;
 import net.minecraftforge.fml.common.discovery.asm.ModAnnotation.EnumHolder;
+
+import org.apache.commons.lang3.StringUtils;
 
 public class ConfigManager
 {
@@ -108,12 +108,7 @@ public class ConfigManager
         for (ASMData target : data.getAll(Config.class.getName()))
         {
             String modid = (String)target.getAnnotationInfo().get("modid");
-            Multimap<Config.Type, ASMData> map = asm_data.get(modid);
-            if (map == null)
-            {
-                map = ArrayListMultimap.create();
-                asm_data.put(modid, map);
-            }
+            Multimap<Config.Type, ASMData> map = asm_data.computeIfAbsent(modid, k -> ArrayListMultimap.create());
 
             EnumHolder tholder = (EnumHolder)target.getAnnotationInfo().get("type");
             Config.Type type = tholder == null ? Config.Type.INSTANCE : Config.Type.valueOf(tholder.getValue());
@@ -139,7 +134,7 @@ public class ConfigManager
      * does not exist, it will be created with default values derived from the mods config classes variable default values
      * and comments and ranges, as well as configuration names based on the appropriate annotations found in {@code @Config}.
      *
-     * Note, that this method is being called by the {@link FMLModContaier}, so the mod needn't call it in init().
+     * Note, that this method is being called by the {@link net.minecraftforge.fml.common.FMLModContainer}, so the mod needn't call it in init().
      *
      * If this method is called after the initial load, it will check whether the values in the Configuration object differ
      * from the values in the corresponding variables. If they differ, it will either overwrite the variables if the Configuration
@@ -164,9 +159,8 @@ public class ConfigManager
             {
                 Class<?> cls = Class.forName(targ.getClassName(), true, mcl);
 
-                if (MOD_CONFIG_CLASSES.get(modid) == null)
-                    MOD_CONFIG_CLASSES.put(modid, Sets.<Class<?>>newHashSet());
-                MOD_CONFIG_CLASSES.get(modid).add(cls);
+                Set<Class<?>> modConfigClasses = MOD_CONFIG_CLASSES.computeIfAbsent(modid, k -> Sets.<Class<?>>newHashSet());
+                modConfigClasses.add(cls);
 
                 String name = (String)targ.getAnnotationInfo().get("name");
                 if (name == null)
@@ -177,24 +171,22 @@ public class ConfigManager
 
                 File file = new File(configDir, name + ".cfg");
 
-                boolean loading = false;
                 Configuration cfg = CONFIGS.get(file.getAbsolutePath());
                 if (cfg == null)
                 {
                     cfg = new Configuration(file);
                     cfg.load();
                     CONFIGS.put(file.getAbsolutePath(), cfg);
-                    loading = true;
                 }
 
-                sync(cfg, cls, modid, category, loading, null);
+                sync(cfg, cls, modid, category, !Loader.instance().hasReachedState(LoaderState.AVAILABLE), null);
 
                 cfg.save();
 
             }
             catch (Exception e)
             {
-                FMLLog.log.error("An error occurred trying to load a config for {} into {}", targ.getClassName(), e);
+                FMLLog.log.error("An error occurred trying to load a config for {} into {}", modid, targ.getClassName(), e);
                 throw new LoaderException(e);
             }
         }
@@ -227,7 +219,13 @@ public class ConfigManager
         {
             if (!Modifier.isPublic(f.getModifiers()))
                 continue;
+
+            //Only the root class may have static fields. Otherwise category tree nodes of the same type would share the
+            //contained value messing up the sync
             if (Modifier.isStatic(f.getModifiers()) != (instance == null))
+                continue;
+
+            if (f.isAnnotationPresent(Config.Ignore.class))
                 continue;
 
             String comment = null;
@@ -235,15 +233,16 @@ public class ConfigManager
             if (ca != null)
                 comment = NEW_LINE.join(ca.value());
 
-            String langKey = modid + "." + (category.isEmpty() ? "" : category + ".") + f.getName().toLowerCase(Locale.ENGLISH);
+            String langKey = modid + "." + (category.isEmpty() ? "" : category + Configuration.CATEGORY_SPLITTER) + f.getName().toLowerCase(Locale.ENGLISH);
             LangKey la = f.getAnnotation(LangKey.class);
             if (la != null)
                 langKey = la.value();
 
             boolean requiresMcRestart = f.isAnnotationPresent(Config.RequiresMcRestart.class);
             boolean requiresWorldRestart = f.isAnnotationPresent(Config.RequiresWorldRestart.class);
+            boolean hasSlidingControl = f.isAnnotationPresent(Config.SlidingOption.class);
 
-            if (FieldWrapper.hasWrapperFor(f)) //Access the field
+            if (FieldWrapper.hasWrapperFor(f)) //Wrappers exist for primitives, enums, maps and arrays
             {
                 if (Strings.isNullOrEmpty(category))
                     throw new RuntimeException("An empty category may not contain anything but objects representing categories!");
@@ -253,22 +252,21 @@ public class ConfigManager
                     ITypeAdapter adapt = wrapper.getTypeAdapter();
                     Property.Type propType = adapt.getType();
 
-                    for (String key : wrapper.getKeys())
+                    for (String key : wrapper.getKeys()) //Iterate the fully qualified property names the field provides
                     {
-                        String suffix = key.replaceFirst(wrapper.getCategory() + ".", "");
+                        String suffix = StringUtils.replaceOnce(key, wrapper.getCategory() + Configuration.CATEGORY_SPLITTER, "");
 
                         boolean existed = exists(cfg, wrapper.getCategory(), suffix);
                         if (!existed || loading) //Creates keys in category specified by the wrapper if new ones are programaticaly added
                         {
                             Property property = property(cfg, wrapper.getCategory(), suffix, propType, adapt.isArrayAdapter());
-
                             adapt.setDefaultValue(property, wrapper.getValue(key));
                             if (!existed)
                                 adapt.setValue(property, wrapper.getValue(key));
                             else
                                 wrapper.setValue(key, adapt.getValue(property));
                         }
-                        else //If the key is not new, sync according to shoudlReadFromVar()
+                        else //If the key is not new, sync according to shouldReadFromVar()
                         {
                             Property property = property(cfg, wrapper.getCategory(), suffix, propType, adapt.isArrayAdapter());
                             Object propVal = adapt.getValue(property);
@@ -283,43 +281,44 @@ public class ConfigManager
 
                     ConfigCategory confCat = cfg.getCategory(wrapper.getCategory());
 
-                    for (Property property : confCat.getOrderedValues())//Are new keys in the Configuration object?
+                    for (Property property : confCat.getOrderedValues()) //Iterate the properties to check for new data from the config side
                     {
-                        if (!wrapper.handlesKey(property.getName()))
+                        String key = confCat.getQualifiedName() + Configuration.CATEGORY_SPLITTER + property.getName();
+                        if (!wrapper.handlesKey(key))
                             continue;
 
-                        if (loading || !wrapper.hasKey(property.getName()))
+                        if (loading || !wrapper.hasKey(key))
                         {
                             Object value = wrapper.getTypeAdapter().getValue(property);
-                            wrapper.setValue(confCat.getName() + "." + property.getName(), value);
+                            wrapper.setValue(key, value);
                         }
                     }
 
-                    if (loading) //Doing this after the loops. The wrapper should set cosmetic stuff.
-                        wrapper.setupConfiguration(cfg, comment, langKey, requiresMcRestart, requiresWorldRestart);
+                    if (loading)
+                        wrapper.setupConfiguration(cfg, comment, langKey, requiresMcRestart, requiresWorldRestart, hasSlidingControl);
 
                 }
-                catch (Exception e) //If anything goes wrong, add the errored field and class.
+                catch (Exception e)
                 {
                     String format = "Error syncing field '%s' of class '%s'!";
                     String error = String.format(format, f.getName(), cls.getName());
                     throw new RuntimeException(error, e);
                 }
             }
-            else if (f.getType().getSuperclass() != null && f.getType().getSuperclass().equals(Object.class)) //Descend the object tree
-            {
+            else if (f.getType().getSuperclass() != null && f.getType().getSuperclass().equals(Object.class))
+            { //If the field extends Object directly, descend the object tree and access the objects members
                 Object newInstance = null;
                 try
                 {
                     newInstance = f.get(instance);
                 }
-                catch (Exception e)
+                catch (IllegalAccessException e)
                 {
-                    //This should never happen. Previous checks should eliminate this.
-                    Throwables.propagate(e);
+                    throw new RuntimeException(e);
                 }
 
-                String sub = (category.isEmpty() ? "" : category + ".") + getName(f).toLowerCase(Locale.ENGLISH);
+                //Setup the sub category with its respective name, comment, language key, etc.
+                String sub = (category.isEmpty() ? "" : category + Configuration.CATEGORY_SPLITTER) + getName(f).toLowerCase(Locale.ENGLISH);
                 ConfigCategory confCat = cfg.getCategory(sub);
                 confCat.setComment(comment);
                 confCat.setLanguageKey(langKey);

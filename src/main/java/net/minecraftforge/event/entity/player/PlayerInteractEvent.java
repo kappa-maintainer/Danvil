@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -168,7 +168,7 @@ public class PlayerInteractEvent extends PlayerEvent
         }
 
         /**
-         * @return If {@link net.minecraft.item.Item#onItemUse} should be called
+         * @return If {@link net.minecraft.item.Item#onItemUseFirst} and {@link net.minecraft.item.Item#onItemUse} should be called
          */
         public Result getUseItem()
         {
@@ -317,14 +317,6 @@ public class PlayerInteractEvent extends PlayerEvent
         public LeftClickEmpty(EntityPlayer player)
         {
             super(player, EnumHand.MAIN_HAND, new BlockPos(player), null);
-        }
-
-        // TODO: remove
-        /** @deprecated use {@link LeftClickEmpty(EntityPlayer)} */
-        @Deprecated
-        public LeftClickEmpty(EntityPlayer player, @Nonnull ItemStack stack)
-        {
-            this(player);
         }
     }
 

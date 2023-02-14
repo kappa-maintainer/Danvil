@@ -235,7 +235,7 @@ project(':forge') {
         return "${MC_VERSION}-${LEGACY_MAJOR}.${info.tag}.${BUILD_NUMBER}${t -> if (branch != null) t << '-' + branch}".toString()
     }
 
-    version = getVersion(GIT_INFO)
+    version = '1.12.2-14.23.5.2861'
     println('Forge Version: ' + version)
 
     //--------------------------------------------------------------------------------------------------------------------------------------

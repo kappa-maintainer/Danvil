@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -44,7 +44,7 @@ public class BlockPosContext extends PlayerContext
 
     public BlockPosContext(EntityPlayer ep, ChunkPos pos)
     {
-        this(ep, new BlockPos((pos.chunkXPos << 4) + 8, 0, (pos.chunkZPos << 4) + 8), null, null);
+        this(ep, new BlockPos(pos.getXStart() + 8, 0, pos.getZStart() + 8), null, null);
     }
 
     @Override

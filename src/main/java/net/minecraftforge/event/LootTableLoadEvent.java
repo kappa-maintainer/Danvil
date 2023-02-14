@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -40,14 +40,6 @@ public class LootTableLoadEvent extends Event
     private final ResourceLocation name;
     private LootTable table;
     private LootTableManager lootTableManager;
-
-    /**
-     * @deprecated Use {@link #LootTableLoadEvent(ResourceLocation, LootTable, LootTableManager)}<br>
-     */
-    @Deprecated
-    public LootTableLoadEvent(ResourceLocation name, LootTable table) {
-        this(name, table, null);
-    }
 
     public LootTableLoadEvent(ResourceLocation name, LootTable table, LootTableManager lootTableManager)
     {

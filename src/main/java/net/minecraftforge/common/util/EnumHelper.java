@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,6 +21,7 @@ package net.minecraftforge.common.util;
 
 import java.lang.reflect.*;
 import java.util.*;
+import java.util.function.BiPredicate;
 
 import com.google.common.base.Predicate;
 import com.google.common.collect.Lists;
@@ -30,9 +31,12 @@ import net.minecraftforge.fml.common.FMLLog;
 import net.minecraft.block.BlockPressurePlate.Sensitivity;
 import net.minecraft.block.material.Material;
 import net.minecraft.enchantment.EnumEnchantmentType;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EnumCreatureAttribute;
 import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.entity.item.EntityPainting.EnumArt;
+import net.minecraft.entity.passive.HorseArmorType;
+import net.minecraft.entity.passive.IAnimals;
 import net.minecraft.entity.player.EntityPlayer.SleepResult;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.EnumRarity;
@@ -40,11 +44,14 @@ import net.minecraft.item.Item;
 import net.minecraft.item.Item.ToolMaterial;
 import net.minecraft.item.ItemArmor.ArmorMaterial;
 import net.minecraft.util.SoundEvent;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.gen.structure.StructureStrongholdPieces.Stronghold.Door;
 import net.minecraftforge.classloading.FMLForgePlugin;
+import org.apache.commons.lang3.ArrayUtils;
 
 import javax.annotation.Nullable;
 
@@ -72,7 +79,9 @@ public class EnumHelper
         {EnumSkyBlock.class, int.class},
         {SleepResult.class},
         {ToolMaterial.class, int.class, int.class, float.class, float.class, int.class},
-        {EnumRarity.class, TextFormatting.class, String.class}
+        {EnumRarity.class, TextFormatting.class, String.class},
+        {HorseArmorType.class, String.class, int.class},
+        {EntityLiving.SpawnPlacementType.class, BiPredicate.class}
     };
 
     @Nullable
@@ -96,7 +105,7 @@ public class EnumHelper
         return addEnum(EnumCreatureAttribute.class, name);
     }
     @Nullable
-    public static EnumCreatureType addCreatureType(String name, Class<?> typeClass, int maxNumber, Material material, boolean peaceful, boolean animal)
+    public static EnumCreatureType addCreatureType(String name, Class<? extends IAnimals> typeClass, int maxNumber, Material material, boolean peaceful, boolean animal)
     {
         return addEnum(EnumCreatureType.class, name, typeClass, maxNumber, material, peaceful, animal);
     }
@@ -135,10 +144,32 @@ public class EnumHelper
     {
         return addEnum(ToolMaterial.class, name, harvestLevel, maxUses, efficiency, damage, enchantability);
     }
+
+    /** @deprecated use {@link net.minecraftforge.common.IRarity} instead */
     @Nullable
+    @Deprecated
     public static EnumRarity addRarity(String name, TextFormatting color, String displayName)
     {
         return addEnum(EnumRarity.class, name, color, displayName);
+    }
+
+    @Nullable
+    public static EntityLiving.SpawnPlacementType addSpawnPlacementType(String name, BiPredicate<IBlockAccess, BlockPos> predicate)
+    {
+        return addEnum(EntityLiving.SpawnPlacementType.class, name, predicate);
+    }
+
+    /**
+     * 
+     * @param name the name of the new {@code HorseArmorType}
+     * @param textureLocation the path to the texture for this armor type. It must follow the format domain:path and be relative to the assets folder.
+     * @param armorStrength how much protection this armor type should give
+     * @return the new {@code HorseArmorType}, or null if it could not be created
+     */
+    @Nullable 
+    public static HorseArmorType addHorseArmor(String name, String textureLocation, int armorStrength)
+    {
+        return addEnum(HorseArmorType.class, name, textureLocation, armorStrength);
     }
 
     private static void setup()
@@ -159,7 +190,7 @@ public class EnumHelper
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            FMLLog.log.error("Error setting up EnumHelper.", e);
         }
 
         isSetup = true;
@@ -219,6 +250,8 @@ public class EnumHelper
     {
         blankField(enumClass, "enumConstantDirectory");
         blankField(enumClass, "enumConstants");
+        //Open J9
+        blankField(enumClass, "enumVars");
     }
 
     @Nullable
@@ -375,18 +408,16 @@ public class EnumHelper
         try
         {
             T[] previousValues = (T[])valuesField.get(enumType);
-            List<T> values = new ArrayList<T>(Arrays.asList(previousValues));
-            T newValue = makeEnum(enumType, enumName, values.size(), paramTypes, paramValues);
-            values.add(newValue);
-            setFailsafeFieldValue(valuesField, null, values.toArray((T[]) Array.newInstance(enumType, 0)));
+            T newValue = makeEnum(enumType, enumName, previousValues.length, paramTypes, paramValues);
+            setFailsafeFieldValue(valuesField, null, ArrayUtils.add(previousValues, newValue));
             cleanEnumCache(enumType);
 
             return newValue;
         }
         catch (Exception e)
         {
-            e.printStackTrace();
-            throw new RuntimeException(e.getMessage(), e);
+            FMLLog.log.error("Error adding enum with EnumHelper.", e);
+            throw new RuntimeException(e);
         }
     }
 

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,10 +28,8 @@ import net.minecraftforge.fml.common.discovery.ModCandidate;
 import net.minecraftforge.fml.common.discovery.asm.ASMModParser;
 import net.minecraftforge.fml.common.discovery.asm.ModAnnotation;
 
-import org.apache.logging.log4j.Level;
 import org.objectweb.asm.Type;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 
 import javax.annotation.Nullable;
@@ -39,7 +37,6 @@ import javax.annotation.Nullable;
 public class ModContainerFactory
 {
     public static Map<Type, Constructor<? extends ModContainer>> modTypes = Maps.newHashMap();
-    private static Pattern modClass = Pattern.compile(".*(\\.|)(mod\\_[^\\s$]+)$");
     private static ModContainerFactory INSTANCE = new ModContainerFactory();
 
     private ModContainerFactory() {
@@ -52,12 +49,14 @@ public class ModContainerFactory
 
     public void registerContainerType(Type type, Class<? extends ModContainer> container)
     {
-        try {
+        try
+        {
             Constructor<? extends ModContainer> constructor = container.getConstructor(new Class<?>[] { String.class, ModCandidate.class, Map.class });
             modTypes.put(type, constructor);
-        } catch (Exception e) {
-            FMLLog.log.error("Critical error : cannot register mod container type {}, it has an invalid constructor", container.getName(), e);
-            Throwables.propagate(e);
+        }
+        catch (Exception e)
+        {
+            throw new RuntimeException("Critical error : cannot register mod container type " + container.getName() + ", it has an invalid constructor", e);
         }
     }
 
@@ -65,22 +64,6 @@ public class ModContainerFactory
     public ModContainer build(ASMModParser modParser, File modSource, ModCandidate container)
     {
         String className = modParser.getASMType().getClassName();
-        if (modParser.isBaseMod(container.getRememberedBaseMods()) && modClass.matcher(className).find())
-        {
-            FMLLog.log.fatal("Found a BaseMod type mod {}", className);
-            FMLLog.log.fatal("This will not be loaded and will be ignored. ModLoader mechanisms are no longer available.");
-        }
-        else if (modClass.matcher(className).find())
-        {
-            FMLLog.log.debug("Identified a class {} following modloader naming convention but not directly a BaseMod or currently seen subclass", className);
-            container.rememberModCandidateType(modParser);
-        }
-        else if (modParser.isBaseMod(container.getRememberedBaseMods()))
-        {
-            FMLLog.log.debug("Found a basemod {} of non-standard naming format", className);
-            container.rememberBaseModType(className);
-        }
-
         for (ModAnnotation ann : modParser.getAnnotations())
         {
             if (modTypes.containsKey(ann.getASMType()))

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -76,14 +76,7 @@ public class CapabilityItemHandler
                     }
                 }
             }
-        }, new Callable<ItemStackHandler>()
-        {
-            @Override
-            public ItemStackHandler call() throws Exception
-            {
-                return new ItemStackHandler();
-            }
-        });
+        }, ItemStackHandler::new);
     }
 
 }

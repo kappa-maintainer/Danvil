@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -35,11 +35,8 @@ import javax.annotation.Nonnull;
 /**
  * MinecartInteractEvent is fired when a player interacts with a minecart. <br>
  * This event is fired whenever a player interacts with a minecart in
- * {@link EntityMinecartContainer#processInitialInteract(EntityPlayer, EnumHand)},
- * {@link EntityMinecartEmpty#processInitialInteract(EntityPlayer, EnumHand)},
- * {@link EntityMinecartFurnace#processInitialInteract(EntityPlayer, EnumHand)},
- * {@link EntityMinecartHopper#processInitialInteract(EntityPlayer, EnumHand)},
- * etc.<br>
+ * {@link EntityMinecart#processInitialInteract(EntityPlayer, EnumHand)}.
+ * <br>
  * <br>
  * {@link #player} contains the EntityPlayer that is involved with this minecart interaction.<br>
  * <br>

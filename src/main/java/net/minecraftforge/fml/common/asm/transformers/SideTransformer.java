@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -92,14 +92,16 @@ public class SideTransformer implements IClassTransformer
             }
         }
 
-        // remove dynamic lambda methods that are inside of removed methods
-        List<Handle> dynamicLambdaHandles = lambdaGatherer.getDynamicLambdaHandles();
-        if (!dynamicLambdaHandles.isEmpty())
+        // remove dynamic synthetic lambda methods that are inside of removed methods
+        for (List<Handle> dynamicLambdaHandles = lambdaGatherer.getDynamicLambdaHandles();
+             !dynamicLambdaHandles.isEmpty(); dynamicLambdaHandles = lambdaGatherer.getDynamicLambdaHandles())
         {
+            lambdaGatherer = new LambdaGatherer();
             methods = classNode.methods.iterator();
             while (methods.hasNext())
             {
                 MethodNode method = methods.next();
+                if ((method.access & Opcodes.ACC_SYNTHETIC) == 0) continue;
                 for (Handle dynamicLambdaHandle : dynamicLambdaHandles)
                 {
                     if (method.name.equals(dynamicLambdaHandle.getName()) && method.desc.equals(dynamicLambdaHandle.getDesc()))
@@ -109,6 +111,7 @@ public class SideTransformer implements IClassTransformer
                             System.out.println(String.format("Removing Method: %s.%s%s", classNode.name, method.name, method.desc));
                         }
                         methods.remove();
+                        lambdaGatherer.accept(method);
                     }
                 }
             }
@@ -154,7 +157,8 @@ public class SideTransformer implements IClassTransformer
 
     private static class LambdaGatherer extends MethodVisitor {
         private static final Handle META_FACTORY = new Handle(Opcodes.H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory",
-                "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;");
+                "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;",
+                false);
         private final List<Handle> dynamicLambdaHandles = new ArrayList<Handle>();
 
         public LambdaGatherer() {

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,13 +19,9 @@
 
 package net.minecraftforge.fml.client;
 
-import java.util.List;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiScreen;
-
-import javax.annotation.Nullable;
 
 /**
  * This is the interface you need to implement if you want to provide a customized config screen.
@@ -38,13 +34,13 @@ public interface IModGuiFactory {
      *
      * @param minecraftInstance the instance
      */
-    public void initialize(Minecraft minecraftInstance);
+    void initialize(Minecraft minecraftInstance);
     
     /**
      * If this method returns false, the config button in the mod list will be disabled
      * @return true if this object provides a config gui screen, false otherwise
      */
-    public boolean hasConfigGui();
+    boolean hasConfigGui();
     
     /**
      * Return an initialized {@link GuiScreen}. This screen will be displayed
@@ -66,32 +62,7 @@ public interface IModGuiFactory {
      * @return A class that will be instantiated on clicks on the config button
      *  or null if no GUI is desired.
      */
-    public GuiScreen createConfigGui(GuiScreen parentScreen);
-    
-    /**
-     * Return the name of a class extending {@link GuiScreen}. This class will
-     * be instantiated when the "config" button is pressed in the mod list. It will
-     * have a single argument constructor - the "parent" screen, the same as all
-     * Minecraft GUIs. The expected behaviour is that this screen will replace the
-     * "mod list" screen completely, and will return to the mod list screen through
-     * the parent link, once the appropriate action is taken from the config screen.
-     *
-     * A null from this method indicates that the mod does not provide a "config"
-     * button GUI screen, and the config button will be hidden/disabled.
-     *
-     * This config GUI is anticipated to provide configuration to the mod in a friendly
-     * visual way. It should not be abused to set internals such as IDs (they're gonna
-     * keep disappearing anyway), but rather, interesting behaviours. This config GUI
-     * is never run when a server game is running, and should be used to configure
-     * desired behaviours that affect server state. Costs, mod game modes, stuff like that
-     * can be changed here.
-     *
-     * @deprecated The method {@link IModGuiFactory.maingConfigGui(GuiScreen} is the recommended method.
-     * @return A class that will be instantiated on clicks on the config button
-     *  or null if no GUI is desired.
-     */
-    @Deprecated
-    public Class<? extends GuiScreen> mainConfigGuiClass();
+    GuiScreen createConfigGui(GuiScreen parentScreen);
 
     /**
      * Return a list of the "runtime" categories this mod wishes to populate with
@@ -113,17 +84,7 @@ public interface IModGuiFactory {
      *
      * @return the set of options this mod wishes to have available, or empty if none
      */
-    public Set<RuntimeOptionCategoryElement> runtimeGuiCategories();
-
-    /**
-     * Return an instance of a {@link RuntimeOptionGuiHandler} that handles painting the
-     * right hand side option screen for the specified {@link RuntimeOptionCategoryElement}.
-     *
-     * @param element The element we wish to paint for
-     * @return The Handler for painting it
-     */
-    @Nullable
-    public RuntimeOptionGuiHandler getHandlerFor(RuntimeOptionCategoryElement element);
+    Set<RuntimeOptionCategoryElement> runtimeGuiCategories();
 
     /**
      * Represents an option category and entry in the runtime gui options list.
@@ -140,49 +101,5 @@ public interface IModGuiFactory {
             this.parent = parent;
             this.child = child;
         }
-    }
-
-    /**
-     * Responsible for painting the mod specific section of runtime options GUI for a particular category
-     *
-     * @author cpw
-     *
-     * TODO remove in 1.11 - this was never fully implemented and will be removed
-     */
-    @Deprecated
-    public interface RuntimeOptionGuiHandler {
-        /**
-         * Called to add widgets to the screen, such as buttons.
-         * GUI identifier numbers should start at 100 and increase.
-         * The callback will be through {@link #actionCallback(int)}
-         *
-         * @param x X
-         * @param y Y
-         * @param w width
-         * @param h height
-         */
-        public void addWidgets(List<Gui> widgetList, int x, int y, int w, int h);
-
-        /**
-         * Called to paint the rectangle specified.
-         * @param x X
-         * @param y Y
-         * @param w width
-         * @param h height
-         */
-        public void paint(int x, int y, int w, int h);
-
-        /**
-         * Called if a widget with id >= 100 is fired.
-         *
-         * @param actionId the actionId of the firing widget
-         */
-        public void actionCallback(int actionId);
-
-        /**
-         * Called when this handler is about to go away (probably replaced by another one, or closing the
-         * option screen)
-         */
-        public void close();
     }
 }

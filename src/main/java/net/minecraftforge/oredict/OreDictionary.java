@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import net.minecraft.block.BlockPrismarine;
@@ -40,6 +41,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.IRecipe;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.item.crafting.ShapedRecipes;
 import net.minecraft.item.crafting.ShapelessRecipes;
 import net.minecraftforge.common.MinecraftForge;
@@ -51,12 +53,14 @@ import com.google.common.collect.Maps;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.Event;
-import net.minecraftforge.fml.common.registry.GameData;
+import net.minecraftforge.fml.common.registry.ForgeRegistries;
+import net.minecraftforge.registries.GameData;
 
 import javax.annotation.Nonnull;
 
 public class OreDictionary
 {
+    private static final boolean DEBUG = false;
     private static boolean hasInit = false;
     private static List<String>          idToName = new ArrayList<String>();
     private static Map<String, Integer>  nameToId = new HashMap<String, Integer>(128);
@@ -90,6 +94,24 @@ public class OreDictionary
             registerOre("stairWood",   Blocks.JUNGLE_STAIRS);
             registerOre("stairWood",   Blocks.ACACIA_STAIRS);
             registerOre("stairWood",   Blocks.DARK_OAK_STAIRS);
+            registerOre("fenceWood", Blocks.OAK_FENCE);
+            registerOre("fenceWood", Blocks.SPRUCE_FENCE);
+            registerOre("fenceWood", Blocks.BIRCH_FENCE);
+            registerOre("fenceWood", Blocks.JUNGLE_FENCE);
+            registerOre("fenceWood", Blocks.DARK_OAK_FENCE);
+            registerOre("fenceWood", Blocks.ACACIA_FENCE);
+            registerOre("fenceGateWood", Blocks.OAK_FENCE_GATE);
+            registerOre("fenceGateWood", Blocks.SPRUCE_FENCE_GATE);
+            registerOre("fenceGateWood", Blocks.BIRCH_FENCE_GATE);
+            registerOre("fenceGateWood", Blocks.JUNGLE_FENCE_GATE);
+            registerOre("fenceGateWood", Blocks.DARK_OAK_FENCE_GATE);
+            registerOre("fenceGateWood", Blocks.ACACIA_FENCE_GATE);
+            registerOre("doorWood", Items.ACACIA_DOOR);
+            registerOre("doorWood", Items.BIRCH_DOOR);
+            registerOre("doorWood", Items.DARK_OAK_DOOR);
+            registerOre("doorWood", Items.OAK_DOOR);
+            registerOre("doorWood", Items.JUNGLE_DOOR);
+            registerOre("doorWood", Items.SPRUCE_DOOR);
             registerOre("stickWood",   Items.STICK);
             registerOre("treeSapling", new ItemStack(Blocks.SAPLING, 1, WILDCARD_VALUE));
             registerOre("treeLeaves",  new ItemStack(Blocks.LEAVES, 1, WILDCARD_VALUE));
@@ -112,7 +134,7 @@ public class OreDictionary
             registerOre("ingotBrick",    Items.BRICK);
             registerOre("ingotBrickNether", Items.NETHERBRICK);
             registerOre("nuggetGold",  Items.GOLD_NUGGET);
-            registerOre("nuggetIron",  Items.field_191525_da);
+            registerOre("nuggetIron",  Items.IRON_NUGGET);
 
             // gems and dusts
             registerOre("gemDiamond",  Items.DIAMOND);
@@ -204,6 +226,8 @@ public class OreDictionary
             registerOre("paneGlass",     Blocks.GLASS_PANE);
             registerOre("paneGlass",     new ItemStack(Blocks.STAINED_GLASS_PANE, 1, WILDCARD_VALUE));
             //paneGlass{Color} is added below with dyes
+            registerOre("wool",          new ItemStack(Blocks.WOOL, 1, WILDCARD_VALUE));
+            //wool{Color} is added below with dyes
 
             // chests
             registerOre("chest",        Blocks.CHEST);
@@ -219,7 +243,12 @@ public class OreDictionary
 
         // wood-related things
         replacements.put(new ItemStack(Items.STICK), "stickWood");
-        replacements.put(new ItemStack(Blocks.PLANKS), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 0), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 1), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 2), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 3), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 4), "plankWood");
+        replacements.put(new ItemStack(Blocks.PLANKS, 1, 5), "plankWood");
         replacements.put(new ItemStack(Blocks.PLANKS, 1, WILDCARD_VALUE), "plankWood");
         replacements.put(new ItemStack(Blocks.WOODEN_SLAB, 1, WILDCARD_VALUE), "slabWood");
 
@@ -296,15 +325,18 @@ public class OreDictionary
         for(int i = 0; i < 16; i++)
         {
             ItemStack dye = new ItemStack(Items.DYE, 1, i);
+            ItemStack wool = new ItemStack(Blocks.WOOL, 1, 15 - i);
             ItemStack block = new ItemStack(Blocks.STAINED_GLASS, 1, 15 - i);
             ItemStack pane = new ItemStack(Blocks.STAINED_GLASS_PANE, 1, 15 - i);
             if (!hasInit)
             {
                 registerOre("dye" + dyes[i], dye);
+                registerOre("wool" + dyes[i], wool);
                 registerOre("blockGlass" + dyes[i], block);
                 registerOre("paneGlass"  + dyes[i], pane);
             }
             replacements.put(dye,   "dye" + dyes[i]);
+            replacements.put(wool,  "wool" + dyes[i]);
             replacements.put(block, "blockGlass" + dyes[i]);
             replacements.put(pane,  "paneGlass" + dyes[i]);
         }
@@ -327,8 +359,8 @@ public class OreDictionary
             new ItemStack(Blocks.SPRUCE_FENCE),
             new ItemStack(Blocks.SPRUCE_FENCE_GATE),
             new ItemStack(Blocks.SPRUCE_STAIRS),
-            new ItemStack(Blocks.BIRCH_STAIRS),
             new ItemStack(Blocks.BIRCH_FENCE_GATE),
+            new ItemStack(Blocks.BIRCH_FENCE),
             new ItemStack(Blocks.BIRCH_STAIRS),
             new ItemStack(Blocks.JUNGLE_FENCE),
             new ItemStack(Blocks.JUNGLE_FENCE_GATE),
@@ -339,60 +371,92 @@ public class OreDictionary
             new ItemStack(Blocks.DARK_OAK_FENCE),
             new ItemStack(Blocks.DARK_OAK_FENCE_GATE),
             new ItemStack(Blocks.DARK_OAK_STAIRS),
-            new ItemStack(Blocks.WOODEN_SLAB),
+            new ItemStack(Blocks.WOODEN_SLAB, 1, WILDCARD_VALUE),
             new ItemStack(Blocks.GLASS_PANE),
             new ItemStack(Blocks.BONE_BLOCK), // Bone Block, to prevent conversion of dyes into bone meal.
             new ItemStack(Items.BOAT),
+            new ItemStack(Items.SPRUCE_BOAT),
+            new ItemStack(Items.BIRCH_BOAT),
+            new ItemStack(Items.JUNGLE_BOAT),
+            new ItemStack(Items.ACACIA_BOAT),
+            new ItemStack(Items.DARK_OAK_BOAT),
             new ItemStack(Items.OAK_DOOR),
+            new ItemStack(Items.SPRUCE_DOOR),
+            new ItemStack(Items.BIRCH_DOOR),
+            new ItemStack(Items.JUNGLE_DOOR),
+            new ItemStack(Items.ACACIA_DOOR),
+            new ItemStack(Items.DARK_OAK_DOOR),
             ItemStack.EMPTY //So the above can have a comma and we don't have to keep editing extra lines.
         };
 
-        List<IRecipe> recipes = CraftingManager.getInstance().getRecipeList();
-        List<IRecipe> recipesToRemove = new ArrayList<IRecipe>();
-        List<IRecipe> recipesToAdd = new ArrayList<IRecipe>();
-
+        FMLLog.log.info("Starts to replace vanilla recipe ingredients with ore ingredients.");
+        int replaced = 0;
         // Search vanilla recipes for recipes to replace
-        for(Object obj : recipes)
+        for(IRecipe obj : CraftingManager.REGISTRY)
         {
-            if(obj.getClass() == ShapedRecipes.class)
+            if(obj.getClass() == ShapedRecipes.class || obj.getClass() == ShapelessRecipes.class)
             {
-                ShapedRecipes recipe = (ShapedRecipes)obj;
-                ItemStack output = recipe.getRecipeOutput();
-                if (!output.isEmpty() && containsMatch(false, exclusions, output))
+                ItemStack output = obj.getRecipeOutput();
+                if (!output.isEmpty() && containsMatch(false, new ItemStack[]{ output }, exclusions))
                 {
                     continue;
                 }
 
-                if(containsMatch(true, recipe.recipeItems, replaceStacks))
+                Set<Ingredient> replacedIngs = new HashSet<>();
+                NonNullList<Ingredient> lst = obj.getIngredients();
+                for (int x = 0; x < lst.size(); x++)
                 {
-                    recipesToRemove.add(recipe);
-                    recipesToAdd.add(new ShapedOreRecipe(recipe, replacements));
-                }
-            }
-            else if(obj.getClass() == ShapelessRecipes.class)
-            {
-                ShapelessRecipes recipe = (ShapelessRecipes)obj;
-                ItemStack output = recipe.getRecipeOutput();
-                if (!output.isEmpty() && containsMatch(false, exclusions, output))
-                {
-                    continue;
-                }
+                    Ingredient ing = lst.get(x);
+                    ItemStack[] ingredients = ing.getMatchingStacks();
+                    String oreName = null;
+                    boolean skip = false;
 
-                if(containsMatch(true, recipe.recipeItems.toArray(new ItemStack[recipe.recipeItems.size()]), replaceStacks))
-                {
-                    recipesToRemove.add((IRecipe)obj);
-                    IRecipe newRecipe = new ShapelessOreRecipe(recipe, replacements);
-                    recipesToAdd.add(newRecipe);
+                    for (ItemStack stack : ingredients)
+                    {
+                        boolean matches = false;
+                        for (Entry<ItemStack, String> ent : replacements.entrySet())
+                        {
+                            if (itemMatches(ent.getKey(), stack, true))
+                            {
+                                matches = true;
+                                if (oreName != null && !oreName.equals(ent.getValue()))
+                                {
+                                    FMLLog.log.info("Invalid recipe found with multiple oredict ingredients in the same ingredient..."); //TODO: Write a dumper?
+                                    skip = true;
+                                    break;
+                                }
+                                else if (oreName == null)
+                                {
+                                    oreName = ent.getValue();
+                                    break;
+                                }
+                            }
+                        }
+                        if (!matches && oreName != null)
+                        {
+                            //TODO: Properly fix this, Broken recipe example: Beds
+                            //FMLLog.info("Invalid recipe found with ingredient that partially matches ore entries..."); //TODO: Write a dumper?
+                            skip = true;
+                        }
+                        if (skip)
+                            break;
+                    }
+                    if (!skip && oreName != null)
+                    {
+                        //Replace!
+                        lst.set(x, new OreIngredient(oreName));
+                        replaced++;
+                        if(DEBUG && replacedIngs.add(ing))
+                        {
+                            String recipeName = obj.getRegistryName().getResourcePath();
+                            FMLLog.log.debug("Replaced {} of the recipe \'{}\' with \"{}\".", ing.getMatchingStacks(), recipeName, oreName);
+                        }
+                    }
                 }
             }
         }
 
-        recipes.removeAll(recipesToRemove);
-        recipes.addAll(recipesToAdd);
-        if (recipesToRemove.size() > 0)
-        {
-            FMLLog.log.info("Replaced {} ore recipes", recipesToRemove.size());
-        }
+        FMLLog.log.info("Replaced {} ore ingredients", replaced);
     }
 
     /**
@@ -453,7 +517,7 @@ public class OreDictionary
         }
         else
         {
-            id = GameData.getItemRegistry().getId(registryName);
+            id = Item.REGISTRY.getIDForObject(stack.getItem().delegate.get());
         }
         List<Integer> ids = stackToId.get(id);
         if (ids != null) set.addAll(ids);
@@ -578,7 +642,7 @@ public class OreDictionary
         {
             return false;
         }
-        return (target.getItem() == input.getItem() && ((target.getItemDamage() == WILDCARD_VALUE && !strict) || target.getItemDamage() == input.getItemDamage()));
+        return (target.getItem() == input.getItem() && ((target.getMetadata() == WILDCARD_VALUE && !strict) || target.getMetadata() == input.getMetadata()));
     }
 
     //Convenience functions that make for cleaner code mod side. They all drill down to registerOre(String, int, ItemStack)
@@ -619,7 +683,7 @@ public class OreDictionary
         }
         else
         {
-            hash = GameData.getItemRegistry().getId(registryName);
+            hash = Item.REGISTRY.getIDForObject(ore.getItem().delegate.get());
         }
         if (ore.getItemDamage() != WILDCARD_VALUE)
         {
@@ -685,18 +749,13 @@ public class OreDictionary
                 }
                 else
                 {
-                    hash = GameData.getItemRegistry().getId(name);
+                    hash = Item.REGISTRY.getIDForObject(ore.getItem().delegate.get());
                 }
                 if (ore.getItemDamage() != WILDCARD_VALUE)
                 {
                     hash |= ((ore.getItemDamage() + 1) << 16); // +1 so meta 0 is significant
                 }
-                List<Integer> ids = stackToId.get(hash);
-                if (ids == null)
-                {
-                    ids = Lists.newArrayList();
-                    stackToId.put(hash, ids);
-                }
+                List<Integer> ids = stackToId.computeIfAbsent(hash, k -> Lists.newArrayList());
                 ids.add(id);
                 //System.out.println(id + " " + getOreName(id) + " " + Integer.toHexString(hash) + " " + ore);
             }

@@ -1,6 +1,6 @@
 /*
  * Minecraft Forge
- * Copyright (c) 2016.
+ * Copyright (c) 2016-2020.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -23,16 +23,12 @@ import java.io.File;
 import java.io.IOException;
 
 import net.minecraft.client.gui.GuiButton;
-import net.minecraft.client.gui.GuiLabel;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiYesNo;
 import net.minecraft.client.gui.GuiYesNoCallback;
-import net.minecraft.world.WorldSettings;
 import net.minecraftforge.fml.common.FMLLog;
 import net.minecraftforge.fml.common.StartupQuery;
 import net.minecraftforge.fml.common.ZipperUtil;
-
-import org.apache.logging.log4j.Level;
 
 public class GuiOldSaveLoadConfirm extends GuiYesNo implements GuiYesNoCallback {
 
@@ -53,15 +49,15 @@ public class GuiOldSaveLoadConfirm extends GuiYesNo implements GuiYesNoCallback 
     public void drawScreen(int mouseX, int mouseY, float partialTicks)
     {
         this.drawDefaultBackground();
-        this.drawCenteredString(this.fontRendererObj, String.format("The world %s contains pre-update modding data", saveName), this.width / 2, 50, 16777215);
-        this.drawCenteredString(this.fontRendererObj, String.format("There may be problems updating it to this version"), this.width / 2, 70, 16777215);
-        this.drawCenteredString(this.fontRendererObj, String.format("FML will save a zip to %s", zip.getName()), this.width / 2, 90, 16777215);
-        this.drawCenteredString(this.fontRendererObj, String.format("Do you wish to continue loading?"), this.width / 2, 110, 16777215);
+        this.drawCenteredString(this.fontRenderer, String.format("The world %s contains pre-update modding data", saveName), this.width / 2, 50, 16777215);
+        this.drawCenteredString(this.fontRenderer, String.format("There may be problems updating it to this version"), this.width / 2, 70, 16777215);
+        this.drawCenteredString(this.fontRenderer, String.format("FML will save a zip to %s", zip.getName()), this.width / 2, 90, 16777215);
+        this.drawCenteredString(this.fontRenderer, String.format("Do you wish to continue loading?"), this.width / 2, 110, 16777215);
         int k;
 
         for (k = 0; k < this.buttonList.size(); ++k)
         {
-            this.buttonList.get(k).drawButton(this.mc, mouseX, mouseY);
+            this.buttonList.get(k).drawButton(this.mc, mouseX, mouseY, partialTicks);
         }
 
         for (k = 0; k < this.labelList.size(); ++k)
