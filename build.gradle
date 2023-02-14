@@ -65,9 +65,9 @@ ext {
             keystore: project.properties.keystore
         ]
     }
-    MAPPING_CHANNEL = 'snapshot_nodoc'
-    MAPPING_VERSION = '20161220-1.11'
-    MC_VERSION = '1.11.2'
+    MAPPING_CHANNEL = 'stable'
+    MAPPING_VERSION = '39-1.12'
+    MC_VERSION = '1.12.2'
     MCP_VERSION = '20210824.173128'
     POST_PROCESSOR = [
         tool: 'net.minecraftforge:mcpcleanup:2.3.2:fatjar',
@@ -82,10 +82,10 @@ ext {
 
 apply from: 'retrogradle-dev.gradle'
 ext {
-    LEGACY_MAJOR = 13     // Legacy versions have an API change prefix
-    LEGACY_BUILD = 2588   // Base build number to not conflict with existing build numbers
+    LEGACY_MAJOR = 14     // Legacy versions have an API change prefix
+    LEGACY_BUILD = 2860   // Base build number to not conflict with existing build numbers
     BUILD_NUMBER = 0      // LEGACY_BUILD + commit offset, used to mimic unique build from old versions
-    SPEC_VERSION = '20.1' // This is overwritten by git tag, but here so dev time doesn't explode
+    SPEC_VERSION = '23.5' // This is overwritten by git tag, but here so dev time doesn't explode
 }
 
 //------------------------------------------------------------------------------------------------------------------------------------------
