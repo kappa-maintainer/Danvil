@@ -89,22 +89,24 @@ public class FMLDeobfuscatingRemapper extends Remapper {
             rawMethodMaps = Maps.newHashMap();
             rawFieldMaps = Maps.newHashMap();
             Builder<String, String> builder = ImmutableBiMap.builder();
-            Splitter splitter = Splitter.on(CharMatcher.anyOf(": ")).omitEmptyStrings().trimResults();
+            Splitter splitter = Splitter.on(CharMatcher.anyOf(" ")).omitEmptyStrings().trimResults();
+            String cl = "";
             for (String line : srgList)
             {
                 String[] parts = Iterables.toArray(splitter.split(line),String.class);
                 String typ = parts[0];
-                if ("CL".equals(typ))
+                if (!typ.startsWith("\t"))
                 {
                     parseClass(builder, parts);
+                    cl = typ;
                 }
-                else if ("MD".equals(typ) && loadAll)
+                else if (parts.length == 3 && loadAll)
                 {
-                    parseMethod(parts);
+                    parseMethod(parts, cl);
                 }
-                else if ("FD".equals(typ) && loadAll)
+                else if (parts.length == 2 && loadAll)
                 {
-                    parseField(parts);
+                    parseField(parts, cl);
                 }
             }
             classNameBiMap = builder.build();
@@ -143,22 +145,23 @@ public class FMLDeobfuscatingRemapper extends Remapper {
             rawMethodMaps = Maps.newHashMap();
             rawFieldMaps = Maps.newHashMap();
             Builder<String, String> builder = ImmutableBiMap.builder();
-            Splitter splitter = Splitter.on(CharMatcher.anyOf(": ")).omitEmptyStrings().trimResults();
+            Splitter splitter = Splitter.on(CharMatcher.anyOf(" ")).omitEmptyStrings().trimResults();
+            String cl = "";
             for (String line : srgList)
             {
                 String[] parts = Iterables.toArray(splitter.split(line),String.class);
-                String typ = parts[0];
-                if ("CL".equals(typ))
+                if (!line.startsWith("\t") && parts.length == 2)
                 {
                     parseClass(builder, parts);
+                    cl = parts[0];
                 }
-                else if ("MD".equals(typ))
+                else if (parts.length == 3)
                 {
-                    parseMethod(parts);
+                    parseMethod(parts, cl);
                 }
-                else if ("FD".equals(typ))
+                else if (parts.length == 2)
                 {
-                    parseField(parts);
+                    parseField(parts, cl);
                 }
             }
             classNameBiMap = builder.build();
@@ -176,15 +179,11 @@ public class FMLDeobfuscatingRemapper extends Remapper {
         return !map(className).equals(className);
     }
 
-    private void parseField(String[] parts)
+    private void parseField(String[] parts, String cl)
     {
-        String oldSrg = parts[1];
-        int lastOld = oldSrg.lastIndexOf('/');
-        String cl = oldSrg.substring(0,lastOld);
-        String oldName = oldSrg.substring(lastOld+1);
-        String newSrg = parts[2];
-        int lastNew = newSrg.lastIndexOf('/');
-        String newName = newSrg.substring(lastNew+1);
+
+        String oldName = parts[0];
+        String newName = parts[1];
         if (!rawFieldMaps.containsKey(cl))
         {
             rawFieldMaps.put(cl, Maps.<String,String>newHashMap());
@@ -241,22 +240,17 @@ public class FMLDeobfuscatingRemapper extends Remapper {
 
     private void parseClass(Builder<String, String> builder, String[] parts)
     {
-        builder.put(parts[1],parts[2]);
+        builder.put(parts[0],parts[1]);
     }
 
-    private void parseMethod(String[] parts)
+    private void parseMethod(String[] parts, String cl)
     {
-        String oldSrg = parts[1];
-        int lastOld = oldSrg.lastIndexOf('/');
-        String cl = oldSrg.substring(0,lastOld);
-        String oldName = oldSrg.substring(lastOld+1);
-        String sig = parts[2];
-        String newSrg = parts[3];
-        int lastNew = newSrg.lastIndexOf('/');
-        String newName = newSrg.substring(lastNew+1);
+        String oldName = parts[0].substring(1);
+        String sig = parts[1];
+        String newName = parts[2];
         if (!rawMethodMaps.containsKey(cl))
         {
-            rawMethodMaps.put(cl, Maps.<String,String>newHashMap());
+            rawMethodMaps.put(cl, Maps.newHashMap());
         }
         rawMethodMaps.get(cl).put(oldName+sig, newName);
     }

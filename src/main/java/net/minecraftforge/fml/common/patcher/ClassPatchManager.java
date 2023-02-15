@@ -30,7 +30,6 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
-import java.util.jar.Pack200;
 import java.util.regex.Pattern;
 
 import net.minecraft.launchwrapper.LaunchClassLoader;
@@ -186,7 +185,7 @@ public class ClassPatchManager {
                     ByteArrayOutputStream jarBytes = new ByteArrayOutputStream();
                     try (JarOutputStream jos = new JarOutputStream(jarBytes))
                     {
-                        Pack200.newUnpacker().unpack(binpatchesDecompressed, jos);
+                        //Pack200.newUnpacker().unpack(binpatchesDecompressed, jos);
                         jis = new JarInputStream(new ByteArrayInputStream(jarBytes.toByteArray()));
                     }
                 }

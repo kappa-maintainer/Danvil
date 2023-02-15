@@ -50,7 +50,7 @@ public class TerminalTransformer implements IClassTransformer
 
         private ExitVisitor(ClassVisitor cv)
         {
-            super(Opcodes.ASM5, cv);
+            super(Opcodes.ASM9, cv);
         }
 
         @Override
@@ -74,7 +74,7 @@ public class TerminalTransformer implements IClassTransformer
                                    clsName.startsWith("com/sun/jna/")
                                    );
 
-            return new MethodVisitor(Opcodes.ASM5, super.visitMethod(mAccess, mName, mDesc, mSignature, mExceptions))
+            return new MethodVisitor(Opcodes.ASM9, super.visitMethod(mAccess, mName, mDesc, mSignature, mExceptions))
             {
                 @Override
                 public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean isIntf)

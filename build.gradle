@@ -83,7 +83,7 @@ ext {
 //apply from: 'retrogradle-dev.gradle'
 ext {
     LEGACY_MAJOR = 14     // Legacy versions have an API change prefix
-    LEGACY_BUILD = 2860   // Base build number to not conflict with existing build numbers
+    LEGACY_BUILD = 2861   // Base build number to not conflict with existing build numbers
     BUILD_NUMBER = 0      // LEGACY_BUILD + commit offset, used to mimic unique build from old versions
     SPEC_VERSION = '23.5' // This is overwritten by git tag, but here so dev time doesn't explode
 }
@@ -109,7 +109,7 @@ project(':clean') {
     apply plugin: 'eclipse'
     apply plugin: 'net.minecraftforge.gradle.patcher'
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+    java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
     repositories {
         mavenLocal()
@@ -117,7 +117,11 @@ project(':clean') {
     }
 
     dependencies {
-        implementation 'net.minecraftforge:mergetool:0.2.3.3:forge'
+        implementation ('net.minecraftforge:mergetool:0.2.3.3:forge') {
+            exclude group: 'org.ow2.asm', module: 'asm-tree'
+            exclude group: 'org.ow2.asm', module: 'asm-util'
+            exclude group: 'org.ow2.asm', module: 'asm'
+        }
     }
 
     patcher {
@@ -167,7 +171,7 @@ project(':forge') {
     apply plugin: 'eclipse'
     apply plugin: 'net.minecraftforge.gradle.patcher'
 
-    java.toolchain.languageVersion = JavaLanguageVersion.of(8)
+    java.toolchain.languageVersion = JavaLanguageVersion.of(17)
     group = 'net.minecraftforge'
 
     sourceSets {
@@ -206,6 +210,12 @@ project(':forge') {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            // GTNH LaunchWrapper
+            name "GTNH Maven"
+            url "http://jenkins.usrv.eu:8081/nexus/content/groups/public/"
+            allowInsecureProtocol = true
+        }
     }
 
     ext {
@@ -390,8 +400,13 @@ project(':forge') {
     }
 
     dependencies {
-        installer 'org.ow2.asm:asm-debug-all:5.2'
-        installer 'net.minecraft:launchwrapper:1.12'
+
+        installer "org.ow2.asm:asm:9.4"
+        installer "org.ow2.asm:asm-commons:9.4"
+        installer "org.ow2.asm:asm-tree:9.4"
+        installer "org.ow2.asm:asm-util:9.4"
+        installer "org.ow2.asm:asm-analysis:9.4"
+        installer 'net.minecraft:launchwrapper:1.15'
         installer 'org.jline:jline:3.5.1'
         installer 'com.typesafe.akka:akka-actor_2.11:2.3.3'
         installer 'com.typesafe:config:1.2.1'

@@ -19,18 +19,16 @@
 
 package net.minecraftforge.fml.common.asm.transformers;
 
-import java.util.Arrays;
-
 import net.minecraft.launchwrapper.IClassNameTransformer;
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraft.launchwrapper.Launch;
-
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLDeobfuscatingRemapper;
 import net.minecraftforge.fml.common.asm.transformers.deobf.FMLRemappingAdapter;
-
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
-import org.objectweb.asm.commons.RemappingClassAdapter;
+import org.objectweb.asm.commons.ClassRemapper;
+
+import java.util.Arrays;
 
 public class DeobfuscationTransformer implements IClassTransformer, IClassNameTransformer {
     private static final String[] EXEMPT_LIBS = new String[] {
@@ -72,7 +70,7 @@ public class DeobfuscationTransformer implements IClassTransformer, IClassNameTr
 
         ClassReader classReader = new ClassReader(bytes);
         ClassWriter classWriter = new ClassWriter(WRITER_FLAGS);
-        RemappingClassAdapter remapAdapter = new FMLRemappingAdapter(classWriter);
+        ClassRemapper remapAdapter = new FMLRemappingAdapter(classWriter);
         classReader.accept(remapAdapter, READER_FLAGS);
         return classWriter.toByteArray();
     }
